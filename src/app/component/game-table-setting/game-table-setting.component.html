@@ -1,10 +1,10 @@
 <div class="flex-container">
   <div class="flex-item no-grow">
     <div>
-      <button style="margin-bottom: 2px; font-size: smaller" (click)="createGameTable()">新しいテーブルを作る</button>
+      <button style="margin-bottom: 2px; font-size: smaller" (click)="createGameTable()">새로운 테이블을 작성</button>
     </div>
     <select style="width: 100%; max-width: 155px" size="10" (change)="selectGameTable($event.target.value)" [ngModel]="selectedTable?.identifier">
-      <option *ngFor="let gameTable of getGameTables()" value="{{gameTable.identifier}}" title="{{gameTable.name}}" [style.color]="gameTable.name == '' ? 'gray' : ''">{{gameTable.name == '' ? '(無名のテーブル)' : gameTable.name}}</option>
+      <option *ngFor="let gameTable of getGameTables()" value="{{gameTable.identifier}}" title="{{gameTable.name}}" [style.color]="gameTable.name == '' ? 'gray' : ''">{{gameTable.name == '' ? '(이름 없는 테이블)' : gameTable.name}}</option>
     </select>
   </div>
   <div class="flex-item">
@@ -17,7 +17,7 @@
     <ng-container *ngIf="!isEmpty || selectedTable">
       <div class="images-select">
         <div>
-          <b>画像</b>
+          <b>이미지</b>
           <div (click)="openBgImageModal()" style="position: relative; overflow: hidden; cursor: pointer">
             <div *ngIf="getHidden(tableBackgroundImage)" style="position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
               <i class="material-icons" [class]="isShowHideImages ? 'red-eye': 'grow'" style="margin-right: 2px; font-size: 16px; display: block">{{ isShowHideImages ? 'visibility' : 'visibility_off' }}</i>
@@ -26,9 +26,9 @@
           </div>
         </div>
         <div>
-          <b>背景</b>
+          <b>배경</b>
           <div *ngIf="!tableDistanceviewImage.url">
-            <button (click)="openDistanceViewImageModal()" style="height: 120px;" [disabled]="!isEditable">背景画像を追加</button>
+            <button (click)="openDistanceViewImageModal()" style="height: 120px;" [disabled]="!isEditable">배경 이미지를 추가</button>
           </div>
           <div *ngIf="tableDistanceviewImage.url" style="position: relative; overflow: hidden; cursor: pointer" (click)="openDistanceViewImageModal()">
             <div *ngIf="getHidden(tableDistanceviewImage)" style="position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
@@ -50,33 +50,33 @@
         <input [(ngModel)]="tableHeight" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 5em;" [disabled]="!isEditable">
       </div>
       <div>
-        <label class="self-setting">グリッド：
+        <label class="self-setting">그리드：
           <select [(ngModel)]="tableGridType" name="tableGridType" [disabled]="!isEditable">
-            <option value="-1">なし</option>
-            <option value="0">スクエア</option>
-            <option value="1">ヘクス（縦揃え）</option>
-            <option value="2">ヘクス（横揃え）</option>
+            <option value="-1">없음</option>
+            <option value="0">스퀘어</option>
+            <option value="1">헥스(세로정렬)</option>
+            <option value="2">헥스(가로정렬)</option>
           </select>
         </label>
-        <label class="self-setting" style="margin-left: 3px">色：
+        <label class="self-setting" style="margin-left: 3px">색：
           <select [(ngModel)]="tableGridColor" name="tableGridColor" [disabled]="!isEditable || tableGridType == -1">
-            <option value="#000000e6">黒</option>
-            <option value="#dddddde6">白</option>
+            <option value="#000000e6">검정</option>
+            <option value="#dddddde6">하양</option>
           </select>
         </label>
       </div>
       <div>
         <label class="self-setting">
           <input type="checkbox" [(ngModel)]="tableGridNumberShow" name="tableGridNumberShow" [disabled]="!isEditable || tableGridType == -1" />
-          <span [ngClass]="{disabled: !isEditable || tableGridType == -1}">グリッドの座標番号を表示</span>
+          <span [ngClass]="{disabled: !isEditable || tableGridType == -1}">그리드의 좌표 숫자 표시</span>
         </label>
       </div>
       <div>
-        <label class="self-setting">背景フィルタ：
+        <label class="self-setting">배경 필터：
           <select [(ngModel)]="tableDistanceviewFilter" name="tableDistanceviewFilter" [disabled]="!isEditable">
-            <option value="">なし</option>
-            <option value="white">ホワイト</option>
-            <option value="black">ブラック</option>
+            <option value="">없음</option>
+            <option value="white">화이트</option>
+            <option value="black">블랙</option>
           </select>
         </label>
       </div>
@@ -84,28 +84,28 @@
       <div>
         <label class="self-setting">
           <input type="checkbox" [(ngModel)]="tableGridShow" name="tableGridShow" />
-          グリッドを常に表示<sup class="self-only">*</sup>
+          그리드를 항상 표시<sup class="self-only">*</sup>
         </label>
         <label style="margin-left: 1em" class="self-setting">
           <input type="checkbox" [(ngModel)]="tableGridSnap" name="tableGridSnap" />
-          スナップ<sup class="self-only">*</sup>
+          스냅<sup class="self-only">*</sup>
         </label>
         <ng-container *ngIf="!isDeleted">
           <button style="margin-left: 2em" [disabled]="isSaveing" (click)="save()">
             <div style="position: relative;">
-              <div [ngClass]="{'is-hidden': isSaveing}">保存</div>
+              <div [ngClass]="{'is-hidden': isSaveing}">저장</div>
               <div *ngIf="isSaveing" class="progress">{{progresPercent}}%</div>
             </div>
           </button>
-          <button class="danger" (click)="delete()" [disabled]="getGameTables().length <= 1">削除</button>
+          <button class="danger" (click)="delete()" [disabled]="getGameTables().length <= 1">삭제</button>
         </ng-container>
         <ng-container *ngIf="isDeleted">
-          <button (click)="restore()">元に戻す</button>
+          <button (click)="restore()">원래대로 되돌린다</button>
         </ng-container>
       </div>
     </ng-container>
   </div>
 </div>
 <ng-container *ngIf="isEmpty">
-  <div style="font-size: 12px;">※テーブルが１つも作成されていません。「新しいテーブルを作る」から新しいテーブルを作成することができます。</div>
+  <div style="font-size: 12px;">※기존의 테이블이 존재하지 않습니다.「새로운 테이블을 작성」을 눌러 새 테이블을 작성할 수 있습니다.</div>
 </ng-container>
