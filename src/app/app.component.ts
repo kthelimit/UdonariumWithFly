@@ -119,29 +119,29 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     let soundEffect: SoundEffect = new SoundEffect('SoundEffect');
     soundEffect.initialize();
 
-    ChatTabList.instance.addChatTab('メインタブ', 'MainTab');
-    let subTab = ChatTabList.instance.addChatTab('サブタブ', 'SubTab');
+    ChatTabList.instance.addChatTab('메인 탭', 'MainTab');
+    let subTab = ChatTabList.instance.addChatTab('서브 탭', 'SubTab');
     subTab.recieveOperationLogLevel = 1;
 
     CutInList.instance.initialize();
 
     let sampleDiceRollTable = new DiceRollTable('SampleDiceRollTable');
     sampleDiceRollTable.initialize();
-    sampleDiceRollTable.name = 'サンプルダイスボット表'
+    sampleDiceRollTable.name = '샘플 다이스봇 표'
     sampleDiceRollTable.command = 'SAMPLE'
     sampleDiceRollTable.dice = '1d6';
-    sampleDiceRollTable.value = "1:これはダイスボット表のサンプルです\n2:数字と対応する結果を1行に1つづつ:（コロン）で区切り\n3:数字:結果のように記述します\n4:\\\\n  \\nで改行します\n5-6:また、-（ハイフン）で区切って数字の範囲を指定可能です";
+    sampleDiceRollTable.value = "1:이것은 다이스봇 표의 샘플입니다.\n2:숫자와 대응하는 결과를 1줄에 1개씩 :(콜론)으로 구분하고\n3:숫자:결과의 형태로 작성합니다.\n4:\\\\n  \\n으로 행을 바꿉니다.\n5-6:또, -（하이픈）으로 구분해서 숫자의 범위를 지정할 수 있습니다.";
     DiceRollTableList.instance.addDiceRollTable(sampleDiceRollTable);
 
     let fileContext = ImageFile.createEmpty('none_icon').toContext();
     fileContext.url = './assets/images/ic_account_circle_black_24dp_2x.png';
     let noneIconImage = ImageStorage.instance.add(fileContext);
-    ImageTag.create(noneIconImage.identifier).tag = '*default アイコン';
+    ImageTag.create(noneIconImage.identifier).tag = '*default 아이콘';
 
     fileContext = ImageFile.createEmpty('stand_no_image').toContext();
     fileContext.url = './assets/images/nc96424.png';
     let standNoIconImage = ImageStorage.instance.add(fileContext);
-    ImageTag.create(standNoIconImage.identifier).tag = '*default スタンド';
+    ImageTag.create(standNoIconImage.identifier).tag = '*default 스탠딩';
 
     AudioPlayer.resumeAudioContext();
     PresetSound.dicePick = AudioStorage.instance.add('./assets/sounds/soundeffect-lab/shoulder-touch1.mp3').identifier;
@@ -183,7 +183,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     AudioStorage.instance.get(PresetSound.coinToss).isHidden = true;
 
     PeerCursor.createMyCursor();
-    if (!PeerCursor.myCursor.name) PeerCursor.myCursor.name = 'プレイヤー';
+    if (!PeerCursor.myCursor.name) PeerCursor.myCursor.name = '플레이어';
     PeerCursor.myCursor.imageIdentifier = noneIconImage.identifier;
 
     EventSystem.register(this)
@@ -211,7 +211,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
               let tempInfos = (API_VERSION == 1 ? infos.names : infos.game_system)
                 .filter(info => (API_VERSION == 1 ? info.system : info.id) != 'DiceBot')
                 .map(info => {
-                  let normalize = (info.sort_key && info.sort_key.indexOf('国際化') < 0) ? info.sort_key : info.name.normalize('NFKD');
+                  let normalize = (info.sort_key && info.sort_key.indexOf('국제화') < 0) ? info.sort_key : info.name.normalize('NFKD');
                   for (let replaceData of DiceBot.replaceData) {
                     if (replaceData[2] && info.name === replaceData[0]) {
                       normalize = replaceData[1];
@@ -220,15 +220,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
                     normalize = normalize.split(replaceData[0].normalize('NFKD')).join(replaceData[1].normalize('NFKD'));
                   }
                   info.normalize = normalize.replace(/[\u3041-\u3096]/g, m => String.fromCharCode(m.charCodeAt(0) + 0x60))
-                    .replace(/第(.+?)版/g, 'タイ$1ハン')
+                    .replace(/제(.+?)판/g, '제$1판')
                     .replace(/[・!?！？\s　:：=＝\/／（）\(\)]+/g, '')
-                    .replace(/([アカサタナハマヤラワ])ー+/g, '$1ア')
-                    .replace(/([イキシチニヒミリ])ー+/g, '$1イ')
-                    .replace(/([ウクスツヌフムユル])ー+/g, '$1ウ')
-                    .replace(/([エケセテネヘメレ])ー+/g, '$1エ')
-                    .replace(/([オコソトノホモヨロ])ー+/g, '$1オ')
-                    .replace(/ン+ー+/g, 'ン')
-                    .replace(/ン+/g, 'ン');
+                    .replace(/([아카사타나하마야라와])ー+/g, '$1아')
+                    .replace(/([이키시치니히미리])ー+/g, '$1이')
+                    .replace(/([우쿠스츠누후무유루])ー+/g, '$1우')
+                    .replace(/([에케세테네헤메레])ー+/g, '$1에')
+                    .replace(/([오코소토노호모요로])ー+/g, '$1오')
+                    .replace(/응+ー+/g, '응')
+                    .replace(/응+/g, '응');
                   return info;
                 })
                 .map(info => {
@@ -247,11 +247,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
                 let sentinel = tempInfos[0].normalize.substring(0, 1);
                 let group = { index: tempInfos[0].normalize.substring(0, 1), infos: [] };
                 for (let info of tempInfos) {
-                  let index = info.lang == 'Other' ? 'その他' 
-                    : info.lang == 'ChineseTraditional' ? '正體中文'
+                  let index = info.lang == 'Other' ? '그외' 
+                    : info.lang == 'ChineseTraditional' ? '정체중문'
                     : info.lang == 'Korean' ? '한국어'
                     : info.lang == 'English' ? 'English'
-                    : info.lang == 'SimplifiedChinese' ? '简体中文'
+                    : info.lang == 'SimplifiedChinese' ? '간체중문'
                     : info.normalize.substring(0, 1);
                   if (index !== sentinel) {
                     sentinel = index;
@@ -275,15 +275,15 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
               normalize = normalize.split(replaceData[0].normalize('NFKD')).join(replaceData[1].normalize('NFKD'));
             }
             normalize = normalize.replace(/[\u3041-\u3096]/g, m => String.fromCharCode(m.charCodeAt(0) + 0x60))
-              .replace(/第(.+?)版/g, 'タイ$1ハン')
+              .replace(/제(.+?)판/g, '제$1판')
               .replace(/[・!?！？\s　:：=＝\/／（）\(\)]+/g, '')
-              .replace(/([アカサタナハマヤラワ])ー+/g, '$1ア')
-              .replace(/([イキシチニヒミリ])ー+/g, '$1イ')
-              .replace(/([ウクスツヌフムユル])ー+/g, '$1ウ')
-              .replace(/([エケセテネヘメレ])ー+/g, '$1エ')
-              .replace(/([オコソトノホモヨロ])ー+/g, '$1オ')
-              .replace(/ン+ー+/g, 'ン')
-              .replace(/ン+/g, 'ン');
+              .replace(/([아카사타나하마야라와])ー+/g, '$1아')
+              .replace(/([이키시치니히미리])ー+/g, '$1이')
+              .replace(/([우쿠스츠누후무유루])ー+/g, '$1우')
+              .replace(/([에케세테네헤메레])ー+/g, '$1에')
+              .replace(/([오코소토노호모요로])ー+/g, '$1오')
+              .replace(/응+ー+/g, '응')
+              .replace(/응+/g, '응');
             info.sort_key = info.lang ? info.lang : normalize.normalize('NFKD');
             //return info;
             //console.log(info.index + ': ' + normalize);
@@ -302,7 +302,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           let sentinel = DiceBot.diceBotInfos[0].sort_key[0];
           let group = { index: sentinel, infos: [] };
           for (let info of DiceBot.diceBotInfos) {
-            if (info.lang == 'Other') info.lang = '简体中文'; //手抜き
+            if (info.lang == 'Other') info.lang = '간체중문'; //手抜き
             if ((info.lang ? info.lang : info.sort_key[0]) !== sentinel) {
               sentinel = info.lang ? info.lang : info.sort_key[0];
               DiceBot.diceBotInfosIndexed.push(group);
@@ -336,10 +336,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           let reconnectErrorTypes = ['disconnected', 'socket-error', 'unavailable-id', 'authentication', 'server-error'];
 
           if (quietErrorTypes.includes(errorType)) return;
-          await this.modalService.open(TextViewComponent, { title: 'ネットワークエラー', text: errorMessage });
+          await this.modalService.open(TextViewComponent, { title: '네트워크 에러', text: errorMessage });
 
           if (!reconnectErrorTypes.includes(errorType)) return;
-          await this.modalService.open(TextViewComponent, { title: 'ネットワークエラー', text: 'このウィンドウを閉じると再接続を試みます。' });
+          await this.modalService.open(TextViewComponent, { title: '네트워크 에러', text: '이 창을 닫으면 다시 접속을 시도합니다.' });
           Network.open();
           this.isLoggedin = false;
         });
@@ -349,7 +349,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           this.chatMessageService.calibrateTimeOffset();
           if (!this.isLoggedin) {
             this.isLoggedin = true;
-            chatMessageService.sendOperationLog((Network.peerContext.isRoom ? Network.peerContext.roomName + ' に': '他者と') + '接続した');
+            chatMessageService.sendOperationLog((Network.peerContext.isRoom ? Network.peerContext.roomName + ' 에': '다른 사람과') + '연결했다');
           }
         }
         this.lazyNgZoneUpdate(event.isSendFromSelf);
@@ -409,9 +409,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           console.log(`New app version ready for use: ${evt.latestVersion.hash}`);
           if (!this.isUpdateCanceled) {
             this.modalService.open(ConfirmationComponent, {
-              title: 'Udonarium with Fly の更新', 
-              text: 'Udonarium with Fly の新しいバージョンが公開されています。更新を行いますか？',
-              help: '更新の際にページを再読み込みします。手動で再読み込みを行うことでも更新可能です。',
+              title: 'Udonarium with Fly 의 갱신', 
+              text: 'Udonarium with Fly의 새로운 버전이 공개되어 있습니다. 갱신을 실시합니까?',
+              help: '갱신 시 페이지를 다시 불러옵니다. 수동으로 다시 불러오는 것으로도 갱신이 가능합니다.',
               type: ConfirmationType.OK_CANCEL,
               materialIcon: 'browser_updated',
               action: () => {
@@ -494,7 +494,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
     let roomName = Network.peerContext && 0 < Network.peerContext.roomName.length
       ? Network.peerContext.roomName
-      : 'fly_ルームデータ';
+      : 'fly_방데이터';
     await this.saveDataService.saveRoomAsync(roomName, percent => {
       this.progresPercent = percent;
     });
@@ -539,18 +539,18 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   toolBox() {
     const menu = [];
     const cunIns = CutInList.instance.cutIns;
-    menu.push({ name: 'カットイン再生', materialIcon: 'play_arrow', 
+    menu.push({ name: '컷인 재생', materialIcon: 'play_arrow', 
       action: null, subActions: cunIns.length === 0 ? [
         {
-          name: '(カットインなし)',
+          name: '(컷인 없음)',
           disabled: true,
           center: true
         }
       ] : cunIns.map(cutIn => {
         return { 
-          name: `${cutIn.isValidAudio ? '' : '⚠️'}${cutIn.name == '' ? '(無名のカットイン)' : cutIn.name}`, 
+          name: `${cutIn.isValidAudio ? '' : '⚠️'}${cutIn.name == '' ? '(이름없는 컷인)' : cutIn.name}`, 
           subActions: [{
-              name: '全員',
+              name: '전원',
               action: () => {
                 EventSystem.call('PLAY_CUT_IN', {
                   identifier: cutIn.identifier,
@@ -560,7 +560,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
               }
             }, ContextMenuSeparator, ...this.otherPeers.map(peer => {
             return {
-              name: peer.name + (peer === PeerCursor.myCursor ? ' (あなた)' : ''),
+              name: peer.name + (peer === PeerCursor.myCursor ? ' (당신)' : ''),
               color: peer.color,
               default: true,
               action: () => {
@@ -583,16 +583,16 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       })
     });
     menu.push(ContextMenuSeparator);
-    menu.push({ name: 'カットイン設定', materialIcon: 'movie_creation', action: () => this.open('CutInSettingComponent') });
-    menu.push({ name: 'ダイスボット表設定', materialIcon: 'table_rows', action: () => this.open('DiceRollTableSettingComponent') })
-    this.contextMenuService.open(this.pointerDeviceService.pointers[0], menu, 'ツールボックス');
+    menu.push({ name: '컷인 설정', materialIcon: 'movie_creation', action: () => this.open('CutInSettingComponent') });
+    menu.push({ name: '다이스봇 표 설정', materialIcon: 'table_rows', action: () => this.open('DiceRollTableSettingComponent') })
+    this.contextMenuService.open(this.pointerDeviceService.pointers[0], menu, '툴 박스');
   }
 
   resetPointOfView() {
     this.contextMenuService.open(this.pointerDeviceService.pointers[0], [
-      { name: '初期視点に戻す', action: () => EventSystem.trigger('RESET_POINT_OF_VIEW', null) },
-      { name: '真上から視る', action: () => EventSystem.trigger('RESET_POINT_OF_VIEW', 'top') }
-    ], '視点リセット');
+      { name: '초기시점으로 되돌린다', action: () => EventSystem.trigger('RESET_POINT_OF_VIEW', null) },
+      { name: '바로 위에서 내려다본다', action: () => EventSystem.trigger('RESET_POINT_OF_VIEW', 'top') }
+    ], '시점 리셋');
   }
 
   standSetteings() {
@@ -600,31 +600,31 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     const isShowNameTag = StandImageComponent.isShowNameTag;
     const isCanBeGone = StandImageComponent.isCanBeGone; 
     this.contextMenuService.open(this.pointerDeviceService.pointers[0], [
-      { name: `${ TableSelecter.instance.gridShow ? '☑' : '☐' }テーブルグリッドを常に表示`, 
+      { name: `${ TableSelecter.instance.gridShow ? '☑' : '☐' }테이블 그리드를 항상 표시`, 
       action: () => {
         TableSelecter.instance.gridShow = !TableSelecter.instance.gridShow;
         EventSystem.trigger('UPDATE_GAME_OBJECT', TableSelecter.instance.toContext()); 
       }
       },
-      { name: `${ TableSelecter.instance.gridSnap ? '☑' : '☐' }オブジェクト移動時にスナップ`, 
+      { name: `${ TableSelecter.instance.gridSnap ? '☑' : '☐' }오브젝트 이동 시에 스냅`, 
       action: () => {
         TableSelecter.instance.gridSnap = !TableSelecter.instance.gridSnap;
       }
       },
       ContextMenuSeparator,
-      { name: `${ isShowStand ? '☑' : '☐' }スタンド表示`, 
+      { name: `${ isShowStand ? '☑' : '☐' }스탠딩 표시`, 
         action: () => {
           StandImageComponent.isShowStand = !isShowStand;
         }
       },
-      { name: `${ isShowNameTag ? '☑' : '☐' }ネームタグ表示`, 
+      { name: `${ isShowNameTag ? '☑' : '☐' }네임태그 표시`, 
         action: () => {
           StandImageComponent.isShowNameTag = !isShowNameTag;
         },
         level: 1,
         disabled: !StandImageComponent.isShowStand
       },
-      { name: `${ isCanBeGone ? '☑' : '☐' }透明化、自動退去`, 
+      { name: `${ isCanBeGone ? '☑' : '☐' }투명화, 자동 퇴거`, 
         action: () => {
           StandImageComponent.isCanBeGone = !isCanBeGone;
         },
@@ -632,8 +632,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: !StandImageComponent.isShowStand
       },
       ContextMenuSeparator,
-      { name: '表示スタンド全消去', action: () => EventSystem.trigger('DESTORY_STAND_IMAGE_ALL', null) }
-    ], '個人設定');
+      { name: '표시 스탠딩 전부 삭제', action: () => EventSystem.trigger('DESTORY_STAND_IMAGE_ALL', null) }
+    ], '개인 설정');
   }
 /*
   farewellStandAll() {
@@ -642,9 +642,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 */
   diceAllOpne() {
     this.modalService.open(ConfirmationComponent, {
-      title: 'ダイス一斉公開', 
-      text: 'テーブル上のダイス、コインを公開しますか？',
-      help: '「一斉公開しない」設定のものは公開されません。',
+      title: '다이스를 한번에 공개', 
+      text: '테이블 위의 다이스, 코인을 한번에 공개합니까?',
+      help: '「함께 공개하지 않는다」설정을 한 것은 공개되지 않습니다.',
       type: ConfirmationType.OK_CANCEL,
       materialIcon: 'all_out',
       action: () => {
