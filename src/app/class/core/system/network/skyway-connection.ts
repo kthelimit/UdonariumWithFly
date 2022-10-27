@@ -79,7 +79,7 @@ export class SkyWayConnection implements Connection {
 
   private shouldConnect(peerId: string): boolean {
     if (!this.peerContext || !this.peer || !this.peerId) {
-      console.log('connect() is Fail. IDが割り振られるまで待てや');
+      console.log('connect() is Fail. ID가 배당될 때까지 기다려');
       return false;
     }
 
@@ -354,7 +354,7 @@ export class SkyWayConnection implements Connection {
     for (let peerId of relayingPeerIds) {
       let conn = this.findDataConnection(peerId);
       if (conn && conn.open) {
-        console.log('<' + peerId + '> 転送しなきゃ・・・');
+        console.log('<' + peerId + '>전송하지 않으면・・・');
         conn.send(container);
       }
     }
@@ -410,25 +410,24 @@ export class SkyWayConnection implements Connection {
 
   private getSkyWayErrorMessage(errType: string): string {
     switch (errType) {
-      case 'room-error': return 'SkyWay Room API に問題が発生しました。';
-      case 'permission': return '該当の SkyWay Room の利用が許可されてません。';
-      case 'list-error': return 'SkyWay listAllPeers API が Disabled です。';
-      case 'disconnected': return 'SkyWay のシグナリングサーバに接続されていません。';
-      case 'socket-error': return 'SkyWay のシグナリングサーバとの通信で問題が発生しました。';
-      case 'invalid-id': return 'Peer ID が不正です。';
-      case 'unavailable-id': return 'その Peer ID すでに使用されています。';
-      case 'peer-unavailable': return 'その Peer ID は利用できません。';
-      case 'invalid-key': return 'SkyWay API キーが無効です。';
-      case 'invalid-domain': return 'SkyWay API キーには現在のドメインは登録されていません。';
-      case 'authentication': return '認証エラーです。';
-      case 'server-error': return 'SkyWay のシグナリングサーバとの接続中に問題がありました。 少し待って、リトライしてください。';
-      case 'sfu-client-not-supported': return 'このクライアントは SFU の使用をサポートしていません。最新の Google Chrome を使用してください';
-      case 'peer-unavailable': return 'Peer へデータを送信できませんでした。Peer ID が正しいことを確認してください。';
-      case 'signaling-limited': return 'シグナリング回数が無償利用枠を超過しているため、全ての機能が利用できません。（SkyWay Community Edition のみ）';
-      case 'sfu-limited': return 'SFU サーバの利用量が無償利用枠を超過しているため、SFU の機能が利用できません。（SkyWay Community Edition のみ）';
-      case 'turn-limited': return 'TURN サーバの利用量が無償利用枠を超過しているため、TURN の機能が利用できません。（SkyWay Community Edition のみ）\nこの状態では、一部のユーザの接続に問題が発生する可能性があります。';
-      case 'peer-unavailable': return 'そのPeer IDは利用できません。';
-      default: return 'SkyWayに関する不明なエラーが発生しました。';
+      case 'room-error': return 'SkyWay Room API에 문제가 발생했습니다.';
+      case 'permission': return '해당 SkyWay Room의 이용이 허가되지 않았습니다.';
+      case 'list-error': return 'SkyWay listAllPeers API 가 Disabled 입니다.';
+      case 'disconnected': return 'SkyWay의 시그널링 서버에 접속되어 있지 않습니다.';
+      case 'socket-error': return 'SkyWay의 시그널린 서버와의 통신에 문제가 발생했습니다.';
+      case 'invalid-id': return 'Peer ID가 맞지 않습니다.';
+      case 'unavailable-id': return '그 Peer ID는 이미 사용되고 있습니다.';
+      case 'peer-unavailable': return '그 Peer 아이디는 이용할 수 없습니다.';
+      case 'invalid-key': return 'SkyWay API 키가 무효입니다.';
+      case 'invalid-domain': return 'SkyWay API 키에 현재 도메인이 등록되어 있지 않습니다.';
+      case 'authentication': return '인증 오류입니다';
+      case 'server-error': return 'SkyWay의 시그널링 서버와의 접속 중에 문제가 있었습니다. 잠시 기다렸다가 재시도 해주세요.';
+      case 'sfu-client-not-supported': return '이 클라이언트는 SFU의 사용을 서포트하고 있지 않습니다. 최신 버전의 Google Chrome을 사용해주세요.';
+      case 'peer-unavailable': return 'Peer에 데이터를 송신할 수 없었습니다. Peer ID가 맞는지 확인해주세요.';
+      case 'signaling-limited': return '시그널링 횟수가 무상이용한도를 초과하고 있기 때문에 모든 기능을 이용할 수 없습니다.（SkyWay Community Edition만）';
+      case 'sfu-limited': return 'SFU 서버의 이용량이 무상이용한도를 초과하고 있기 때문에 SFU의 기능을 이용할 수 없습니다.（SkyWay Community Edition만）';
+      case 'turn-limited': return 'TURN 서버의 이용량이 무상이용한도를 초과하고 있기 때문에 TURN의 기능을 이용할 수 없습니다.（SkyWay Community Edition만）\n이 상태로는 일부 사용자의 접속에 문제가 발생할 가능성이 있습니다.';
+      default: return 'SkyWay에 관한 알 수 없는 오류가 발생했습니다.';
     }
   }
 }
