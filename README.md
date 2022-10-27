@@ -1,4 +1,7 @@
+NANASUNANA님의 개조판 유드나리움 : [원본주소](https://github.com/NanasuNANA/UdonariumWithFly)   
+한국어로 번역해보려고 포크해둠... 아직 아무것도 손대지 않았다.
 
+**↓↓↓↓　以下、ユドナリウムwithFlyより　↓↓↓↓**  
 [ユドナリウム（Udonarium）](https://github.com/TK11235/udonarium)の私家改造版、高度とかチャットテキストの色とか立ち絵（ユドナリウムだとキャラクターの画像と紛らわしいのでスタンドと呼称）とか。
 
 配布用ファイルは（まだ）用意していないので、自分で配置したい場合はcloneしてbuildしてください。~~また、config.yamlも同梱していないので本家ユドナを設置したことのない方は本家等からコピーしてください~~config.template.yamlを同梱しました。
