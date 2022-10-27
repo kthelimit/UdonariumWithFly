@@ -101,7 +101,7 @@ export class Transform {
     while (node) {
       this.extractMatrix(node, matrix);
       if (node && node.style.position === 'fixed') {
-        console.warn('fixed領域は計算が不正確');
+        console.warn('fixed영역은 계산이 부정확');
         matrix.appendPosition(window.pageXOffset, window.pageYOffset, 0);
       }
       node = node.parentElement;
