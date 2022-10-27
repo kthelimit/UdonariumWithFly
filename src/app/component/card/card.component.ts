@@ -238,7 +238,7 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.hasOwner && !this.isHand) return;
       this.state = this.isVisible && !this.isHand ? CardState.BACK : CardState.FRONT;
       this.owner = '';
-      if (this.state === CardState.FRONT) this.chatMessageService.sendOperationLog((this.card.name == '' ? '(無名のカード)' : this.card.name)  + ' を公開');
+      if (this.state === CardState.FRONT) this.chatMessageService.sendOperationLog((this.card.name == '' ? '(이름없는 카드)' : this.card.name)  + ' 공개');
       SoundEffect.play(PresetSound.cardDraw);
     }
   }
@@ -269,12 +269,12 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
     this.contextMenuService.open(position, [
       (this.isLocked
         ? {
-          name: '☑ 固定', action: () => {
+          name: '☑ 고정', action: () => {
             this.isLocked = false;
             SoundEffect.play(PresetSound.unlock);
           }
         } : {
-          name: '☐ 固定', action: () => {
+          name: '☐ 고정', action: () => {
             this.isLocked = true;
             SoundEffect.play(PresetSound.lock);
           }
@@ -282,14 +282,14 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
       ContextMenuSeparator,
       (!this.isVisible || this.isHand
         ? {
-          name: this.isHand ? '表向きで出す（公開する）' : this.hasOwner ? '表にする（公開する）' : '表にする', action: () => {
+          name: this.isHand ? '앞면으로 낸다（공개한다）' : this.hasOwner ? '앞면으로 한다（공개한다）' : '앞면으로 한다', action: () => {
             this.card.faceUp();
-            this.chatMessageService.sendOperationLog((this.card.name == '' ? '(無名のカード)' : this.card.name) + ' を公開');
+            this.chatMessageService.sendOperationLog((this.card.name == '' ? '(이름없는 카드)' : this.card.name) + ' 공개');
             SoundEffect.play(PresetSound.cardDraw);
           }, default: !this.isLocked && (!this.hasOwner || this.isHand)
         }
         : {
-          name: '裏にする', action: () => {
+          name: '뒷면으로 한다', action: () => {
             this.card.faceDown();
             SoundEffect.play(PresetSound.cardDraw);
           }, default: !this.card.isLocked && (!this.hasOwner || this.isHand)
@@ -297,31 +297,31 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
       ),
       (this.isHand
         ? {
-          name: '裏向きで出す', action: () => {
+          name: '뒷면으로 낸다', action: () => {
             this.card.faceDown();
             SoundEffect.play(PresetSound.cardDraw);
           }
         }
         : {
-          name: '自分だけ見る（手札にする）', action: () => {
+          name: '혼자만 본다（손패로 한다）', action: () => {
             SoundEffect.play(PresetSound.cardDraw);
-            this.chatMessageService.sendOperationLog(`${this.card.isFront ? (this.card.name == '' ? '(無名のカード)' : this.card.name)  : '(伏せたカード)'} を自分だけ見た`);
+            this.chatMessageService.sendOperationLog(`${this.card.isFront ? (this.card.name == '' ? '(이름없는 카드)' : this.card.name)  : '(엎어둔 카드)'} 혼자만 봤다`);
             this.card.faceDown();
             this.owner = Network.peerContext.userId;
           }
         }),
       ContextMenuSeparator,
       {
-        name: '重なったカードで山札を作る', action: () => {
+        name: '겹쳐진 카드로 카드 더미를 만든다', action: () => {
           this.createStack();
           SoundEffect.play(PresetSound.cardPut);
         },
         disabled: this.isLocked
       },
       ContextMenuSeparator,
-      { name: 'カードを編集', action: () => { this.showDetail(this.card); } },
+      { name: '카드를 편집', action: () => { this.showDetail(this.card); } },
       (this.isVisible && this.card.getUrls().length > 0 ? {
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.card.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -334,14 +334,14 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         })
       } : null),
       (this.isVisible && this.card.getUrls().length > 0 ? ContextMenuSeparator : null),
       {
-        name: 'コピーを作る', action: () => {
+        name: '사본을 작성', action: () => {
           let cloneObject = this.card.clone();
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
@@ -351,12 +351,12 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       },
       {
-        name: '削除する', action: () => {
+        name: '삭제', action: () => {
           this.card.destroy();
           SoundEffect.play(PresetSound.sweep);
         }
       },
-    ], this.isVisible ? this.name : 'カード');
+    ], this.isVisible ? this.name : '카드');
   }
 
   onMove() {
@@ -423,8 +423,8 @@ export class CardComponent implements OnInit, OnDestroy, AfterViewInit {
   private showDetail(gameObject: Card) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'カード設定';
-    if (gameObject.name.length) title += ' - ' + (this.isVisible ? gameObject.name : 'カード（裏面）');
+    let title = '카드 설정';
+    if (gameObject.name.length) title += ' - ' + (this.isVisible ? gameObject.name : '카드（뒷면）');
     let option: PanelOption = { title: title, left: coordinate.x - 300, top: coordinate.y - 300, width: 600, height: 490 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
     component.tabletopObject = gameObject;
