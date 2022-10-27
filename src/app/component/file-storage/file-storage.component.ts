@@ -275,7 +275,7 @@ export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
   setectedImagesToHidden(toHidden: boolean) {
     this.modalService.open(ConfirmationComponent, {
       title: toHidden ? '숨김으로 설정' : '숨김 설정을 삭제', 
-      text: `이미지${ toHidden ? '숨김으로 설정' : '의 숨김 설정을 삭제'}할까요?`,
+      text: `이미지${ toHidden ? '를 숨김으로 설정' : '의 숨김 설정을 삭제'}할까요?`,
       help: toHidden ? '선택한 이미지를 숨김 설정으로 합니다. \n이것은 「의도치않게 스포일러를 접한다」같은 상황을 방지하기 위한 것으로 다른 사람으로부터 완전히 숨길 수 있는 것은 아닙니다.' : '선택한 이미지의 숨김 설정을 삭제합니다.',
       type: ConfirmationType.OK_CANCEL,
       materialIcon: toHidden ? 'visibility_off' : 'visibility',
