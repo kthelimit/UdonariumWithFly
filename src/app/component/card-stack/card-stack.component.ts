@@ -223,14 +223,14 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       let card: Card = e.detail;
       let distance: number = (card.location.x - this.cardStack.location.x) ** 2 + (card.location.y - this.cardStack.location.y) ** 2 + (card.posZ - this.cardStack.posZ) ** 2;
       if (distance < 50 ** 2) {
-        this.chatMessageService.sendOperationLog(`${card.isFront ? (card.name == '' ? '(無名のカード)' : card.name) : '伏せたカード'} を ${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} に乗せた`);
+        this.chatMessageService.sendOperationLog(`${card.isFront ? (card.name == '' ? '(이름없는 카드)' : card.name) : '엎어둔 카드'} 를 ${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 에 올렸다`);
         this.cardStack.putOnTop(card);
       }
     } else if (e.detail instanceof CardStack) {
       let cardStack: CardStack = e.detail;
       let distance: number = (cardStack.location.x - this.cardStack.location.x) ** 2 + (cardStack.location.y - this.cardStack.location.y) ** 2 + (cardStack.posZ - this.cardStack.posZ) ** 2;
       if (distance < 25 ** 2) {
-        this.chatMessageService.sendOperationLog(`${cardStack.name == '' ? '(無名の山札)' : cardStack.name} を全て ${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} に乗せた`);
+        this.chatMessageService.sendOperationLog(`${cardStack.name == '' ? '(이름없는 카드 더미)' : cardStack.name} 를 전부 ${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 에 올렸다`);
         this.concatStack(cardStack);
       }
     }
@@ -268,9 +268,9 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         SoundEffect.play(PresetSound.cardDraw);
         let text: string;
         if (card.isFront) {
-          text = `${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} から ${card.name == '' ? '(無名のカード)' : card.name} を引いた`
+          text = `${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 ${card.name == '' ? '(이름없는 카드)' : card.name} 를 뽑았다`
         } else {
-          text = `${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} から 1枚引いて伏せた`
+          text = `${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아서 엎었다`
         }
         this.chatMessageService.sendOperationLog(text);
       }
@@ -306,27 +306,27 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     this.contextMenuService.open(position, [
       (this.isLocked
         ? {
-          name: '☑ 固定', action: () => {
+          name: '☑ 고정', action: () => {
             this.isLocked = false;
             SoundEffect.play(PresetSound.unlock);
           }
         } : {
-          name: '☐ 固定', action: () => {
+          name: '☐ 고정', action: () => {
             this.isLocked = true;
             SoundEffect.play(PresetSound.lock);
           }
         }),
       ContextMenuSeparator,
       {
-        name: 'カードを１枚引く', action: () => {
+        name: '카드를 １장 뽑는다', action: () => {
           const card = this.drawCard();
           if (card) {
             SoundEffect.play(PresetSound.cardDraw);
             let text: string;
             if (card.isFront) {
-              text = `${this.cardStack.name} から ${card.name == '' ? '(無名のカード)' : card.name} を引いた`
+              text = `${this.cardStack.name} 로부터 ${card.name == '' ? '(이름없는 카드)' : card.name} 를 뽑았다`
             } else {
-              text = `${this.cardStack.name} から 1枚引いて伏せた`
+              text = `${this.cardStack.name} 로부터 1장 뽑아서 엎었다`
             }
             this.chatMessageService.sendOperationLog(text);
           }
@@ -335,10 +335,10 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: this.cards.length == 0
       },
       {
-        name: 'カードを引く', action: null,
+        name: '카드를 뽑는다', action: null,
         subActions: [2, 3, 4, 5, 10].map(n => {
           return {
-            name: `${n}枚`,
+            name: `${n}장`,
             action: () => {
               const cards: Card[] = [];
               for (let i = 0; i < n; i++) {
@@ -351,19 +351,19 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
               if (cards.length > 0) {
                 const frontCards = cards.filter(card => card.isFront);
                 if (frontCards.length == 0) {
-                  this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} から ${cards.length}枚引いて伏せた`);
+                  this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 ${cards.length}장 뽑아서 엎었다`);
                 } else {
                   const counter = new Map();
                   for (const card of frontCards) {
                     let count = counter.get(card.name) || 0;
                     count += 1;
-                    counter.set(card.name == '' ? '(無名のカード)' : card.name, count);
+                    counter.set(card.name == '' ? '(이름없는 카드)' : card.name, count);
                   }
-                  let text = `${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} から ${[...counter.keys()].map(key => `${key} を ${counter.get(key)}枚`).join('、')}`;
+                  let text = `${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 ${[...counter.keys()].map(key => `${key} 를 ${counter.get(key)}장`).join('、')}`;
                   if (frontCards.length === cards.length) {
-                    text += '引いた'
+                    text += '뽑았다'
                   } else {
-                    text += `引き、${cards.length - frontCards.length}枚を伏せた`;
+                    text += `뽑고, ${cards.length - frontCards.length}장 뽑아서 엎었다`;
                   }
                   this.chatMessageService.sendOperationLog(text);
                 }
@@ -375,15 +375,15 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       ContextMenuSeparator,
       (this.cards.length == 0 || !this.cardStack.topCard.isFront ? {
-        name: '一番上を表にする', action: () => {
+        name: '가장 위를 앞면으로 한다', action: () => {
           if (!this.cardStack.topCard) return;
-          if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} の一番上の ${this.cardStack.topCard.name == '' ? '(無名のカード)' : this.cardStack.topCard.name} を公開した`);
+          if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 의 가장 위에 있는 ${this.cardStack.topCard.name == '' ? '(이름없는 카드)' : this.cardStack.topCard.name} 를 공개했다`);
           this.cardStack.faceUp();
           SoundEffect.play(PresetSound.cardDraw);
         }, 
         disabled: this.cards.length == 0        
       } : {
-        name: '一番上を裏にする', action: () => {
+        name: '가장 위를 뒷면으로 한다', action: () => {
           this.cardStack.faceDown();
           SoundEffect.play(PresetSound.cardDraw);
         }, 
@@ -391,23 +391,23 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       }),
       ContextMenuSeparator,
       {
-        name: 'すべて表にする', action: () => {
+        name: '전부 앞면으로 한다', action: () => {
           //if (!this.cardStack.topCard) return;
-          //if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name} をすべて表にし、一番上の ${this.cardStack.topCard.name} を公開した`);
+          //if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name} 를 전부 앞면으로 하고, 가장 위의 ${this.cardStack.topCard.name} 를 공개했다`);
           this.cardStack.faceUpAll();
           SoundEffect.play(PresetSound.cardDraw);
         }, 
         disabled: this.cards.length == 0
       },
       {
-        name: 'すべて裏にする', action: () => {
+        name: '전부 뒷면으로 한다', action: () => {
           this.cardStack.faceDownAll();
           SoundEffect.play(PresetSound.cardDraw);
         }, 
         disabled: this.cards.length == 0
       },
       {
-        name: 'すべて正位置にする', action: () => {
+        name: '전부 정방향으로 한다', action: () => {
           this.cardStack.uprightAll();
           SoundEffect.play(PresetSound.cardDraw);
         }, 
@@ -415,29 +415,29 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       ContextMenuSeparator,
       {
-        name: 'シャッフル', action: () => {
+        name: '섞는다', action: () => {
           this.cardStack.shuffle();
           SoundEffect.play(PresetSound.cardShuffle);
           EventSystem.call('SHUFFLE_CARD_STACK', { identifier: this.cardStack.identifier });
         }, 
         disabled: this.cards.length == 0
       },
-      { name: 'カード一覧を見る', action: () => {
+      { name: '카드 리스트를 본다', action: () => {
         this.showStackList(this.cardStack);
-        this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} のカード一覧を見た`);
+        this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 의 카드 리스트를 보았다`);
       }, disabled: this.cards.length == 0 },
       ContextMenuSeparator,
       (this.isShowTotal
-        ? { name: '☑ 枚数を表示', action: () => { this.cardStack.isShowTotal = false; } }
-        : { name: '☐ 枚数を表示', action: () => { this.cardStack.isShowTotal = true; } }
+        ? { name: '☑ 장수를 표시', action: () => { this.cardStack.isShowTotal = false; } }
+        : { name: '☐ 장수를 표시', action: () => { this.cardStack.isShowTotal = true; } }
       ),
-      { name: 'カードサイズを揃える', action: () => { if (this.cardStack.topCard) this.cardStack.unifyCardsSize(this.cardStack.topCard.size); }, disabled: this.cards.length == 0 },
+      { name: '카드 사이즈를 맞춘다', action: () => { if (this.cardStack.topCard) this.cardStack.unifyCardsSize(this.cardStack.topCard.size); }, disabled: this.cards.length == 0 },
       ContextMenuSeparator,
       {
-        name: '山札を分割する', 
+        name: '카드 더미를 분할한다', 
         subActions: [
           {
-            name: '人数で分割',
+            name: '사람 수대로 분할',
             action: () => {
               this.splitStack(Network.peerIds.length);
               SoundEffect.play(PresetSound.cardDraw);
@@ -446,7 +446,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
           ContextMenuSeparator,
           ...[2, 3, 4, 5, 6].map(num => {
             return {
-              name: `${num}つに分割`,
+              name: `${num}개로 분할`,
               action: () => {
                 this.splitStack(num);
                 SoundEffect.play(PresetSound.cardDraw);
@@ -457,14 +457,14 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: this.cards.length == 0
       },
       {
-        name: '山札を崩す', action: () => {
+        name: '카드 더미를 부순다', action: () => {
           this.breakStack();
           SoundEffect.play(PresetSound.cardShuffle);
         }, 
         disabled: this.cards.length == 0
       },
       {
-        name: '山札全体を裏返す', action: () => {
+        name: '카드 더미 전체를 뒤집는다', action: () => {
           this.cardStack.inverse();
           SoundEffect.play(PresetSound.cardDraw);
           SoundEffect.play(PresetSound.cardDraw);
@@ -473,9 +473,9 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         disabled: this.cards.length == 0
       },
       ContextMenuSeparator,
-      { name: '詳細を表示', action: () => { this.showDetail(this.cardStack); } },
+      { name: '상세를 표시', action: () => { this.showDetail(this.cardStack); } },
       (this.cardStack.getUrls().length <= 0 ? null : {
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.cardStack.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -488,14 +488,14 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다.' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         })
       }),
       (this.cardStack.getUrls().length <= 0 ? null : ContextMenuSeparator),
       {
-        name: 'コピーを作る', action: () => {
+        name: '사본을 작성', action: () => {
           let cloneObject = this.cardStack.clone();
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
@@ -506,7 +506,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       {
-        name: '山札を削除する', action: () => {
+        name: '카드 더미를 삭제', action: () => {
           this.cardStack.setLocation('graveyard');
           this.cardStack.destroy();
           SoundEffect.play(PresetSound.sweep);
@@ -609,7 +609,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   private showDetail(gameObject: CardStack) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = '山札設定';
+    let title = '카드 더미 설정';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x - 300, top: coordinate.y - 300, width: 600, height: 490 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
