@@ -27,7 +27,7 @@ export namespace XmlUtil {
       xmlDocument = domParser.parseFromString(xml, 'application/xml');
       let parsererror = xmlDocument.getElementsByTagName('parsererror');
       if (parsererror.length) {
-        console.error('XMLのパースに失敗しました', xmlDocument.documentElement);
+        console.error('XML의 패스에 실패했습니다.', xmlDocument.documentElement);
         xmlDocument = null;
       }
     } catch (error) {
