@@ -54,7 +54,7 @@ export class BufferSharingTask<T> {
 
   start(data?: T) {
     if (!this.onstart) {
-      console.warn('再起動する仕様など無い。');
+      console.warn('재기동하는 사양은 없음');
       return;
     }
     this.data = data;
@@ -109,7 +109,7 @@ export class BufferSharingTask<T> {
     let total = Math.ceil(this.uint8Array.byteLength / this.chankSize);
     this.chanks = new Array(total);
 
-    console.log('チャンク分割 ' + this.identifier, this.chanks.length);
+    console.log('청크분할 ' + this.identifier, this.chanks.length);
 
     EventSystem.register(this)
       .on<number>('FILE_MORE_CHANK_' + this.identifier, event => {
@@ -122,11 +122,11 @@ export class BufferSharingTask<T> {
       })
       .on('DISCONNECT_PEER', event => {
         if (event.data.peerId !== this.sendTo) return;
-        console.warn('送信キャンセル（Peer切断）', this, event.data.peerId);
+        console.warn('송신 취소（Peer절단）', this, event.data.peerId);
         this._cancel();
       })
       .on('CANCEL_TASK_' + this.identifier, event => {
-        console.warn('送信キャンセル', this, event.sendFrom);
+        console.warn('송신 취소', this, event.sendFrom);
         this._cancel();
       });
     this.sentChankIndex = this.completedChankIndex = 0;
@@ -140,7 +140,7 @@ export class BufferSharingTask<T> {
     this.sentChankIndex = index;
     this.sendChankTimer = null;
     if (this.chanks.length <= index + 1) {
-      console.log('バッファ送信完了', this.identifier);
+      console.log('버퍼 송신 완료', this.identifier);
       setZeroTimeout(() => this.finish());
     } else if (this.completedChankIndex + 4 <= index) {
       this.resetTimeout();
@@ -173,24 +173,24 @@ export class BufferSharingTask<T> {
       })
       .on('DISCONNECT_PEER', event => {
         if (event.data.peerId !== this.sendTo) return;
-        console.warn('受信キャンセル（Peer切断）', this, event.data.peerId);
+        console.warn('수신 취소（Peer절단）', this, event.data.peerId);
         this._cancel();
       })
       .on('CANCEL_TASK_' + this.identifier, event => {
-        console.warn('受信キャンセル', this, event.sendFrom);
+        console.warn('수신 취소', this, event.sendFrom);
         this._cancel();
       });
   }
 
   private finishReceive() {
-    console.log('バッファ受信完了', this.identifier);
+    console.log('버퍼 수신 완료', this.identifier);
 
     let sumLength = 0;
     for (let chank of this.chanks) { sumLength += chank.byteLength; }
 
     let time = performance.now() - this.startTime;
     let rate = (sumLength / 1024 / 1024) / (time / 1000);
-    console.log(`${(sumLength / 1024).toFixed(2)}KB ${(time / 1000).toFixed(2)}秒 転送速度: ${rate.toFixed(2)}MB/s`);
+    console.log(`${(sumLength / 1024).toFixed(2)}KB ${(time / 1000).toFixed(2)}초 전송속도: ${rate.toFixed(2)}MB/s`);
 
     let uint8Array = new Uint8Array(sumLength);
     let pos = 0;
