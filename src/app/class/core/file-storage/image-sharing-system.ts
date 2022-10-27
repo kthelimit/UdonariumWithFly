@@ -88,7 +88,7 @@ export class ImageSharingSystem {
             EventSystem.call(event, peerId);
             return;
           }
-          console.log('REQUEST_FILE_RESOURE ImageStorageService あぶれた...' + event.data.receiver, randomRequest.length);
+          console.log('REQUEST_FILE_RESOURE ImageStorageService 엉망이다...' + event.data.receiver, randomRequest.length);
         }
       })
       .on('UPDATE_FILE_RESOURE', event => {
