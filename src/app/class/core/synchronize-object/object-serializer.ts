@@ -176,7 +176,7 @@ export class ObjectSerializer {
       key = Number.isNaN(index) ? split[i] : index;
 
       if (Array.isArray(obj) && typeof key !== 'number') {
-        console.warn('Arrayにはindexの挿入しか許可しない');
+        console.warn('Array에는 index의 삽입 밖에 허가하지 않는다');
         return { obj, key: null };
       }
       if (i + 1 < length) {
