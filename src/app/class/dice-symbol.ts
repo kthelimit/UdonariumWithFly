@@ -40,7 +40,7 @@ export class DiceSymbol extends TabletopObject {
   get backFaceImageFile(): ImageFile {
     if (!this.isCoin) return this.imageFile;
     return this.isVisible ?
-    this.getImageFile(this.face == '表' ? '裏' : '表')
+    this.getImageFile(this.face == '앞면' ? '뒷면' : '앞면')
     : this.getImageFile(this.faces[1])
   }
   get nothingFaces(): string[] { return this.imageDataElement.children.filter(element => (element as DataElement).currentValue == 'nothing').map(element => (element as DataElement).name); }
@@ -78,7 +78,7 @@ export class DiceSymbol extends TabletopObject {
     switch (type) {
       case DiceType.D2:
         sided = 2;
-        faceGeneratorFunc = index => (index === 0) ? '表' : '裏';
+        faceGeneratorFunc = index => (index === 0) ? '앞면' : '뒷면';
         break;
       case DiceType.D4:
         sided = 4;
