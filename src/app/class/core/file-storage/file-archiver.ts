@@ -135,7 +135,7 @@ export class FileArchiver {
     for (let zipEntry of zipEntries) {
       try {
         let arraybuffer = await zipEntry.async('arraybuffer');
-        console.log(zipEntry.name + ' 解凍...');
+        console.log(zipEntry.name + ' 해동...');
         await this.load([new File([arraybuffer], zipEntry.name, { type: MimeType.type(zipEntry.name) })]);
       } catch (reason) {
         console.warn(reason);
