@@ -1,14 +1,14 @@
 <div *ngIf="!isConnected;else other_content">
-  <button (click)="reload()" [disabled]="isReloading">一覧を更新</button>
-  <button (click)="showRoomSetting()">新しいルームを作成する</button>
+  <button (click)="reload()" [disabled]="isReloading">리스트를 갱신</button>
+  <button (click)="showRoomSetting()">새로운 방을 작성한다</button>
   <hr/>
   <ng-container *ngIf="rooms.length">
     <table class="room-list">
       <tr>
-        <th>ルームID</th>
-        <th class="room-name">ルーム名</th>
-        <th>パスワード</th>
-        <th>参加者</th>
+        <th>방 ID</th>
+        <th class="room-name">방 이름</th>
+        <th>패스워드</th>
+        <th>참가자</th>
         <th></th>
       </tr>
       <ng-container *ngFor="let room of rooms">
@@ -21,7 +21,7 @@
           <td *ngIf="!room.peerContexts[0].hasPassword">-</td>
           <td>{{room.peerContexts.length}}人</td>
           <td>
-            <button [disabled]="room.peerContexts[0]?.roomId === currentRoom" *ngIf="0 < room.alias.length" type="submit" (click)="connect(room.peerContexts)">接続</button>
+            <button [disabled]="room.peerContexts[0]?.roomId === currentRoom" *ngIf="0 < room.alias.length" type="submit" (click)="connect(room.peerContexts)">접속</button>
           </td>
         </tr>
       </ng-container>
@@ -29,4 +29,4 @@
   </ng-container>
   <span *ngIf="rooms.length < 1" style="font-size: 12px;">{{help}}</span>
 </div>
-<ng-template #other_content><span style="font-size: 12px;">別のルームに接続したい場合は、他の参加者との接続を切ってください。<br>（※ページリロードで切断できます。）</span></ng-template>
+<ng-template #other_content><span style="font-size: 12px;">다른 방에 접속하고 싶은 경우, 다른 참가자와의 연결을 끊어주세요. <br>（※페이지 새로고침으로 끊을 수 있습니다.）</span></ng-template>
