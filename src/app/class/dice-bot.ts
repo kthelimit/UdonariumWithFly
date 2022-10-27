@@ -240,7 +240,7 @@ export class DiceBot extends GameObject {
               modStr = modStr.split(' ')[0];
               if (/^[\+\-]\d+$/.test(modStr)) {
                 modifier = +modStr;
-                modStr = ` (修正${modStr})`;
+                modStr = ` (수정${modStr})`;
               } else if (/^\=\-?\d+$/.test(modStr)) {
                 isFixedRef = true;
               } else {
@@ -251,7 +251,7 @@ export class DiceBot extends GameObject {
             if (isDiceRollTableMatch) {
               finalResult.isFailure = false;
               finalResult.isDiceRollTable = true;
-              finalResult.tableName = (diceRollTable.name && diceRollTable.name.length > 0) ? diceRollTable.name : '(無名のダイスボット表)';
+              finalResult.tableName = (diceRollTable.name && diceRollTable.name.length > 0) ? diceRollTable.name : '(이름없는 다이스봇 표)';
               finalResult.isSecret = isSecret || isRepSecret;
               const diceRollTableRows = diceRollTable.parseText();
               for (let i = 0; i < repeat && i < 32; i++) {
@@ -260,7 +260,7 @@ export class DiceBot extends GameObject {
                 finalResult.isEmptyDice = finalResult.isEmptyDice && rollResult.isEmptyDice;
                 if (rollResult.result) rollResult.result = this.formatRollResult(rollResult.result);
                 let match = null;
-                if (rollResult.result.length > 0 && (match = rollResult.result.match(/\s→\s(?:成功数|計算結果)?(\-?\d+)$/))) {
+                if (rollResult.result.length > 0 && (match = rollResult.result.match(/\s→\s(?:성공수|계산결과)?(\-?\d+)$/))) {
                   rollResultNumber = +match[1];
                 }
                 let isRowMatch = false;
@@ -280,11 +280,11 @@ export class DiceBot extends GameObject {
                 }
                 if (!isRowMatch) {
                   if (rollResultNumber == null) {
-                    finalResult.result += ('（エラー：ダイスロールから数字が取得できません）' + "\n" + '(結果なし)');
+                    finalResult.result += ('（에러：다이스 롤로부터 숫자를 획득할 수 없습니다）' + "\n" + '(결과 없음)');
                   } else if (!isFixedRef) {
-                    finalResult.result += (rollResult.result + modStr  + (modStr ? ` → ${rollResultNumber + modifier}`: '') + "\n" + '(結果なし)');
+                    finalResult.result += (rollResult.result + modStr  + (modStr ? ` → ${rollResultNumber + modifier}`: '') + "\n" + '(결과 없음)');
                   } else {
-                    finalResult.result += ('指定=' + rollResultNumber + "\n" + '(結果なし)');
+                    finalResult.result += ('지정=' + rollResultNumber + "\n" + '(결과 없음)');
                   }
                 }
                 if (1 < repeat) finalResult.result += ` #${i + 1}`;
@@ -555,11 +555,11 @@ export class DiceBot extends GameObject {
         .then(jsons => { 
           return jsons.map(json => {
             if (DiceBot.apiVersion == 1 && json.systeminfo && json.systeminfo.info) {
-              return json.systeminfo.info.replace('部屋のシステム名', 'チャットパレットなどのシステム名');
+              return json.systeminfo.info.replace('방의 시스템명', '채팅 팔레트 등의 시스템명');
             } else if (json.help_message) {
-              return json.help_message.replace('部屋のシステム名', 'チャットパレットなどのシステム名');
+              return json.help_message.replace('방의 시스템명', '채팅 팔레트 등의 시스템명');
             } else {
-              return 'ダイスボット情報がありません。';
+              return '다이스봇 정보가 없습니다.';
             }                
           }) 
         });
@@ -570,9 +570,9 @@ export class DiceBot extends GameObject {
         if (gameType && gameType != '' && gameType != 'DiceBot') {
           let gameSystem = await DiceBot.loadGameSystemAsync(gameType);
           if (gameSystem && gameSystem.ID != 'DiceBot' && gameSystem.HELP_MESSAGE) {
-            help.push(gameSystem.HELP_MESSAGE.replace('部屋のシステム名', 'チャットパレットなどのシステム名'));
+            help.push(gameSystem.HELP_MESSAGE.replace('방의 시스템명', '채팅 팔레트 등의 시스템명'));
           } else {
-            help.push('ダイスボット情報がありません。');
+            help.push('다이스봇의 정보가 없습니다.');
           }
         }
       } catch (e) {
@@ -616,7 +616,7 @@ export class DiceBot extends GameObject {
         const lang = /.+\:(.+)/.exec(gameSystemInfo.id);
         let langName;
         if (lang && lang[1]) {
-          langName = (lang[1] == 'ChineseTraditional') ? '正體中文'
+          langName = (lang[1] == 'ChineseTraditional') ? '정체중문'
             : (lang[1] == 'Korean') ? '한국어' 
             : (lang[1] == 'English') ? 'English' : 'Other';
         }
