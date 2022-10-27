@@ -20,11 +20,11 @@ export class ObjectFactory {
   register<T extends GameObject>(constructor: Type<T>, alias?: string) {
     if (!alias) alias = constructor.name ?? (constructor.toString().match(/function\s*([^(]*)\(/)?.[1] ?? '');
     if (this.constructorMap.has(alias)) {
-      console.error('その alias<' + alias + '> はすでに割り当て済みじゃねー？');
+      console.error('그 alias<' + alias + '> 는 이미 할당 끝났지 않아？');
       return;
     }
     if (this.aliasMap.has(constructor)) {
-      console.error('その constructor はすでに登録済みじゃねー？', constructor);
+      console.error('그 constructor 는 이미 등록되어 있지 않아？', constructor);
       return;
     }
     console.log('addGameObjectFactory -> ' + alias);
@@ -35,7 +35,7 @@ export class ObjectFactory {
   create<T extends GameObject>(alias: string, identifer?: string): T | null {
     let classConstructor = this.constructorMap.get(alias);
     if (!classConstructor) {
-      console.error(alias + 'という名のGameObjectクラスは定義されていません');
+      console.error(alias + '라는 이름의 GameObject클래스는 정의되어 있지 않습니다.');
       return null;
     }
     let gameObject: GameObject = new classConstructor(identifer);
