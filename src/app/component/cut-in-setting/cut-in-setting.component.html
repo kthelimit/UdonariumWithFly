@@ -77,7 +77,7 @@
         <div class="section">
           <div>
             <b class="header">위치</b>
-            <label style="margin-left: 0.6em"><input name="cutInIsPreventOutBounds" type="checkbox" [(ngModel)]="cutInIsPreventOutBounds" [checked]="cutInIsPreventOutBounds" [value]="true" [attr.disabled]="!isEditable || cutInVideoId ? '' : null"><b>유출방지</b></label>
+            <label style="margin-left: 0.6em"><input name="cutInIsPreventOutBounds" type="checkbox" [(ngModel)]="cutInIsPreventOutBounds" [checked]="cutInIsPreventOutBounds" [value]="true" [attr.disabled]="!isEditable || cutInVideoId ? '' : null"><b>가려짐 방지</b></label>
           </div>
           <div style="padding-left: 1em">
             <b>PosX: </b><input [(ngModel)]="cutInPosX" type="range" title="{{cutInPosX}}" min="{{minSize}}" max="{{maxSize}}" style="width: 180px" name="cutInPosX" [attr.disabled]="!isEditable ? '' : null" />
