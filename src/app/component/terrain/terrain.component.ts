@@ -285,11 +285,11 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
       */
       (this.isDropShadow
         ? {
-          name: '☑ 影を落とす', action: () => {
+          name: '☑ 그림자를 나타내다', action: () => {
             this.isDropShadow = false;
           }
         } : {
-          name: '☐ 影を落とす', action: () => {
+          name: '☐ 그림자를 나타내다', action: () => {
             this.isDropShadow = true;
           }
         }),
