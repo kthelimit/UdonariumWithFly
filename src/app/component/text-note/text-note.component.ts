@@ -218,12 +218,12 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
     this.contextMenuService.open(position, [
       (this.isLocked
         ? {
-          name: '☑ 固定', action: () => {
+          name: '☑ 고정', action: () => {
             this.isLocked = false;
             SoundEffect.play(PresetSound.unlock);
           }
         } : {
-          name: '☐ 固定', action: () => {
+          name: '☐ 고정', action: () => {
             this.isLocked = true;
             SoundEffect.play(PresetSound.lock);
           }
@@ -231,12 +231,12 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
       ContextMenuSeparator,
       (this.isUpright
         ? {
-          name: '☑ 直立', action: () => {
+          name: '☑ 위치', action: () => {
             this.transition = true;
             this.isUpright = false;
           }
         } : {
-          name: '☐ 直立', action: () => {
+          name: '☐ 위치', action: () => {
             this.transition = true;
             this.isUpright = true;
           }
@@ -244,16 +244,16 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
       ContextMenuSeparator,
       (this.isAltitudeIndicate
         ? {
-          name: '☑ 高度の表示', action: () => {
+          name: '☑ 고도의 표시', action: () => {
             this.isAltitudeIndicate = false;
           }
         } : {
-          name: '☐ 高度の表示', action: () => {
+          name: '☐ 고도의 표시', action: () => {
             this.isAltitudeIndicate = true;
           }
         }),
       {
-        name: '高度を0にする', action: () => {
+        name: '고도를 0으로 한다', action: () => {
           if (this.altitude != 0) {
             if (this.isUpright) {
               this.fall = true;
@@ -267,9 +267,9 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
         altitudeHande: this.textNote
       },
       ContextMenuSeparator,
-      { name: 'メモを編集', action: () => { this.showDetail(this.textNote); } },
+      { name: '메모를 편집', action: () => { this.showDetail(this.textNote); } },
       (this.textNote.getUrls().length <= 0 ? null : {
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.textNote.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -282,17 +282,17 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         })
       }),
       (this.textNote.getUrls().length <= 0 ? null : ContextMenuSeparator),
       {
-        name: 'コピーを作る', action: () => {
+        name: '사본을 작성', action: () => {
           let cloneObject = this.textNote.clone();
           cloneObject.isLocked = false;
-          console.log('コピー', cloneObject);
+          console.log('사본', cloneObject);
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
           cloneObject.toTopmost();
@@ -300,7 +300,7 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       },
       {
-        name: '削除する', action: () => {
+        name: '삭제', action: () => {
           this.textNote.destroy();
           SoundEffect.play(PresetSound.sweep);
         }
@@ -354,7 +354,7 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
   private showDetail(gameObject: TextNote) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = '共有メモ設定';
+    let title = '공유 메모 설정';
     if (gameObject.title.length) title += ' - ' + gameObject.title;
     let option: PanelOption = { title: title, left: coordinate.x - 350, top: coordinate.y - 200, width: 700, height: 450 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
