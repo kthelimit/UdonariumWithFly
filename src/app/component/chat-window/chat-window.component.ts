@@ -108,9 +108,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewInit {
 
   updatePanelTitle() {
     if (this.chatTab && this.chatTab.name !== '') {
-      this.panelService.title = 'チャットウィンドウ - ' + this.chatTab.name;
+      this.panelService.title = '채팅 윈도우 - ' + this.chatTab.name;
     } else {
-      this.panelService.title = 'チャットウィンドウ';
+      this.panelService.title = '채팅 윈도우';
     }
   }
 
