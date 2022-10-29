@@ -1,7 +1,7 @@
 <div *ngIf="!isConnected;else other_content">
   <div>방 이름 : <input class="input" (input)="calcPeerId($event.target.value, password)" [(ngModel)]="roomName" required minlength="1" maxlength="128" #roomNameValidation="ngModel"
       placeholder="방의 이름은 필수" /></div>
-  <div>패스워드: <input class="input" (input)="calcPeerId(roomName, $event.target.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="空ならパスワードなし"
+  <div>패스워드: <input class="input" (input)="calcPeerId(roomName, $event.target.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="비워두면 패스워드 없음"
     /></div>
   <hr/>
   <div *ngIf="roomNameValidation.errors && (roomNameValidation.dirty || roomNameValidation.touched)">
@@ -24,10 +24,10 @@
     방의 이름과 패스워드의 합계가 너무 긴 것 같습니다. 어느쪽인가를 짧게 해보세요.
   </div>
   <div>
-    <button [disabled]="!roomNameValidation.valid || !passwordValidation.valid || !validateLength" (click)="createRoom()">新しいルームを作成</button>
+    <button [disabled]="!roomNameValidation.valid || !passwordValidation.valid || !validateLength" (click)="createRoom()">새로운 방을 작성</button>
   </div>
 </div>
 <div><span style="font-size: 12px;">※작성한 방은 참가자가 0이 된 시점에 해산합니다. 방의 상태를 다음으로 가져가고 싶다면 반드시 「저장」해 주세요.</span></div>
 <ng-template #other_content>
-  <span style="font-size: 12px;">다른 참가자와 접속된 상태로는 방의 작성을 할 수 없습니다.<br>다른 방에 접속하고 싶은 경우, 다른 참가자와의 접속을 끊어주세요.<br>（※페이지 새로고침으로 끊을 수 있습니다. ）</span>
+  <span style="font-size: 12px;">다른 참가자와 접속된 상태로는 방의 작성을 할 수 없습니다.<br>다른 방에 접속하고 싶은 경우, 다른 참가자와의 접속을 끊어주세요.<br>（※페이지 새로고침으로 끊을 수 있습니다.）</span>
 </ng-template>
