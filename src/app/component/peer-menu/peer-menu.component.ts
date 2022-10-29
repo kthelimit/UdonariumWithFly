@@ -84,7 +84,7 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => { this.panelService.title = '接続情報'; this.panelService.isAbleFullScreenButton = false });
+    Promise.resolve().then(() => { this.panelService.title = '정보'; this.panelService.isAbleFullScreenButton = false });
   }
 
   ngOnDestroy() {
@@ -116,7 +116,7 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
       PeerCursor.isGMHold = false;
       this.isGMMode = false;
       if (this.isGMMode) {
-        this.chatMessageService.sendOperationLog('GMモードを解除');
+        this.chatMessageService.sendOperationLog('GM모드를 해제');
         EventSystem.trigger('CHANGE_GM_MODE', null);
       }
     }
@@ -127,7 +127,7 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
       PeerCursor.isGMHold = false;
       this.isGMMode = false;
       if (this.isGMMode) {
-        this.chatMessageService.sendOperationLog('GMモードを解除');
+        this.chatMessageService.sendOperationLog('GM모드를 해제');
         EventSystem.trigger('CHANGE_GM_MODE', null);
       }
     }
@@ -203,8 +203,8 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: 'パスワードの表示', 
-        text: 'パスワードを表示しますか？',
+        title: '패스워드 표시', 
+        text: '패스워드를 표시합니까?',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
@@ -221,22 +221,22 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
       if (this.isGMMode) {
         $event.preventDefault();
         this.modalService.open(ConfirmationComponent, {
-          title: 'GMモード解除', 
-          text: 'GMモードを解除しますか？',
+          title: 'GM모드 해제', 
+          text: 'GM모드를 해제합니까?',
           type: ConfirmationType.OK_CANCEL,
           materialIcon: 'person_remove',
           action: () => {
             PeerCursor.isGMHold = false;
             this.isGMMode = false;
             (<HTMLInputElement>$event.target).checked = false;
-            this.chatMessageService.sendOperationLog('GMモードを解除');
+            this.chatMessageService.sendOperationLog('GM모드를 제');
             EventSystem.trigger('CHANGE_GM_MODE', null);
             //this.changeDetector.markForCheck();
             if (GameCharacter.isStealthMode) {
               this.modalService.open(ConfirmationComponent, {
-                title: 'ステルスモード', 
-                text: 'ステルスモードになります。',
-                help: '位置を自分だけ見ているキャラクターが1つ以上テーブル上にある間、あなたのカーソル位置は他の参加者に伝わりません。',
+                title: '스텔스 모드', 
+                text: '스텔스 모드가 됩니다.',
+                help: '위치를 자신만 볼 수 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자들에게 전해지지 않습니다.',
                 type: ConfirmationType.OK,
                 materialIcon: 'disabled_visible'
               });
@@ -250,9 +250,9 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: 'GMモードになる', 
-        text: 'GMモードになりますか？\nGMモード中（保留中含む）はあなたからプライベート接続、ルームへの接続は行えません。',
-        helpHtml: 'GMモードでは、<b>秘話</b>、裏向きの<b>カード</b>、公開されていない<b>ダイスシンボル</b>、<b>キャラクター</b>位置、<b>カーソル</b>位置をすべて見ることができ、あなたのカーソル位置は他の参加者に伝わらなくなります。\n\n<b><big>—With great power comes great responsibility.</big></b>',
+        title: 'GM모드가 된다', 
+        text: 'GM모드가 되겠습니까？\nGM모드 중(보류 중 포함)에는 당신으로부터의 프라이빗 접속이나 방에 연결을 할 수 없습니다.',
+        helpHtml: 'GM모드에서는<b>비밀 대화</b>, 뒷면의 <b>카드</b>, 공개되지 않은 <b>다이스심볼</b>, <b>캐릭터</b>위치, <b>커서</b>위치를 전부 보는 것이 가능하고 당신의 커서위치는 다른 참가자들에게 전달되지 않게 됩니다.\n\n<b><big>—With great power comes great responsibility.</big></b>',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'person_add',
         action: () => {
@@ -261,9 +261,9 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
           (<HTMLInputElement>$event.target).checked = true;
           //this.changeDetector.markForCheck();
           this.modalService.open(ConfirmationComponent, {
-            title: 'GMモードになる', 
-            text: 'まだGMモードではありません。',
-            helpHtml: 'GMモードになるには、チャットから <b>GMになる</b> または <b>GMになります</b> を含む文を送信します。',
+            title: 'GM모드가 된다', 
+            text: '아직 GM모드가 아닙니다.',
+            helpHtml: 'GM모드가 되기 위해서는 채팅으로부터 <b>GM이 된다</b> 또는 <b>GM이 됩니다</b> 를 포함한 문장을 보내주세요.',
             type: ConfirmationType.OK,
             materialIcon: 'person_add'
           });
