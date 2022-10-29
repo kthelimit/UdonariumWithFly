@@ -171,7 +171,7 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
   ) { }
 
   ngOnInit(): void {
-    Promise.resolve().then(() => this.modalService.title = this.panelService.title = 'カットイン設定');
+    Promise.resolve().then(() => this.modalService.title = this.panelService.title = '컷인 설정');
     EventSystem.register(this)
       .on('SYNCHRONIZE_AUDIO_LIST', -1000, event => {
         this.onAudioFileChange();
@@ -197,7 +197,7 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedCutInXml = '';
   }
 
-  create(name: string = 'カットイン'): CutIn {
+  create(name: string = '컷인'): CutIn {
     return CutInList.instance.addCutIn(name)
   }
 
@@ -292,9 +292,9 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '非表示設定の画像を表示', 
-        text: '非表示設定の画像を表示しますか？',
-        help: 'ネタバレなどにご注意ください。',
+        title: '숨김 설정의 이미지를 표시', 
+        text: '숨김 설정의 이미지를 표시합니까?',
+        help: '스포일러 등에 주의해주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
@@ -363,7 +363,7 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   openYouTubeTerms() {
-    this.modalService.open(OpenUrlComponent, { url: 'https://www.youtube.com/terms', title: 'YouTube 利用規約' });
+    this.modalService.open(OpenUrlComponent, { url: 'https://www.youtube.com/terms', title: 'YouTube 이용규약' });
     return false;
   }
 
@@ -371,24 +371,24 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     let coordinate = this.pointerDeviceService.pointers[0];
     let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 620 };
     let textView = this.panelService.open(TextViewComponent, option);
-    textView.title = 'カットインヘルプ';
+    textView.title = '컷인 도움말';
     textView.text = 
-`　カットインの名前、表示時間、位置と幅と高さ（それぞれ画面サイズに対する相対指定）、チャット送信時にカットインが表示される条件を設定できます。また、動画を再生する場合および「見切れ防止」にチェックを入れた場合、画面内に収まるように位置とサイズが調整されます。
+`　컷인의 이름, 표시 시간, 위치와 폭과 높이(각각 화면 사이즈에 대한 상대 지정), 채팅 송신시에 컷인이 표시되는 조건을 설정할 수 있습니다. 또, 동영상을 재생하는 경우 및 「가려짐 방지」에 체크를 했을 경우, 화면 내에 들어가도록 위치와 사이즈가 조정됩니다.
 　
-　横位置（PosX）と縦位置（PosY）は、画面の左上隅からカットインの中心位置までの距離となります。サイズの幅（Width）と高さ（Height）のどちらかを0とした場合、元画像の縦横比を保って拡大縮小します（ただし、カットインの最小幅、高さは${CutInComponent.MIN_SIZE}ピクセルとなります）。
+　가로 위치(PosX)와 세로 위치(PosY)는, 화면의 왼쪽 위구석으로부터 컷인의 중심 위치까지의 거리가 됩니다. 사이즈 폭(Width)과 높이(Height) 중 하나를 0으로 한 경우 원래 이미지의 가로 세로 비율을 유지하며 확대 축소합니다. (단, 커트인의 최소 폭, 높이는 ${CutInComponent.MIN_SIZE}픽셀이 됩니다).
 　
-　動画を再生するカットインは必ず前面、その他は後から表示されるカットイン画像がより前面になりますが、重なり順（Z-Index）を指定することで制御可能です。同じカットイン、動画を再生するカットイン、同じタグが指定されたカットインを再生する場合は、以前のものは停止します。また、チャット末尾条件を満たすカットインが複数ある場合、
+　동영상을 재생하는 컷인은 반드시 앞에, 그 외는 나중에 표시되는 컷인 화상이 보다 앞쪽에 출력되지만, 중첩순서(Z-Index)를 지정하는 것으로 제어 가능합니다. 같은 컷인, 동영상을 재생하는 컷인, 같은 태그가 지정된 컷인을 재생하는 경우 이전의 것은 정지됩니다. 또, 채팅 말미 조건을 만족하는 컷인이 다수 있는 경우,
 
-　　・タグが設定されていないものはすべて
-　　・タグが設定されたものは、同じタグのものの中からランダムに1つ
-　　・動画を再生するカットインは上記の中からランダムに1つを選択
+　　・태그가 설정되어 있지 않은 것은 모두
+　　・태그가 설정된 것은, 같은 태그의 것 중에서 랜덤으로 1개
+　　・동영상을 재생하는 컷인은 상기 중에서 랜덤으로 1개를 선택
 
-となります。
+입니다.
 
-　カットインはドラッグによって移動可能です（動画を再生するカットインは端をドラッグ）。またダブルクリックで閉じる（自分だけ停止）、右クリックでコンテキストメニューから操作が可能です（「閉じる」「ウィンドウの背面に表示」「最小化」が可能、動画を再生するカットインは端で受付）。
+　컷인은 드래그에 의해서 이동 가능합니다(동영상을 재생하는 컷인은 가장자리를 드래그). 또한 더블 클릭으로 닫거나(자신만 정지), 오른쪽 클릭으로 컨텍스트 메뉴로부터 조작이 가능합니다(「닫는다」「창의 뒤쪽에 표시」「최소화」가 가능, 동영상을 재생하는 컷인은 가장자리에서 접수).
 
-　アップロードされた音楽ファイルをカットイン表示時の効果音として設定できます。音量にはジュークボックスの設定（「テスト (自分だけ見る)」の場合は試聴音量）が使用されます。表示時間や手動操作によってカットインが停止した際には、途中であっても音声も停止します。カットインや部屋のセーブデータ（zip）には音楽ファイルは含まれませんので、必要でしたら別途アップロードしてください（カットインと音楽ファイルのリンクはファイルの内容によります、同名の別ファイルをアップロードしても再リンクされません）。
+　업로드된 음악 파일을 컷인 표시시의 효과음으로서 설정할 수 있습니다. 음량에는 쥬크 박스의 설정(「테스트(자신만 본다)」의 경우는 시청 음량)이 사용됩니다. 표시 시간이나 수동 조작에 의해서 컷인이 정지했을 때에는, 도중이더라도 음성도 정지합니다. 컷인이나 방 세이브 데이터(zip)에는 음악 파일은 포함되지 않으므로, 필요하면 별도 업로드 해 주세요(컷인과 음악 파일의 링크는 파일의 내용에 따릅니다, 동명의 다른 파일을 업로드해도 재링크 되지않습니다).
 
-　カットインに動画を使用する場合、URLは現在YouTubeのもののみ有効です。動画を利用する際は権利者およびYouTubeの定めた利用規約を参照し、順守してください。`;
+　컷인에 동영상을 사용하는 경우, URL은 현재 YouTube만 유효합니다. 동영상을 이용할 때는 권리자 및 YouTube가 정한 이용 약관을 참조해, 준수해 주세요.`;
   }
 }
