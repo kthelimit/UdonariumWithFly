@@ -193,12 +193,12 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
     this.contextMenuService.open(menuPosition, [
       (this.isLocked
         ? {
-          name: '☑ 固定', action: () => {
+          name: '☑ 고정', action: () => {
             this.isLocked = false;
             SoundEffect.play(PresetSound.unlock);
           }
         } : {
-          name: '☐ 固定', action: () => {
+          name: '☐ 고정', action: () => {
             this.isLocked = true;
             SoundEffect.play(PresetSound.lock);
           }
@@ -207,58 +207,58 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
       /*
       (this.isSlope
         ? {
-          name: '☑ 傾斜', action: () => {
+          name: '☑ 경사', action: () => {
             this.isSlope = false;
           }
         } : {
-          name: '☐ 傾斜', action: () => {
+          name: '☐ 경사', action: () => {
             this.isSlope = true;
           }
         }),
       */
-      { name: '傾斜', action: null, subActions: [
+      { name: '경사', action: null, subActions: [
         {
-          name: `${ this.slopeDirection == SlopeDirection.NONE ? '◉' : '○' } なし`, action: () => {
+          name: `${ this.slopeDirection == SlopeDirection.NONE ? '◉' : '○' } 없음`, action: () => {
             this.slopeDirection = SlopeDirection.NONE;
           }
         },
         ContextMenuSeparator,
         {
-          name: `${ this.slopeDirection == SlopeDirection.TOP ? '◉' : '○' } 上（北）`, action: () => {
+          name: `${ this.slopeDirection == SlopeDirection.TOP ? '◉' : '○' } 위쪽(북쪽)`, action: () => {
             this.slopeDirection = SlopeDirection.TOP;
           }
         },
         {
-          name: `${ this.slopeDirection == SlopeDirection.BOTTOM ? '◉' : '○' } 下（南）`, action: () => {
+          name: `${ this.slopeDirection == SlopeDirection.BOTTOM ? '◉' : '○' } 아래쪽(남쪽)`, action: () => {
             this.slopeDirection = SlopeDirection.BOTTOM;
           }
         },
         {
-          name: `${ this.slopeDirection == SlopeDirection.LEFT ? '◉' : '○' } 左（西）`, action: () => {
+          name: `${ this.slopeDirection == SlopeDirection.LEFT ? '◉' : '○' } 왼쪽(서쪽)`, action: () => {
             this.slopeDirection = SlopeDirection.LEFT;
           }
         },
         {
-          name: `${ this.slopeDirection == SlopeDirection.RIGHT ? '◉' : '○' } 右（東）`, action: () => {
+          name: `${ this.slopeDirection == SlopeDirection.RIGHT ? '◉' : '○' } 오른쪽(동쪽)`, action: () => {
             this.slopeDirection = SlopeDirection.RIGHT;
           }
         }
       ]},
-      { name: '壁の表示', action: null, subActions: [
+      { name: '벽의 표시', action: null, subActions: [
         {
-          name: `${ this.hasWall && this.isSurfaceShading ? '◉' : '○' } 通常`, action: () => {
+          name: `${ this.hasWall && this.isSurfaceShading ? '◉' : '○' } 통상`, action: () => {
             this.mode = TerrainViewState.ALL;
             this.isSurfaceShading = true;
           }
         },
         {
-          name: `${ this.hasWall && !this.isSurfaceShading ? '◉' : '○' } 陰影なし`, action: () => {
+          name: `${ this.hasWall && !this.isSurfaceShading ? '◉' : '○' } 음영없음`, action: () => {
             this.mode = TerrainViewState.ALL;
             this.isSurfaceShading = false;
           }
         },
         {
-          name: `${ !this.hasWall ? '◉' : '○' } 非表示`, action: () => {
+          name: `${ !this.hasWall ? '◉' : '○' } 비표시`, action: () => {
             this.mode = TerrainViewState.FLOOR;
             if (this.depth * this.width === 0) {
               this.terrain.width = this.width <= 0 ? 1 : this.width;
@@ -271,12 +271,12 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
       /*
       (this.isInteract
         ? {
-          name: '☑ 他の地形に乗る', action: () => {
+          name: '☑ 다른 지형에 올린다', action: () => {
             this.isInteract = false;
             SoundEffect.play(PresetSound.unlock);
           }
         } : {
-          name: '☐ 他の地形に乗る', action: () => {
+          name: '☐ 다른 지형에 올린다', action: () => {
             this.isInteract = true;
             SoundEffect.play(PresetSound.lock);
           }
@@ -295,16 +295,16 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
         }),
       (this.isAltitudeIndicate
         ? {
-          name: '☑ 高度の表示', action: () => {
+          name: '☑ 고도의 표시', action: () => {
             this.isAltitudeIndicate = false;
           }
         } : {
-          name: '☐ 高度の表示', action: () => {
+          name: '☐ 고도의 표시', action: () => {
             this.isAltitudeIndicate = true;
           }
         }),
       {
-        name: '高度を0にする', action: () => {
+        name: '고도를 0으로 한다', action: () => {
           if (this.altitude != 0) {
             this.altitude = 0;
             SoundEffect.play(PresetSound.sweep);
@@ -313,9 +313,9 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
         altitudeHande: this.terrain
       },
       ContextMenuSeparator,
-      { name: '地形設定を編集', action: () => { this.showDetail(this.terrain); } },
+      { name: '지형 설정 편집', action: () => { this.showDetail(this.terrain); } },
       (this.terrain.getUrls().length <= 0 ? null : {
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.terrain.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -328,14 +328,14 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         })
       }),
       (this.terrain.getUrls().length <= 0 ? null : ContextMenuSeparator),
       {
-        name: 'コピーを作る', action: () => {
+        name: '사본을 작성', action: () => {
           let cloneObject = this.terrain.clone();
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
@@ -345,13 +345,13 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       },
       {
-        name: '削除する', action: () => {
+        name: '삭제', action: () => {
           this.terrain.destroy();
           SoundEffect.play(PresetSound.sweep);
         }
       },
       ContextMenuSeparator,
-      { name: 'オブジェクト作成', action: null, subActions: this.tabletopActionService.makeDefaultContextMenuActions(objectPosition) }
+      { name: '오브젝트 작성', action: null, subActions: this.tabletopActionService.makeDefaultContextMenuActions(objectPosition) }
     ], this.name);
   }
 
@@ -414,7 +414,7 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
   private showDetail(gameObject: Terrain) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = '地形設定';
+    let title = '지형 설정';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x - 250, top: coordinate.y - 150, width: 550, height: 380 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
