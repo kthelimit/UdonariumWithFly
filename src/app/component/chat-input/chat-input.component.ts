@@ -465,9 +465,9 @@ export class ChatInputComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (PeerCursor.isGMHold && !this.sendTo && !PeerCursor.myCursor.isGMMode && /GM(?:モード)?にな(?:ります|る)/i.test(StringUtil.toHalfWidth(text))) {
+    if (PeerCursor.isGMHold && !this.sendTo && !PeerCursor.myCursor.isGMMode && /GM(?:모드)?가 (?:됩니다|된다)/i.test(StringUtil.toHalfWidth(text))) {
       PeerCursor.myCursor.isGMMode = true;
-      this.chatMessageService.sendOperationLog('GMモードになった');
+      this.chatMessageService.sendOperationLog('GM모드가 되었다');
       EventSystem.trigger('CHANGE_GM_MODE', null);
     }
 
@@ -523,13 +523,13 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     DiceBot.getHelpMessage(this.gameType).then(help => {
       this.gameHelp = help;
 
-      let gameName: string = 'ダイスボット';
+      let gameName: string = '다이스봇';
       for (let diceBotInfo of DiceBot.diceBotInfos) {
         if (diceBotInfo.id === this.gameType) {
-          gameName = 'ダイスボット〈' + diceBotInfo.game + '〉'
+          gameName = '다이스봇〈' + diceBotInfo.game + '〉'
         }
       }
-      gameName += '使用法';
+      gameName += '사용법';
 
       let coordinate = this.pointerDeviceService.pointers[0];
       let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 500 };
@@ -550,7 +550,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
       this.contextMenuService.open(
         position, 
         [
-          { name: '接続情報', action: () => {
+          { name: '접속 정보', action: () => {
             this.panelService.open(PeerMenuComponent, { width: 520, height: 600, top: position.y - 100, left: position.x - 100 });
           } }
         ],
@@ -563,7 +563,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     }
     
     let contextMenuActions: ContextMenuAction[] = [
-      { name: '「」を入力', 
+      { name: '「」를 입력', 
         action: () => {
           let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement;
           let text = this.text.trim();
@@ -582,7 +582,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         if (this.character.imageFiles.length > 1) {
           contextMenuActions.push(ContextMenuSeparator);
           contextMenuActions.push({
-            name: '画像切り替え',
+            name: '이미지 변경',
             action: null,
             subActions: this.character.imageFiles.map((image, i) => {
               return { 
@@ -600,49 +600,49 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         }
         contextMenuActions.push(ContextMenuSeparator);
         contextMenuActions.push(
-          { name: '画像効果', action: null, subActions: [
+          { name: '이미지 효과', action: null, subActions: [
             (this.character.isInverse
               ? {
-                name: '☑ 反転', action: () => {
+                name: '☑ 반전', action: () => {
                   this.character.isInverse = false;
                   EventSystem.trigger('UPDATE_INVENTORY', null);
                 }
               } : {
-                name: '☐ 反転', action: () => {
+                name: '☐ 반전', action: () => {
                   this.character.isInverse = true;
                   EventSystem.trigger('UPDATE_INVENTORY', null);
                 }
               }),
             (this.character.isHollow
               ? {
-                name: '☑ ぼかし', action: () => {
+                name: '☑ 흐리게', action: () => {
                   this.character.isHollow = false;
                   EventSystem.trigger('UPDATE_INVENTORY', null);
                 }
               } : {
-                name: '☐ ぼかし', action: () => {
+                name: '☐ 흐리게', action: () => {
                   this.character.isHollow = true;
                   EventSystem.trigger('UPDATE_INVENTORY', null);
                 }
               }),
             (this.character.isBlackPaint
               ? {
-                name: '☑ 黒塗り', action: () => {
+                name: '☑ 검정칠', action: () => {
                   this.character.isBlackPaint = false;
                   EventSystem.trigger('UPDATE_INVENTORY', null);
                 }
               } : {
-                name: '☐ 黒塗り', action: () => {
+                name: '☐ 검정칠', action: () => {
                   this.character.isBlackPaint = true;
                   EventSystem.trigger('UPDATE_INVENTORY', null);
                 }
               }),
-              { name: 'オーラ', action: null, subActions: [{ name: `${this.character.aura == -1 ? '◉' : '○'} なし`, action: () => { this.character.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['ブラック', 'ブルー', 'グリーン', 'シアン', 'レッド', 'マゼンタ', 'イエロー', 'ホワイト'].map((color, i) => {  
+              { name: '오오라', action: null, subActions: [{ name: `${this.character.aura == -1 ? '◉' : '○'} 없음`, action: () => { this.character.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['블랙', '블루', '그린', '시안', '레드', '마젠타', '옐로', '화이트'].map((color, i) => {  
                 return { name: `${this.character.aura == i ? '◉' : '○'} ${color}`, action: () => { this.character.aura = i; EventSystem.trigger('UPDATE_INVENTORY', null) } };
               })) },
             ContextMenuSeparator,
             {
-              name: 'リセット', action: () => {
+              name: '리셋', action: () => {
                 this.character.isInverse = false;
                 this.character.isHollow = false;
                 this.character.isBlackPaint = false;
@@ -657,7 +657,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         //if (this.character.faceIcons.length > 1) {
           contextMenuActions.push(ContextMenuSeparator);
           contextMenuActions.push({
-            name: '顔アイコンの切り替え',
+            name: '얼굴 아이콘의 변경',
             action: null,
             subActions: this.character.faceIcons.map((faceIconImage, i) => {
               return { 
@@ -676,11 +676,11 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         //}
       }
       contextMenuActions.push(ContextMenuSeparator);
-      contextMenuActions.push({ name: '詳細を表示', action: () => { this.showDetail(this.character); } });
+      contextMenuActions.push({ name: '상세를 표시', action: () => { this.showDetail(this.character); } });
       if (!this.onlyCharacters) {
-        contextMenuActions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(this.character) } });
+        contextMenuActions.push({ name: '채팅 팔레트를 표시', action: () => { this.showChatPalette(this.character) } });
       }
-      contextMenuActions.push({ name: 'スタンド設定', action: () => { this.showStandSetting(this.character) } });
+      contextMenuActions.push({ name: '스탠딩 설정', action: () => { this.showStandSetting(this.character) } });
     }
     this.contextMenuService.open(position, contextMenuActions, this.character.name);
   }
