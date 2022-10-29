@@ -1,27 +1,27 @@
 <div class="flex-container">
   <div class="flex-item no-grow">
     <div>
-      <button (click)="create()" style="font-size: smaller; margin-bottom: 2px">チャットタブを作る</button>
+      <button (click)="create()" style="font-size: smaller; margin-bottom: 2px">채팅 탭 작성</button>
     </div>
     <select style="width: 100%; max-width: 140px" size="10" (change)="onChangeSelectTab($event.target.value)" [ngModel]="selectedTab?.identifier">
-      <option *ngFor="let chatTab of chatTabs" value="{{chatTab.identifier}}" title="{{chatTab.name}}" [style.color]="chatTab.name == '' ? 'gray' : ''">{{chatTab.name == '' ? '(無名のタブ)' : chatTab.name}}</option>
+      <option *ngFor="let chatTab of chatTabs" value="{{chatTab.identifier}}" title="{{chatTab.name}}" [style.color]="chatTab.name == '' ? 'gray' : ''">{{chatTab.name == '' ? '(이름없는 탭)' : chatTab.name}}</option>
     </select>
   </div>
   <div class="flex-item">
     <ng-container *ngIf="!isEmpty && selectedTab">
-      <div><label><b style="font-size: smaller">タブ名: </b>
+      <div><label><b style="font-size: smaller">탭 이름: </b>
         <input style="width: 200px" [(ngModel)]="tabName" placeholder="Name" [attr.disabled]="!isEditable ? '' : null" /></label>
       </div>
       <div style="font-weight: bolder; font-size: smaller; padding-top: 3px">
         <label>
           <input type="checkbox" [(ngModel)]="isUseStandImage" checked="{{isUseStandImage ? 'checked' : ''}}" (change)="isUseStandImage = (isUseStandImage ? true : false)" [attr.disabled]="!isEditable ? '' : null" />
-          カットイン、スタンド有効
+          컷인,스탠딩 유효
         </label>
       </div>
       <div style="font-weight: bolder; font-size: smaller; padding-top: 3px">
         <label>
           <input type="checkbox" [(ngModel)]="recieveOperationLogLevel" checked="{{recieveOperationLogLevel > 0 ? 'checked' : ''}}" (change)="recieveOperationLogLevel = (recieveOperationLogLevel > 0 ? 1 : 0)" [attr.disabled]="!isEditable ? '' : null" />
-          操作ログを受信する
+          동작 로그를 송신한다
         </label>
       </div>
       <hr/>
@@ -33,20 +33,20 @@
           <button (click)="showLogOutput()"><i class="material-icons small-font">history_edu</i>ログ</button>
           <button [disabled]="isSaveing" (click)="save()">
             <div style="position: relative;">
-              <div [ngClass]="{'is-hidden': isSaveing}">保存</div>
+              <div [ngClass]="{'is-hidden': isSaveing}">저장</div>
               <div *ngIf="isSaveing" class="progress">{{progresPercent}}%</div>
             </div>
           </button>
-          <button class="danger" (click)="delete()" [attr.disabled]="chatTabs.length <= 1 ? '' : null">削除</button>
+          <button class="danger" (click)="delete()" [attr.disabled]="chatTabs.length <= 1 ? '' : null">삭제</button>
           </div>
         </ng-container>
         <ng-container *ngIf="isDeleted">
-          <button (click)="restore()">元に戻す</button>
+          <button (click)="restore()">원래대로 되돌린다</button>
         </ng-container>
       </div>
     </ng-container>
   </div>
 </div>
 <ng-container *ngIf="isEmpty">
-  <div style="font-size: 12px;">※チャットタブが１つも作成されていません。「チャットタブを作る」からチャットタブを作成することができます。</div>
+  <div style="font-size: 12px;">※채팅 탭이 작성되어 있지 않습니다. 「채팅 탭 작성」을 눌러 채팅 탭을 작성할 수 있습니다.</div>
 </ng-container>
