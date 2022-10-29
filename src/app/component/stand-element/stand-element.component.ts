@@ -214,7 +214,7 @@ export class StandElementComponent implements OnInit {
     });
     EventSystem.trigger('POPUP_CHAT_BALLOON', { 
       characterIdentifier: this.gameCharacter.identifier, 
-      text: 'これはテストです、あなたにだけ見えています。スタンドの設定を行う際は、メニューの「個人設定」から「透明化、自動退去」をオフにすると微調整が行いやすくなります。', 
+      text: '이것은 테스트입니다. 당신에게만 보입니다. 스탠딩의 설정을 할 때는 메뉴의 「개인 설정」으로부터 「투명화, 자동퇴장」을 오프로 하면 보기 좋게 조정하는 것이 쉬워집니다.', 
       color: this.gameCharacter.chatPalette ? this.gameCharacter.chatPalette.color : null,
       dialogTest: true
     });
