@@ -36,7 +36,7 @@ export class ConfirmationComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     Promise.resolve().then(() => {
-      let titleBar = '確認';
+      let titleBar = '확인';
       if (this.title) {
         titleBar += ('〈' + this.title + (this.subTitle ? `：${this.subTitle}` : '') + '〉');
       } else if (this.subTitle) {
