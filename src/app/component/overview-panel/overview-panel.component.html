@@ -48,8 +48,8 @@
     </div>
     <div class="component-title title-background"
       [ngClass]="{'with-button-marign': hasImage}">
-      <ng-container *ngIf="card.isVisible == null || card.isVisible || card.isGMMode">{{card.name}}</ng-container><ng-container *ngIf="card.aliasName == 'card-stack' && !card.isEmpty"> のトップ</ng-container>
-      <ng-container *ngIf="card.isVisible != null && !card.isVisible && !card.isGMMode">カード（裏面）</ng-container>
+      <ng-container *ngIf="card.isVisible == null || card.isVisible || card.isGMMode">{{card.name}}</ng-container><ng-container *ngIf="card.aliasName == 'card-stack' && !card.isEmpty"> 의 맨 위</ng-container>
+      <ng-container *ngIf="card.isVisible != null && !card.isVisible && !card.isGMMode">카드(뒷면)</ng-container>
     </div>
     <div class="component-background">
       <div class="grid-container-root" *ngIf="hasDataElms && (card.isVisible || card.isGMMode)">
