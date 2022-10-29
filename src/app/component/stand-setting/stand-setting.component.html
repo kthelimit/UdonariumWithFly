@@ -6,13 +6,13 @@
     <input style="width: 3em; text-align: right; margin-right: 3px;" type="number" min="0" max="100" [(ngModel)]="position"><b sytle="margin-left: 3px; margin-right: 1em ">％　</b>
   </div>
   <div class="position-indicate">
-    <b>Height (0=元画像のまま): </b> 
+    <b>Height (0=원본 이미지 그대로): </b> 
     <input style="width: 350px" type="range" min="0" max="100" [(ngModel)]="height">
     <input style="width: 3em; text-align: right; margin-right: 3px;" type="number" min="0" max="200" [(ngModel)]="height"><b sytle="margin-left: 3px; margin-right: 1em ">％</b>
   </div>
 </div>
 <div class="overview-selecter" [style.border-color]="overviewIndex == -1 ? 'red' : 'transparent'" style="padding: 0px; width: 695px;">
-  <label style="font-size: smaller; font-weight: bolder;"><input type="radio" name="{{panelId}}_overviewIndex" value="-1" [checked]="overviewIndex == -1" (click)="overviewIndex = -1"> スタンド画像をオーバービューに使用しない</label>
+  <label style="font-size: smaller; font-weight: bolder;"><input type="radio" name="{{panelId}}_overviewIndex" value="-1" [checked]="overviewIndex == -1" (click)="overviewIndex = -1"> 스탠딩 이미지를 오버뷰에 사용하지 않는다</label>
 </div>
 <hr>
 <div style="display: flex; flex-direction: row; flex-wrap: wrap">
@@ -33,5 +33,5 @@
     <hr>
   </div>
 </div>
-<button (click)="add()">スタンド設定の追加</button>
-<button *ngIf="standSettingXML" (click)="restore()">直前に削除したスタンド設定を戻す</button>
+<button (click)="add()">스탠딩 설정의 추가</button>
+<button *ngIf="standSettingXML" (click)="restore()">직전에 삭제한 스탠딩의 설정을 되돌린다</button>
