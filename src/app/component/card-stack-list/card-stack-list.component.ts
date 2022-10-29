@@ -30,7 +30,7 @@ export class CardStackListComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => this.panelService.title = this.cardStack.name + ' のカード一覧');
+    Promise.resolve().then(() => this.panelService.title = this.cardStack.name + ' 의 카드 리스트');
     EventSystem.register(this)
       .on('UPDATE_GAME_OBJECT', -1000, event => {
         let object = ObjectStore.instance.get(event.data.identifier);
@@ -67,9 +67,9 @@ export class CardStackListComponent implements OnInit, OnDestroy {
     card.toTopmost();
     SoundEffect.play(PresetSound.cardDraw);
     if (card.isFront) {
-      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} から ${card.name == '' ? '(無名のカード)' : card.name} を取り出した`);
+      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터  ${card.name == '' ? '(이름없는 카드)' : card.name} 를 뽑았습니다`);
     } else {
-      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(無名の山札)' : this.cardStack.name} から 1枚取り出して伏せた`);
+      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아서 엎었다`);
     }
   } 
 
@@ -105,7 +105,7 @@ export class CardStackListComponent implements OnInit, OnDestroy {
       x: this.panelService.left,
       y: this.panelService.top
     };
-    let title = 'カード設定';
+    let title = '카드 설정';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x + 10, top: coordinate.y + 20, width: 600, height: 600 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
