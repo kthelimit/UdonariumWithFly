@@ -487,24 +487,24 @@ export class CutInComponent implements OnInit, OnDestroy {
     let position = this.pointerDeviceService.pointers[0];
     this.contextMenuService.open(position, [
       {
-        name: '閉じる（自分のみ停止）',
+        name: '닫기(자신만 정지)',
         action: () => { this.stop(); },
         default: true,
         selfOnly: true
       },
       ContextMenuSeparator,
       {
-        name: `${this.isIndicateSender ? '☑' : '☐'}送信者を表示`,
+        name: `${this.isIndicateSender ? '☑' : '☐'}송신자를 표시`,
         action: () => { this.isIndicateSender = !this.isIndicateSender; },
         selfOnly: true
       },
       {
-        name: `${this.isBackyard ? '☑' : '☐'}ウィンドウの背後に表示`,
+        name: `${this.isBackyard ? '☑' : '☐'}창 뒤에 표시`,
         action: () => { this.isBackyard = !this.isBackyard; },
         selfOnly: true
       },
       {
-        name: `${this.isMinimize ? '☑' : '☐'}最小化`,
+        name: `${this.isMinimize ? '☑' : '☐'}최소화`,
         action: () => { this.isMinimize = !this.isMinimize; },
         selfOnly: true
       },
@@ -512,25 +512,25 @@ export class CutInComponent implements OnInit, OnDestroy {
       (!this.videoId ? null : ContextMenuSeparator),
       (!this.videoId ? null :
         {
-          name: 'YouTubeで開く',
+          name: 'YouTube에서 연다',
           action: () => { 
             this.modalService.open(OpenUrlComponent, { url: `https://www.youtube.com/watch?v=${this.cutIn.videoId}`, title: this.cutIn.name });
           },
           //disabled: !StringUtil.validUrl(url),
-          //error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+          //error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
           isOuterLink: true
         }
       )
       ContextMenuSeparator,
       {
-        name: '効果音の開始／最初から',
+        name: '효과음 재생／최초부터',
         action: () => { this.audioPlayer.play() },
         disabled: !(this.cutIn && this.cutIn.audioIdentifier && this.cutIn.isValidAudio), 
         selfOnly: true,
         materialIcon: 'play_arrow'
       },
       {
-        name: '効果音の停止',
+        name: '효과음 정지',
         action: () => { this.audioPlayer.stop() },
         disabled: !this.audioPlayer.paused && !(this.cutIn && this.cutIn.audioIdentifier && this.cutIn.isValidAudio), 
         selfOnly: true,
