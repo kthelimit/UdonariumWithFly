@@ -1,33 +1,33 @@
 <div *ngIf="!isConnected;else other_content">
-  <div>ルーム名 : <input class="input" (input)="calcPeerId($event.target.value, password)" [(ngModel)]="roomName" required minlength="1" maxlength="128" #roomNameValidation="ngModel"
-      placeholder="ルームの名前は必須" /></div>
-  <div>パスワード: <input class="input" (input)="calcPeerId(roomName, $event.target.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="空ならパスワードなし"
+  <div>방 이름 : <input class="input" (input)="calcPeerId($event.target.value, password)" [(ngModel)]="roomName" required minlength="1" maxlength="128" #roomNameValidation="ngModel"
+      placeholder="방의 이름은 필수" /></div>
+  <div>패스워드: <input class="input" (input)="calcPeerId(roomName, $event.target.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="空ならパスワードなし"
     /></div>
   <hr/>
   <div *ngIf="roomNameValidation.errors && (roomNameValidation.dirty || roomNameValidation.touched)">
     <div [hidden]="!roomNameValidation.errors.required">
-      ルームの名前は必須です。
+      방의 이름은 필수입니다.
     </div>
     <div [hidden]="!roomNameValidation.errors.minlength">
-      ルームの名前は必須です。
+      방의 이름은 필수입니다.
     </div>
     <div [hidden]="!roomNameValidation.errors.maxlength">
-      ルーム名前の長さは128以内にしてください。
+      방 이름의 길이는 128자이내로 해주세요.
     </div>
   </div>
   <div *ngIf="passwordValidation.errors && (passwordValidation.dirty || passwordValidation.touched)">
     <div [hidden]="!passwordValidation.errors.maxlength">
-      パスワードの長さは12以内にしてください。
+      패스워드의 길이는 12자 이내로 해주세요.
     </div>
   </div>
   <div *ngIf="!validateLength">
-    ルームの名前とパスワードの合計が長すぎるようです。どちらかを少し短くしてみてください。
+    방의 이름과 패스워드의 합계가 너무 긴 것 같습니다. 어느쪽인가를 짧게 해보세요.
   </div>
   <div>
     <button [disabled]="!roomNameValidation.valid || !passwordValidation.valid || !validateLength" (click)="createRoom()">新しいルームを作成</button>
   </div>
 </div>
-<div><span style="font-size: 12px;">※作成したルームは参加者が0人になった時点で解散します。ルームの状態を次回に持ち越したい場合は必ず「保存」してください。</span></div>
+<div><span style="font-size: 12px;">※작성한 방은 참가자가 0이 된 시점에 해산합니다. 방의 상태를 다음으로 가져가고 싶다면 반드시 「저장」해 주세요.</span></div>
 <ng-template #other_content>
-  <span style="font-size: 12px;">他の参加者と接続したままではルーム作成を行えません。<br>別のルームに接続したい場合は、他の参加者との接続を切ってください。<br>（※ページリロードで切断できます。）</span>
+  <span style="font-size: 12px;">다른 참가자와 접속된 상태로는 방의 작성을 할 수 없습니다.<br>다른 방에 접속하고 싶은 경우, 다른 참가자와의 접속을 끊어주세요.<br>（※페이지 새로고침으로 끊을 수 있습니다. ）</span>
 </ng-template>
