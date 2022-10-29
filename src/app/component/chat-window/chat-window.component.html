@@ -1,19 +1,19 @@
-<!--<h2>チャットシステム</h2>-->
+<!--<h2>채팅 시스템</h2>-->
 <div class="component">
 <div class="log">
   <chat-tab #chatTabComponemt *ngIf="chatTab" [chatTab]="chatTab" [compact]="isCompact" (onAddMessage)="scrollToBottom()"></chat-tab>
-  <div *ngIf="!chatTab">※チャットタブの内容が更新されました。チャットタブを選択しなおすか、このチャットウィンドウを開きなおしてください。</div>
+  <div *ngIf="!chatTab">※채팅 탭 내용이 갱신되었습니다. 채팅 탭을 다시 선택하거나, 이 채팅창을 다시 열어주세요.</div>
 </div>
 <div class="sticky-bottom">
   <form>
     <div class="chat-tab">
       <label *ngFor="let chatTab of chatMessageService.chatTabs; trackBy: trackByChatTab" class="tab">
         <input name="chat-tab" type="radio" value="{{chatTab.identifier}}" ng-control="options" [(ngModel)]="chatTabidentifier">
-        <div><span [style.cursor]="chatTabidentifier != chatTab.identifier ? 'pointer' : ''" [style.color]="chatTab.name == '' && chatTabidentifier != chatTab.identifier ? 'gray' : ''">{{chatTab.name == '' ? '(無名のタブ)' : chatTab.name}}</span><i *ngIf="chatTab.isUseStandImage" class="material-icons small-font">how_to_reg</i><i *ngIf="chatTab.recieveOperationLogLevel > 0" class="material-icons small-font">history_edu</i><badge *ngIf="chatTab.hasUnread" class="badge" [count]="chatTab.unreadLength"></badge></div>
+        <div><span [style.cursor]="chatTabidentifier != chatTab.identifier ? 'pointer' : ''" [style.color]="chatTab.name == '' && chatTabidentifier != chatTab.identifier ? 'gray' : ''">{{chatTab.name == '' ? '(이름없는 탭)' : chatTab.name}}</span><i *ngIf="chatTab.isUseStandImage" class="material-icons small-font">how_to_reg</i><i *ngIf="chatTab.recieveOperationLogLevel > 0" class="material-icons small-font">history_edu</i><badge *ngIf="chatTab.hasUnread" class="badge" [count]="chatTab.unreadLength"></badge></div>
       </label>
-      <button class="tab-setting small-font" (click)="showTabSetting()"><i class="material-icons small-font">settings</i>タブ設定</button>
+      <button class="tab-setting small-font" (click)="showTabSetting()"><i class="material-icons small-font">settings</i>탭 설정</button>
       <button class="tab-setting small-font" (click)="showLogOutput()"><i class="material-icons small-font">history_edu</i>ログ</button>
-      <label class="small-font" style="float: right; padding: 1px 4px 1px 2px; margin-left: 2px; height: 24px; box-sizing: border-box"><input name="isCompact" type="checkbox" [(ngModel)]="isCompact" [value]="true" [checked]="isCompact" ><b>簡易表示<sup style="color: red">*</sup></b></label>
+      <label class="small-font" style="float: right; padding: 1px 4px 1px 2px; margin-left: 2px; height: 24px; box-sizing: border-box"><input name="isCompact" type="checkbox" [(ngModel)]="isCompact" [value]="true" [checked]="isCompact" ><b>간이표시<sup style="color: red">*</sup></b></label>
     </div>
   </form>
   <chat-input [chatTabidentifier]="chatTabidentifier" [(gameType)]="gameType" [(sendFrom)]="sendFrom" (chat)="sendChat($event)"></chat-input>
