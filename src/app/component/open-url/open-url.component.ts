@@ -36,7 +36,7 @@ export class OpenUrlComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     Promise.resolve().then(() => {
-      let titleBar = '外部URLを開く';
+      let titleBar = '외부 URL을 연다';
       if (this.title) {
         titleBar += ('〈' + this.title + (this.subTitle ? `：${this.subTitle}` : '') + '〉');
       } else if (this.subTitle) {
