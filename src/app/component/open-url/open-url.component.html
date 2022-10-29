@@ -3,9 +3,9 @@
   <div *ngIf="!isValid" class="url">{{url}}</div>
   <hr />
   <div class="help">
-    <div *ngIf="isValid">このURLを開きますか？（別ウィンドウで開きます、ポップアップを許可してください）</div>
-    <div *ngIf="!isValid">⚠️URLが不正です。</div>
+    <div *ngIf="isValid">이 URL을 엽니까?（다른 창에서 열립니다. 팝업을 허가해주세요）</div>
+    <div *ngIf="!isValid">⚠️URL이 정확하지 않습니다</div>
   </div>
 </div>
-<button type="submit" (click)="openUrl()" [disabled]="!isValid">開く</button>
-<button type="button" (click)="cancel()">キャンセル</button>
+<button type="submit" (click)="openUrl()" [disabled]="!isValid">열기</button>
+<button type="button" (click)="cancel()">취소</button>
