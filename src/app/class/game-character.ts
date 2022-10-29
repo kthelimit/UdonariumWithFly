@@ -113,7 +113,7 @@ export class GameCharacter extends TabletopObject {
     //TEST
     let testElement: DataElement = DataElement.create('정보', '', {}, '정보' + this.identifier);
     this.detailDataElement.appendChild(testElement);
-    testElement.appendChild(DataElement.create('설명', '여기세 설명을 적는다\nあいうえお', { 'type': 'note' }, '설명' + this.identifier));
+    testElement.appendChild(DataElement.create('설명', '여기에 설명을 적는다\nあいうえお', { 'type': 'note' }, '설명' + this.identifier));
     testElement.appendChild(DataElement.create('메모', '임의의 문자열\n１\n２\n３\n４\n５', { 'type': 'note' }, '메모' + this.identifier));
     testElement.appendChild(DataElement.create('참조URL', 'https://www.example.com', { 'type': 'url' }, '참조URL' + this.identifier));
 
