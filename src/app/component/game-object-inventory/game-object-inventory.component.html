@@ -1,14 +1,14 @@
 <div class="component" (input)="onInput()">
   <ng-container *ngTemplateOutlet="inventoryTab"></ng-container>
   <ng-container *ngTemplateOutlet="inventoryViewSetting"></ng-container>
-  <div *ngIf="getGameObjects(selectTab).length < 1">{{getTabTitle(selectTab)}}インベントリは空です</div>
+  <div *ngIf="getGameObjects(selectTab).length < 1">{{getTabTitle(selectTab)}}인벤토리가 비어있습니다</div>
   <div (contextmenu)="onContextMenu($event, gameObject)" *ngFor="let gameObject of getGameObjects(selectTab); trackBy: trackByGameObject" class="object-container"
     (click)="selectGameObject(gameObject)" (dblclick)="focusGameObject(gameObject, $event)" [ngClass]="{'box': true, 'selected': (selectedIdentifier === gameObject.identifier), 'is-hide-in': gameObject.isHideIn, 'is-inventory-no-indicate': !gameObject.isInventoryIndicate}">
-    <div *ngIf="gameObject.isHideIn && gameObject.ownerName != null" class="owner-tag" [style.background-color]="gameObject.ownerColor">{{gameObject.ownerName ? gameObject.ownerName : '（無名のプレイヤー）'}}</div>
+    <div *ngIf="gameObject.isHideIn && gameObject.ownerName != null" class="owner-tag" [style.background-color]="gameObject.ownerColor">{{gameObject.ownerName ? gameObject.ownerName : '（이름없는 플레이어）'}}</div>
     <ng-container *ngTemplateOutlet="gameObjectTags; context:{ gameObject: gameObject}"></ng-container>
   </div>
   <div *ngIf="selectTab === 'graveyard'" style="padding-top: 6px;">
-    <button class="danger" (click)="cleanInventory()" [attr.disabled]="getGameObjects(selectTab).length < 1 ? '' : null">墓場を空にする</button>
+    <button class="danger" (click)="cleanInventory()" [attr.disabled]="getGameObjects(selectTab).length < 1 ? '' : null">묘지를 비운다</button>
   </div>
 </div>
 <ng-template #inventoryTab>
@@ -24,30 +24,30 @@
 <ng-template #inventoryViewSetting>
   <ng-container *ngIf="isEdit">
     <div>
-      <div style="font-size: 12px;"><b>並び順: </b></div>
-      <input [(ngModel)]="sortTag" placeholder="タグ名" class="order-control" />
+      <div style="font-size: 12px;"><b>정렬순: </b></div>
+      <input [(ngModel)]="sortTag" placeholder="태그 이름" class="order-control" />
       <select [(ngModel)]="sortOrder" class="order-control">
-        <option value="ASC">昇順</option>
-        <option value="DESC">降順</option>
+        <option value="ASC">오름차순</option>
+        <option value="DESC">내림차순</option>
       </select>
     </div>
-    <div style="font-size: 12px; padding-top: 6px;"><b>表示項目: </b></div>
-    <input style="width: 100%; box-sizing: border-box;" [(ngModel)]="dataTag" placeholder="スペース区切りでタグ名 スラッシュで改行 ex.「HP MP / メモ」" />
+    <div style="font-size: 12px; padding-top: 6px;"><b>표시항목: </b></div>
+    <input style="width: 100%; box-sizing: border-box;" [(ngModel)]="dataTag" placeholder="스페이스바로 구분하여 태그 이름, 슬래시로 줄바꿈 ex.「HP MP / メモ」" />
     <div style="padding-top: 6px;">
-      <button class="tab-setting small-font" (click)="toggleEdit()"><i class="material-icons small-font">settings</i>完了</button>
+      <button class="tab-setting small-font" (click)="toggleEdit()"><i class="material-icons small-font">settings</i>완료</button>
     </div>
   </ng-container>
   <ng-container *ngIf="!isEdit">
     <table style="font-size: 0.8em;">
       <tr>
-        <th style=" vertical-align:middle;" nowrap>並び順:</th>
+        <th style=" vertical-align:middle;" nowrap>정렬순:</th>
         <td style=" vertical-align:middle;" nowrap>
           <ng-container *ngIf="0 < sortTag.length"><span>{{sortTag}} ({{sortOrderName}})</span></ng-container>
           <ng-container *ngIf="sortTag.length < 1">-</ng-container>
         </td>
         <td width="100%" nowrap>
-          <button class="tab-setting small-font" (click)="toggleEdit()"><i class="material-icons small-font">settings</i>設定</button>
-          <label *ngIf="selectTab === 'table'" style="float: right; font-size: smaller"><input type="checkbox" [(ngModel)]="indicateAll" /><b>すべて表示<sup class="self_only">*</sup></b></label>
+          <button class="tab-setting small-font" (click)="toggleEdit()"><i class="material-icons small-font">settings</i>설정</button>
+          <label *ngIf="selectTab === 'table'" style="float: right; font-size: smaller"><input type="checkbox" [(ngModel)]="indicateAll" /><b>전부 표시<sup class="self_only">*</sup></b></label>
         </td>
       </tr>
     </table>
@@ -56,32 +56,32 @@
 <ng-template #gameObjectTags let-gameObject="gameObject">
   <div class="inventory-object">
     <div class="object-name">
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 1px; width: 24px; height: 16px; margin-bottom: 1px" title="オーバービューに顔アイコンを使用" [ngClass]="{'is-active': gameObject.isUseIconToOverviewImage}" (click)="gameObject.isUseIconToOverviewImage = !gameObject.isUseIconToOverviewImage">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 1px; width: 24px; height: 16px; margin-bottom: 1px" title="오버뷰에 얼굴 아이콘을 사용" [ngClass]="{'is-active': gameObject.isUseIconToOverviewImage}" (click)="gameObject.isUseIconToOverviewImage = !gameObject.isUseIconToOverviewImage">
         <i *ngIf="gameObject.faceIcon && 0 < gameObject.faceIcon?.url.length; else altImage" class="face-icon"><img [src]="gameObject.faceIcon.url | safe: 'resourceUrl'" alt=""></i>
         <ng-template #altImage>
           <i class="material-icons" style="font-size: 1em;">emoji_emotions</i>
         </ng-template>
       </button>
       <span class="game-object-name" style="margin-left: 3px; margin-right: 3px">{{gameObject.name}}</span>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="💭の表示" [ngClass]="{'is-active': gameObject.isShowChatBubble}" (click)="gameObject.isShowChatBubble = !gameObject.isShowChatBubble">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="💭의 표시" [ngClass]="{'is-active': gameObject.isShowChatBubble}" (click)="gameObject.isShowChatBubble = !gameObject.isShowChatBubble">
         <i class="material-icons" style="font-size: 1em;">{{ gameObject.isShowChatBubble ? 'textsms' : 'speaker_notes_off'}}</i>
       </button>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 1px; width: 24px; height: 16px; margin-bottom: 1px" title="影の表示" [ngClass]="{'is-active': gameObject.isDropShadow}" (click)="gameObject.isDropShadow = !gameObject.isDropShadow">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 1px; width: 24px; height: 16px; margin-bottom: 1px" title="그림자의 표시" [ngClass]="{'is-active': gameObject.isDropShadow}" (click)="gameObject.isDropShadow = !gameObject.isDropShadow">
         <i *ngIf="gameObject.shadowImageFile && 0 < gameObject.shadowImageFile.url.length; else altShadow" class="face-icon"><img style="filter: brightness(0);" [ngStyle]="{'opacity': gameObject.isDropShadow ? 0.7 : 0.3}" [src]="gameObject.shadowImageFile.url | safe: 'resourceUrl'" alt=""></i>
         <ng-template #altShadow>
           <i class="material-icons" style="font-size: 1em;">{{ gameObject.isDropShadow ? 'star_half' : 'star_border'}}</i>
         </ng-template>      
       </button>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="他のキャラクターに乗る" [ngClass]="{'is-active': !gameObject.isNotRide}" (click)="gameObject.isNotRide = !gameObject.isNotRide">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="다른 캐릭터에 올린다" [ngClass]="{'is-active': !gameObject.isNotRide}" (click)="gameObject.isNotRide = !gameObject.isNotRide">
         <i class="material-icons" style="font-size: 1em;">{{ !gameObject.isNotRide ? 'directions_bike' : 'directions_run'}}</i>
       </button>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="高度の表示" [ngClass]="{'is-active': gameObject.isAltitudeIndicate}" (click)="gameObject.isAltitudeIndicate = !gameObject.isAltitudeIndicate">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="고도의 표시" [ngClass]="{'is-active': gameObject.isAltitudeIndicate}" (click)="gameObject.isAltitudeIndicate = !gameObject.isAltitudeIndicate">
         <i class="material-icons rotate" style="font-size: 1em;">straighten</i><span style="display: inline-block; text-align: center; font-size: xx-small; color: gray; min-width: 2em;">{{ gameObject.altitude }}</span>
       </button>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="テーブルインベントリに表示" [ngClass]="{'is-active': gameObject.isInventoryIndicate}" (click)="gameObject.isInventoryIndicate = !gameObject.isInventoryIndicate">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="테이블 인벤토리에 표시" [ngClass]="{'is-active': gameObject.isInventoryIndicate}" (click)="gameObject.isInventoryIndicate = !gameObject.isInventoryIndicate">
         <i class="material-icons" style="font-size: 1em;">all_inbox</i>
       </button>
-      <button *ngIf="selectedIdentifier === gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="メニュー" (click)="onContextMenu($event, gameObject)">
+      <button *ngIf="selectedIdentifier === gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="메뉴" (click)="onContextMenu($event, gameObject)">
         <i class="material-icons" style="font-size: 1em;">settings</i>
       </button>
     </div>
