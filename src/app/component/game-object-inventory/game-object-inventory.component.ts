@@ -50,7 +50,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   get indicateAll(): boolean { return this.inventoryService.indicateAll; }
   set indicateAll(indicateAll: boolean) { this.inventoryService.indicateAll = indicateAll; }
 
-  get sortOrderName(): string { return this.sortOrder === SortOrder.ASC ? '昇順' : '降順'; }
+  get sortOrderName(): string { return this.sortOrder === SortOrder.ASC ? '오름차순' : '내림차순'; }
 
   get newLineString(): string { return this.inventoryService.newLineString; }
 
@@ -66,7 +66,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => this.panelService.title = 'インベントリ');
+    Promise.resolve().then(() => this.panelService.title = '인벤토리');
     EventSystem.register(this)
       .on('SELECT_TABLETOP_OBJECT', -1000, event => {
         if (ObjectStore.instance.get(event.data.identifier) instanceof TabletopObject) {
@@ -97,13 +97,13 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   getTabTitle(inventoryType: string) {
     switch (inventoryType) {
       case 'table':
-        return 'テーブル';
+        return '테이블';
       case Network.peerId:
-        return '個人';
+        return '개인';
       case 'graveyard':
-        return '墓場';
+        return '묘지';
       default:
-        return '共有';
+        return '공유';
     }
   }
 
@@ -142,7 +142,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     let actions: ContextMenuAction[] = [];
     if (gameObject.location.name === 'table' && (this.isGMMode || gameObject.isVisible)) {
       actions.push({
-        name: 'テーブル上から探す',
+        name: '테이블 위에서 찾는다',
         action: () => {
           if (gameObject.location.name === 'table') EventSystem.trigger('FOCUS_TABLETOP_OBJECT', { x: gameObject.location.x, y: gameObject.location.y, z: gameObject.posZ + (gameObject.altitude > 0 ? gameObject.altitude * 50 : 0) });
         },
@@ -153,7 +153,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     }
     if (gameObject.isHideIn) {
       actions.push({ 
-        name: '位置を公開する',
+        name: '위치를 공개한다',
         action: () => {
           gameObject.owner = '';
           SoundEffect.play(PresetSound.piecePut);
@@ -163,13 +163,13 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     }
     if (!gameObject.isHideIn || !gameObject.isVisible) {
       actions.push({ 
-        name: '位置を自分だけ見る（ステルス）',
+        name: '위치를 자신만 본다(스텔스)',
         action: () => {
           if (gameObject.location.name === 'table' && !GameCharacter.isStealthMode && !PeerCursor.myCursor.isGMMode) {
             this.modalService.open(ConfirmationComponent, {
-              title: 'ステルスモード', 
-              text: 'ステルスモードになります。',
-              help: '位置を自分だけ見ているキャラクターが1つ以上テーブル上にある間、あなたのカーソル位置は他の参加者に伝わりません。',
+              title: '스텔스모드', 
+              text: '스텔스모드가 됩니다.',
+              help: '위치를 자신만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
               type: ConfirmationType.OK,
               materialIcon: 'disabled_visible'
             });
@@ -183,7 +183,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     actions.push(ContextMenuSeparator);
     if (gameObject.imageFiles.length > 1) {
       actions.push({
-        name: '画像切り替え',
+        name: '이미지 변경',
         action: null,
         subActions: gameObject.imageFiles.map((image, i) => {
           return { 
@@ -202,24 +202,24 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     }
     actions.push((gameObject.isUseIconToOverviewImage
       ? {
-        name: '☑ オーバービューに顔ICを使用', action: () => {
+        name: '☑ 오버뷰에 얼굴 아이콘을 사용', action: () => {
           gameObject.isUseIconToOverviewImage = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       } : {
-        name: '☐ オーバービューに顔ICを使用', action: () => {
+        name: '☐ 오버뷰에 얼굴 아이콘을 사용', action: () => {
           gameObject.isUseIconToOverviewImage = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       }));
     actions.push((gameObject.isShowChatBubble
       ? {
-        name: '☑ 💭の表示', action: () => {
+        name: '☑ 💭의 표시', action: () => {
           gameObject.isShowChatBubble = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       } : {
-        name: '☐ 💭の表示', action: () => {
+        name: '☐ 💭의 표시', action: () => {
           gameObject.isShowChatBubble = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
@@ -227,61 +227,61 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     actions.push(
       (gameObject.isDropShadow
       ? {
-        name: '☑ 影の表示', action: () => {
+        name: '☑ 그림자의 표시', action: () => {
           gameObject.isDropShadow = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       } : {
-        name: '☐ 影の表示', action: () => {
+        name: '☐ 그림자의 표시', action: () => {
           gameObject.isDropShadow = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       })
     );
-    actions.push({ name: '画像効果', action: null,  
+    actions.push({ name: '이미지 효과', action: null,  
       subActions: [
       (gameObject.isInverse
         ? {
-          name: '☑ 反転', action: () => {
+          name: '☑ 반전', action: () => {
             gameObject.isInverse = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ 反転', action: () => {
+          name: '☐ 반전', action: () => {
             gameObject.isInverse = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
       (gameObject.isHollow
         ? {
-          name: '☑ ぼかし', action: () => {
+          name: '☑ 흐리게', action: () => {
             gameObject.isHollow = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ ぼかし', action: () => {
+          name: '☐ 흐리게', action: () => {
             gameObject.isHollow = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
       (gameObject.isBlackPaint
         ? {
-          name: '☑ 黒塗り', action: () => {
+          name: '☑ 검은칠', action: () => {
             gameObject.isBlackPaint = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ 黒塗り', action: () => {
+          name: '☐ 검은칠', action: () => {
             gameObject.isBlackPaint = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
-        { name: 'オーラ', action: null, subActions: [ { name: `${gameObject.aura == -1 ? '◉' : '○'} なし`, action: () => { gameObject.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['ブラック', 'ブルー', 'グリーン', 'シアン', 'レッド', 'マゼンタ', 'イエロー', 'ホワイト'].map((color, i) => {  
+        { name: '오오라', action: null, subActions: [ { name: `${gameObject.aura == -1 ? '◉' : '○'} 없음`, action: () => { gameObject.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['블랙', '블루', '그린', '시안', '레드', '마젠타', '옐로', '화이트'].map((color, i) => {  
           return { name: `${gameObject.aura == i ? '◉' : '○'} ${color}`, action: () => { gameObject.aura = i; EventSystem.trigger('UPDATE_INVENTORY', null) } };
         })) },
         ContextMenuSeparator,
         {
-          name: 'リセット', action: () => {
+          name: '리셋', action: () => {
             gameObject.isInverse = false;
             gameObject.isHollow = false;
             gameObject.isBlackPaint = false;
@@ -295,12 +295,12 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     actions.push(ContextMenuSeparator);
     actions.push((!gameObject.isNotRide
       ? {
-        name: '☑ 他のキャラクターに乗る', action: () => {
+        name: '☑ 다른 캐릭터에 올린다', action: () => {
           gameObject.isNotRide = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       } : {
-        name: '☐ 他のキャラクターに乗る', action: () => {
+        name: '☐ 다른 캐릭터에 올린다', action: () => {
           gameObject.isNotRide = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
@@ -308,12 +308,12 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     actions.push(
       (gameObject.isAltitudeIndicate
       ? {
-        name: '☑ 高度の表示', action: () => {
+        name: '☑ 고도의 표시', action: () => {
           gameObject.isAltitudeIndicate = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       } : {
-        name: '☐ 高度の表示', action: () => {
+        name: '☐ 고도의 표시', action: () => {
           gameObject.isAltitudeIndicate = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
@@ -321,7 +321,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     );
     actions.push(
     {
-      name: '高度を0にする', action: () => {
+      name: '고도를 0으로 한다', action: () => {
         if (gameObject.altitude != 0) {
           gameObject.altitude = 0;
           if (gameObject.location.name === 'table') SoundEffect.play(PresetSound.sweep);
@@ -330,14 +330,14 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
       altitudeHande: gameObject
     });
     actions.push(ContextMenuSeparator);
-    actions.push({ name: '詳細を表示', action: () => { this.showDetail(gameObject); } });
+    actions.push({ name: '상세를 표시', action: () => { this.showDetail(gameObject); } });
     //if (gameObject.location.name !== 'graveyard') {
-      actions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(gameObject) }, disabled: gameObject.location.name === 'graveyard' });
+      actions.push({ name: '채팅 팔레트를 표시', action: () => { this.showChatPalette(gameObject) }, disabled: gameObject.location.name === 'graveyard' });
     //}
-    actions.push({ name: 'スタンド設定', action: () => { this.showStandSetting(gameObject) } });
+    actions.push({ name: '스탠딩 설정', action: () => { this.showStandSetting(gameObject) } });
     actions.push(ContextMenuSeparator);
     actions.push({
-      name: '参照URLを開く', action: null,
+      name: '참조URL을 연다', action: null,
       subActions: gameObject.getUrls().map((urlElement) => {
         const url = urlElement.value.toString();
         return {
@@ -350,7 +350,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
             } 
           },
           disabled: !StringUtil.validUrl(url),
-          error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+          error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
           isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
         };
       }),
@@ -359,24 +359,24 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     actions.push(ContextMenuSeparator);
     actions.push(gameObject.isInventoryIndicate
       ? {
-        name: '☑ テーブルインベントリに表示', action: () => {
+        name: '☑ 테이블 인벤토리에 표시', action: () => {
           gameObject.isInventoryIndicate = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       } : {
-        name: '☐ テーブルインベントリに表示', action: () => {
+        name: '☐ 테이블 인벤토리에 표시', action: () => {
           gameObject.isInventoryIndicate = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
         }
       });
     let locations = [
-      { name: 'table', alias: 'テーブル' },
-      { name: 'common', alias: '共有インベントリ' },
-      { name: Network.peerId, alias: '個人インベントリ' },
-      { name: 'graveyard', alias: '墓場' }
+      { name: 'table', alias: '테이블' },
+      { name: 'common', alias: '공유 인벤토리' },
+      { name: Network.peerId, alias: '개인 인벤토리' },
+      { name: 'graveyard', alias: '묘지' }
     ];
     actions.push({
-      name: `${ (locations.find((location) => { return location.name == gameObject.location.name }) || locations[1]).alias }から移動`,
+      name: `${ (locations.find((location) => { return location.name == gameObject.location.name }) || locations[1]).alias }로부터 이동`,
       action: null,
       subActions: locations
         .filter((location, i) => { return !(gameObject.location.name == location.name || (i == 1 && !locations.map(loc => loc.name).includes(gameObject.location.name))) })
@@ -389,9 +389,9 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
               gameObject.setLocation(location.name);
               if (location.name === 'table' && gameObject.isHideIn && gameObject.isVisible && !isStealthMode && !PeerCursor.myCursor.isGMMode) {
                 this.modalService.open(ConfirmationComponent, {
-                  title: 'ステルスモード', 
-                  text: 'ステルスモードになります。',
-                  help: '位置を自分だけ見ているキャラクターが1つ以上テーブル上にある間、あなたのカーソル位置は他の参加者に伝わりません。',
+                  title: '스텔스모드', 
+                  text: '스텔스모드가 됩니다.',
+                  help: '위치를 자신만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
                   type: ConfirmationType.OK,
                   materialIcon: 'disabled_visible'
                 });
@@ -420,14 +420,14 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     */
     actions.push(ContextMenuSeparator);
     actions.push({
-      name: 'コピーを作る', action: () => {
+      name: '사본을 작성', action: () => {
         this.cloneGameObject(gameObject);
         SoundEffect.play(PresetSound.piecePut);
       },
       disabled: !gameObject.isVisible && !this.isGMMode
     });
     actions.push({
-      name: 'コピーを作る（自動採番）', action: () => {
+      name: '사본을 작성(자동번호생성)', action: () => {
         const cloneObject = gameObject.clone();
         const tmp = cloneObject.name.split('_');
         let baseName;
@@ -451,7 +451,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     if (gameObject.location.name === 'graveyard') {
       actions.push(ContextMenuSeparator);
       actions.push({
-        name: '削除する（完全に削除）', action: () => {
+        name: '삭제(완전삭제)', action: () => {
           this.deleteGameObject(gameObject);
           SoundEffect.play(PresetSound.sweep);
         }
@@ -459,7 +459,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     } else {
       actions.push(ContextMenuSeparator);
       actions.push({
-        name: '削除する（墓場へ移動）', action: () => {
+        name: '삭제(묘지로 이동)', action: () => {
           EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: gameObject.identifier });
           gameObject.setLocation('graveyard');
           SoundEffect.play(PresetSound.sweep);
@@ -477,9 +477,9 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     let tabTitle = this.getTabTitle(this.selectTab);
     let gameObjects = this.getGameObjects(this.selectTab);
     this.modalService.open(ConfirmationComponent, {
-      title: '墓場を空にする', 
-      text: 'キャラクターを完全に削除しますか？',
-      helpHtml: `<b>${ StringUtil.escapeHtml(tabTitle) }</b>に存在する <b>${ gameObjects.length }</b> 体のキャラクターを完全に削除します。`,
+      title: '묘지를 비운다', 
+      text: '캐릭터를 완전히 삭제합니까?',
+      helpHtml: `<b>${ StringUtil.escapeHtml(tabTitle) }</b>に存在する <b>${ gameObjects.length }</b> 체의 캐릭터를 완전히 삭제합니다.`,
       type: ConfirmationType.OK_CANCEL,
       materialIcon: 'delete_forever',
       action: () => {
@@ -498,7 +498,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   private showDetail(gameObject: GameCharacter) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'キャラクターシート';
+    let title = '캐릭터 시트';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x - 800, top: coordinate.y - 300, width: 800, height: 600 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
