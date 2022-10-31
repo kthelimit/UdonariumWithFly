@@ -1,12 +1,12 @@
 <div class="header" style="position: sticky; top: 0px">
   <div>
-    <b>試聴音量<sup class="self-only">*</sup>：</b>
+    <b>미리듣기 음량<sup class="self-only">*</sup>：</b>
     <i class="material-icons" style="font-size: 22px">{{ auditionVolume == 0 ? 'volume_off' : auditionVolume <= 0.5 ? 'volume_down' : 'volume_up' }}</i> 
     <input [(ngModel)]="auditionVolume" type="range" title="{{percentAuditionVolume + '%'}}" min="0" max="1" step="0.01" style="width:53%" /> 
     <span style="white-space: nowrap;"><input type="number" min="0" max="100" step="1" style="width: 3em" [(ngModel)]="percentAuditionVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span>
   </div>
   <div>
-    <b>再生音量<sup class="self-only">*</sup>：</b>
+    <b>재생음량<sup class="self-only">*</sup>：</b>
     <i class="material-icons" style="font-size: 22px">{{ volume == 0 ? 'volume_off' : volume <= 0.5 ? 'volume_down' : 'volume_up' }}</i> 
     <input [(ngModel)]="volume" type="range" min="0" title="{{percentVolume + '%'}}" max="1" step="0.01" style="width:53%" /> 
     <span style="white-space: nowrap;"><input type="number" min="0" max="100" step="1" style="width: 3em" [(ngModel)]="percentVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span>
@@ -16,17 +16,17 @@
 <div style="margin-bottom: 3px">
   <div *ngFor="let audio of audios; last as last" class="box" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden" [ngClass]="{last: last}">
     <button *ngIf="audio !== auditionPlayer?.audio || auditionPlayer?.paused" (click)="play(audio)" [disabled]="!audio.isReady"><i class="material-icons">play_arrow</i>試聴<sup style="font-size: larger" class="self-only">*</sup></button>
-    <button *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" (click)="stop()" [disabled]="!audio.isReady"><i class="material-icons">stop</i>試聴<sup style="font-size: larger" class="self-only">*</sup></button>
+    <button *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" (click)="stop()" [disabled]="!audio.isReady"><i class="material-icons">stop</i>미리듣기<sup style="font-size: larger" class="self-only">*</sup></button>
     <button *ngIf="audio !== jukebox?.audio" (click)="playBGM(audio)" [disabled]="!audio.isReady"><i class="material-icons">loop</i>ＢＧＭ</button>
     <button *ngIf="audio === jukebox?.audio" (click)="stopBGM(audio)" [disabled]="!audio.isReady"><i class="material-icons">stop</i>ＢＧＭ</button>
-    <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused && audio != jukebox?.audio" style="padding-left: 2px"><b>【試聴中】</b></span>
+    <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused && audio != jukebox?.audio" style="padding-left: 2px"><b>【미리듣기 중】</b></span>
     <ng-container *ngIf="audio === jukebox?.audio">
       <span *ngIf="audio != auditionPlayer?.audio || (audio == auditionPlayer?.audio && auditionPlayer?.paused)" style="padding-left: 2px"><b>【ＢＧＭ】</b></span>
-      <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" style="padding-left: 2px"><b>【試聴/BGM】</b></span>
+      <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" style="padding-left: 2px"><b>【미리듣기/BGM】</b></span>
     </ng-container>
     <span style="font-size: smaller" style="padding-left: 2px" [style.font-weight]="audio === jukebox?.audio ? 'bolder': 'normal'">{{audio.name}}</span>
   </div>
-  <div *ngIf="audios.length < 1" style="padding: 1em 0px; text-align: center"><small><b>アップロードされた音楽ファイルはここに表示されます。</b></small></div>
+  <div *ngIf="audios.length < 1" style="padding: 1em 0px; text-align: center"><small><b>업로드 된 음악 파일은 여기에 표시됩니다.</b></small></div>
 </div>
 
 <label>
@@ -34,13 +34,13 @@
     <div>
       <i class="material-icons large-font">playlist_add</i>
     </div>
-    <div>ここに音楽をドロップ</div>
-    <div class="small-font">またはここをクリックして選択</div>
+    <div>이곳에 음악을 끌어놓기</div>
+    <div class="small-font">또는 여기를 클릭해 선택</div>
     <input type="file" style="display: none;" (change)="handleFileSelect($event)" multiple accept="audio/*"/>
     <div class="small-font">
-      <br>１ファイルにつき10MBまで</div>
+      <br>1파일당 10MB까지</div>
   </div>
 </label>
-<div style="font-size: 12px; margin-top: 3px">※「試聴<sup class="self-only">*</sup>」は自分のスピーカーだけで音楽を1回再生します。</div>
-<div style="font-size: 12px;">※「BGM」はルーム内の全員で1つの音楽をループ再生します。</div>
-<div style="font-size: 12px;">※現行バージョンのセーブデータ（zip）には音楽ファイルは含まれません。（毎回アップロードが必要です）</div>
+<div style="font-size: 12px; margin-top: 3px">※「미리듣기<sup class="self-only">*</sup>」는 자신의 스피커에서만 음악을 1회 재생합니다.</div>
+<div style="font-size: 12px;">※「BGM」은 방 내의 전원에게 하나의 음악을 반복재생합니다.</div>
+<div style="font-size: 12px;">※현재 버전의 세이브 데이터(zip)에는 음악파일이 포함되지 않습니다. (매회 업로드가 필요합니다.)</div>
