@@ -168,13 +168,13 @@ export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit 
     this.contextMenuService.open(menuPosition, [
       (this.isGMMode ?
         this.gameTableMask.isTransparentOnGMMode ? {
-          name: '☑ GMモード時透過', action: () => {
+          name: '☑ GM모드시 투과', action: () => {
             this.gameTableMask.isTransparentOnGMMode = false;
             SoundEffect.play(PresetSound.lock);
           }
         }
         : {
-          name: '☐ GMモード時透過', action: () => {
+          name: '☐ GM모드시 투과', action: () => {
             this.gameTableMask.isTransparentOnGMMode = true;
             SoundEffect.play(PresetSound.unlock);
           }
@@ -183,42 +183,42 @@ export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit 
       (this.isGMMode ? ContextMenuSeparator : null),
       (this.isLock
         ? {
-          name: '☑ 固定', action: () => {
+          name: '☑ 고정', action: () => {
             this.isLock = false;
             //this.chatMessageService.sendOperationLog(`${this.gameTableMask.name} の固定を解除した`);
             SoundEffect.play(PresetSound.unlock);
           }
         }
         : {
-          name: '☐ 固定', action: () => {
+          name: '☐ 고정', action: () => {
             this.isLock = true;
             SoundEffect.play(PresetSound.lock);
           }
         }
       ),
       {
-        name: '画像と色',
+        name: '이미지와 색',
         subActions: [
-          { name: `${this.blendType == 0 ? '◉' : '○'} 画像のみ`,  action: () => { this.blendType = 0; SoundEffect.play(PresetSound.cardDraw) } },
-          { name: `${this.blendType == 1 ? '◉' : '○'} 背景色と重ねる`,  action: () => { this.blendType = 1; SoundEffect.play(PresetSound.cardDraw) } },
-          { name: `${this.blendType == 2 ? '◉' : '○'} 背景色と混ぜる`,  action: () => { this.blendType = 2; SoundEffect.play(PresetSound.cardDraw) } },
+          { name: `${this.blendType == 0 ? '◉' : '○'} 이미지만`,  action: () => { this.blendType = 0; SoundEffect.play(PresetSound.cardDraw) } },
+          { name: `${this.blendType == 1 ? '◉' : '○'} 배경색과 겹친다`,  action: () => { this.blendType = 1; SoundEffect.play(PresetSound.cardDraw) } },
+          { name: `${this.blendType == 2 ? '◉' : '○'} 배경색과 섞는다`,  action: () => { this.blendType = 2; SoundEffect.play(PresetSound.cardDraw) } },
           ContextMenuSeparator,
-          { name: '色の初期化', action: () => { this.color = '#555555'; this.bgcolor = '#0a0a0a'; SoundEffect.play(PresetSound.cardDraw) } }
+          { name: '색의 초기화', action: () => { this.color = '#555555'; this.bgcolor = '#0a0a0a'; SoundEffect.play(PresetSound.cardDraw) } }
         ]
       },
       ContextMenuSeparator,
       (this.isAltitudeIndicate
         ? {
-          name: '☑ 高度の表示', action: () => {
+          name: '☑ 고도의 표시', action: () => {
             this.isAltitudeIndicate = false;
           }
         } : {
-          name: '☐ 高度の表示', action: () => {
+          name: '☐ 고도의 표시', action: () => {
             this.isAltitudeIndicate = true;
           }
         }),
       {
-        name: '高度を0にする', action: () => {
+        name: '고도를 0으로 한다', action: () => {
           if (this.altitude != 0) {
             this.altitude = 0;
             SoundEffect.play(PresetSound.sweep);
@@ -227,9 +227,9 @@ export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit 
         altitudeHande: this.gameTableMask
       },
       ContextMenuSeparator,
-      { name: 'マップマスクを編集', action: () => { this.showDetail(this.gameTableMask); } },
+      { name: '맵마스크의 편집', action: () => { this.showDetail(this.gameTableMask); } },
       (this.gameTableMask.getUrls().length <= 0 ? null : {
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.gameTableMask.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -242,16 +242,16 @@ export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit 
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         })
       }),
       (this.gameTableMask.getUrls().length <= 0 ? null : ContextMenuSeparator),
       {
-        name: 'コピーを作る', action: () => {
+        name: '사본을 작성', action: () => {
           let cloneObject = this.gameTableMask.clone();
-          console.log('コピー', cloneObject);
+          console.log('복사', cloneObject);
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
           cloneObject.isLock = false;
@@ -260,14 +260,14 @@ export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit 
         }
       },
       {
-        name: '削除する', action: () => {
-          //this.chatMessageService.sendOperationLog(`${this.gameTableMask.name} を削除した`);
+        name: '삭제', action: () => {
+          //this.chatMessageService.sendOperationLog(`${this.gameTableMask.name} 를 삭제했다`);
           this.gameTableMask.destroy();
           SoundEffect.play(PresetSound.sweep);
         }
       },
       ContextMenuSeparator,
-      { name: 'オブジェクト作成', action: null, subActions: this.tabletopActionService.makeDefaultContextMenuActions(objectPosition) }
+      { name: '오브젝트 작성', action: null, subActions: this.tabletopActionService.makeDefaultContextMenuActions(objectPosition) }
     ], this.name);
   }
 
@@ -285,7 +285,7 @@ export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit 
 
   private showDetail(gameObject: GameTableMask) {
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'マップマスク設定';
+    let title = '맵마스크 ';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x - 200, top: coordinate.y - 150, width: 400, height: 530 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
