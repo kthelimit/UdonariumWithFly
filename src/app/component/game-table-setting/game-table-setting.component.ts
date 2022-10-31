@@ -95,7 +95,7 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => { this.modalService.title = this.panelService.title = 'テーブル設定' });
+    Promise.resolve().then(() => { this.modalService.title = this.panelService.title = '테이블 설정' });
     this.selectedTable = this.tableSelecter.viewTable;
     EventSystem.register(this)
       .on('DELETE_GAME_OBJECT', 1000, event => {
@@ -125,7 +125,7 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
 
   createGameTable() {
     let gameTable = new GameTable();
-    gameTable.name = '白紙のテーブル';
+    gameTable.name = '백지 테이블';
     gameTable.imageIdentifier = 'testTableBackgroundImage_image';
     gameTable.initialize();
     this.selectGameTable(gameTable.identifier);
@@ -193,9 +193,9 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '非表示設定の画像を表示', 
-        text: '非表示設定の画像を表示しますか？',
-        help: 'ネタバレなどにご注意ください。',
+        title: '숨김설정의 이미지를 표시', 
+        text: '숨김설정의 이미지를 표시합니까？',
+        help: '스포일러 등에 주의해주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
