@@ -20,7 +20,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   isReloading: boolean = false;
 
-  help: string = '「一覧を更新」ボタンを押すと接続可能なルーム一覧を表示します。';
+  help: string = '「리스트를 갱신」버튼을 누르면 접속 가능한 방 리스트를 표시합니다.';
 
   get currentRoom(): string { return Network.peerContext.roomId };
   get peerId(): string { return Network.peerId; }
@@ -45,7 +45,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
   }
 
   private changeTitle() {
-    this.modalService.title = this.panelService.title = 'ロビー';
+    this.modalService.title = this.panelService.title = '로비';
     if (Network.peerContext.roomName.length) {
       this.modalService.title = this.panelService.title = '〈' + Network.peerContext.roomName + '/' + Network.peerContext.roomId + '〉'
     }
@@ -57,7 +57,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   async reload() {
     this.isReloading = true;
-    this.help = '検索中...';
+    this.help = '검색중...';
     this.rooms = [];
     let peersOfroom: { [room: string]: PeerContext[] } = {};
     let peerIds = await Network.listAllPeers();
@@ -79,7 +79,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
       if (a.alias > b.alias) return 1;
       return 0;
     });
-    this.help = '接続可能なルームが見つかりませんでした。「新しいルームを作成する」で新規ルームを作成できます。';
+    this.help = '접속 가능한 방을 발견하지 못했습니다. 「새로운 방을 작성」으로 새로운 방을 작성할 수 있습니다.';
     this.isReloading = false;
   }
 
@@ -109,18 +109,18 @@ export class LobbyComponent implements OnInit, OnDestroy {
         }
         EventSystem.register(triedPeer)
           .on('CONNECT_PEER', event => {
-            console.log('接続成功！', event.data.peerId);
+            console.log('접속 성공!', event.data.peerId);
             triedPeer.push(event.data.peerId);
-            console.log('接続成功 ' + triedPeer.length + '/' + peerContexts.length);
+            console.log('접속 성공 ' + triedPeer.length + '/' + peerContexts.length);
             if (peerContexts.length <= triedPeer.length) {
               this.resetNetwork();
               EventSystem.unregister(triedPeer);
             }
           })
           .on('DISCONNECT_PEER', event => {
-            console.warn('接続失敗', event.data.peerId);
+            console.warn('접속 실패', event.data.peerId);
             triedPeer.push(event.data.peerId);
-            console.warn('接続失敗 ' + triedPeer.length + '/' + peerContexts.length);
+            console.warn('접속 실패 ' + triedPeer.length + '/' + peerContexts.length);
             if (peerContexts.length <= triedPeer.length) {
               this.resetNetwork();
               EventSystem.unregister(triedPeer);
@@ -139,6 +139,6 @@ export class LobbyComponent implements OnInit, OnDestroy {
   async showRoomSetting() {
     await this.modalService.open(RoomSettingComponent, { width: 700, height: 400, left: 0, top: 400 });
     this.reload();
-    this.help = '「一覧を更新」ボタンを押すと接続可能なルーム一覧を表示します。';
+    this.help = '「리스트를 갱신」버튼을 누르면 접속 가능한 방 리스트를 표시합니다.';
   }
 }
