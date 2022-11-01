@@ -20,7 +20,7 @@ import { PanelService } from 'service/panel.service';
 })
 export class GameCharacterGeneratorComponent implements OnInit, OnDestroy, AfterViewInit {
 
-  name: string = "ゲームキャラクター";
+  name: string = "게임 캐릭터";
   size: number = 1;
   xml: string = '';
 
@@ -36,7 +36,7 @@ export class GameCharacterGeneratorComponent implements OnInit, OnDestroy, After
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => this.panelService.title = 'キャラクタージェネレーター');
+    Promise.resolve().then(() => this.panelService.title = '캐릭터 제네레이터');
     EventSystem.register(this)
       .on('SELECT_FILE', event => {
         console.log('SELECT_FILE GameCharacterGeneratorComponent ' + event.data.fileIdentifier);
@@ -61,7 +61,7 @@ export class GameCharacterGeneratorComponent implements OnInit, OnDestroy, After
   createGameTableMask() {
     let viewTable = TableSelecter.instance.viewTable;
     if (!viewTable) return;
-    let tableMask = GameTableMask.create('マップマスク', 5, 5, 100);
+    let tableMask = GameTableMask.create('맵마스크', 5, 5, 100);
     viewTable.appendChild(tableMask);
   }
 
