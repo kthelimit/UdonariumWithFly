@@ -495,7 +495,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
     let position = this.pointerDeviceService.pointers[0];
     this.contextMenuService.open(position, [
       { 
-        name: this.isHideIn ? '位置を公開する' : '位置を自分だけ見る（ステルス）',
+        name: this.isHideIn ? '위치를 공개한다' : '위치를 자신만 본다(스텔스)',
         action: () => {
           if (this.isHideIn) {
             this.gameCharacter.owner = '';
@@ -503,9 +503,9 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
           } else {
             if (!GameCharacter.isStealthMode && !PeerCursor.myCursor.isGMMode) {
               this.modalService.open(ConfirmationComponent, {
-                title: 'ステルスモード', 
-                text: 'ステルスモードになります。',
-                help: '位置を自分だけ見ているキャラクターが1つ以上テーブル上にある間、あなたのカーソル位置は他の参加者に伝わりません。',
+                title: '스텔스모드', 
+                text: '스텔스모드가 됩니다.',
+                help: '위치를 자신만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
                 type: ConfirmationType.OK,
                 materialIcon: 'disabled_visible'
               });
@@ -519,7 +519,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
       },
       ContextMenuSeparator,
       (this.gameCharacter.imageFiles.length <= 1 ? null : {
-        name: '画像切り替え',
+        name: '이미지 변경',
         action: null,
         subActions: this.gameCharacter.imageFiles.map((image, i) => {
           return { 
@@ -533,83 +533,83 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
       (this.gameCharacter.imageFiles.length <= 1 ? null : ContextMenuSeparator),
       (this.isUseIconToOverviewImage
         ? {
-          name: '☑ オーバービューに顔ICを使用', action: () => {
+          name: '☑ 오버뷰에 얼굴 아이콘을 사용', action: () => {
             this.isUseIconToOverviewImage = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ オーバービューに顔ICを使用', action: () => {
+          name: '☐ 오버뷰에 얼굴 아이콘을 사용', action: () => {
             this.isUseIconToOverviewImage = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
       (this.gameCharacter.isShowChatBubble
         ? {
-          name: '☑ 💭の表示', action: () => {
+          name: '☑ 💭의 표시', action: () => {
             this.gameCharacter.isShowChatBubble = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ 💭の表示', action: () => {
+          name: '☐ 💭의 표시', action: () => {
             this.gameCharacter.isShowChatBubble = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
       (this.isDropShadow
         ? {
-          name: '☑ 影の表示', action: () => {
+          name: '☑ 그림자의 표시', action: () => {
             this.isDropShadow = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ 影の表示', action: () => {
+          name: '☐ 그림자의 표시', action: () => {
             this.isDropShadow = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
-      { name: '画像効果', action: null, subActions: [
+      { name: '이미지 효과', action: null, subActions: [
         (this.isInverse
           ? {
-            name: '☑ 反転', action: () => {
+            name: '☑ 반전', action: () => {
               this.isInverse = false;
               EventSystem.trigger('UPDATE_INVENTORY', null);
             }
           } : {
-            name: '☐ 反転', action: () => {
+            name: '☐ 반전', action: () => {
               this.isInverse = true;
               EventSystem.trigger('UPDATE_INVENTORY', null);
             }
           }),
         (this.isHollow
           ? {
-            name: '☑ ぼかし', action: () => {
+            name: '☑ 흐리게', action: () => {
               this.isHollow = false;
               EventSystem.trigger('UPDATE_INVENTORY', null);
             }
           } : {
-            name: '☐ ぼかし', action: () => {
+            name: '☐ 흐리게', action: () => {
               this.isHollow = true;
               EventSystem.trigger('UPDATE_INVENTORY', null);
             }
           }),
         (this.isBlackPaint
           ? {
-            name: '☑ 黒塗り', action: () => {
+            name: '☑ 검은칠', action: () => {
               this.isBlackPaint = false;
               EventSystem.trigger('UPDATE_INVENTORY', null);
             }
           } : {
-            name: '☐ 黒塗り', action: () => {
+            name: '☐ 검은칠', action: () => {
               this.isBlackPaint = true;
               EventSystem.trigger('UPDATE_INVENTORY', null);
             }
           }),
-          { name: 'オーラ', action: null, subActions: [{ name: `${this.aura == -1 ? '◉' : '○'} なし`, action: () => { this.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['ブラック', 'ブルー', 'グリーン', 'シアン', 'レッド', 'マゼンタ', 'イエロー', 'ホワイト'].map((color, i) => {  
+          { name: '오오라', action: null, subActions: [{ name: `${this.aura == -1 ? '◉' : '○'} 없음`, action: () => { this.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['블랙', '블루', '그린', '시안', '레드', '마젠타', '옐로', '화이트'].map((color, i) => {  
             return { name: `${this.aura == i ? '◉' : '○'} ${color}`, action: () => { this.aura = i; EventSystem.trigger('UPDATE_INVENTORY', null) } };
           })) },
           ContextMenuSeparator,
           {
-            name: 'リセット', action: () => {
+            name: '리셋', action: () => {
               this.isInverse = false;
               this.isHollow = false;
               this.isBlackPaint = false;
@@ -623,30 +623,30 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
       ContextMenuSeparator,
       (!this.isNotRide
         ? {
-          name: '☑ 他のキャラクターに乗る', action: () => {
+          name: '☑ 다른 캐릭터에 올린다', action: () => {
             this.isNotRide = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ 他のキャラクターに乗る', action: () => {
+          name: '☐ 다른 캐릭터에 올린다', action: () => {
             this.isNotRide = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
       (this.isAltitudeIndicate
         ? {
-          name: '☑ 高度の表示', action: () => {
+          name: '☑ 고도의 표시', action: () => {
             this.isAltitudeIndicate = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ 高度の表示', action: () => {
+          name: '☐ 고도의 표시', action: () => {
             this.isAltitudeIndicate = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
       {
-        name: '高度を0にする', action: () => {
+        name: '고도를 0으로 한다', action: () => {
           if (this.altitude != 0) {
             this.altitude = 0;
             if (!this.isHideIn) SoundEffect.play(PresetSound.sweep);
@@ -655,12 +655,12 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
         altitudeHande: this.gameCharacter
       },
       ContextMenuSeparator,
-      { name: '詳細を表示', action: () => { this.showDetail(this.gameCharacter); } },
-      { name: 'チャットパレットを表示', action: () => { this.showChatPalette(this.gameCharacter) } },
-      { name: 'スタンド設定', action: () => { this.showStandSetting(this.gameCharacter) } },
+      { name: '상세를 표시', action: () => { this.showDetail(this.gameCharacter); } },
+      { name: '채팅 팔레트를 표시', action: () => { this.showChatPalette(this.gameCharacter) } },
+      { name: '스탠딩 설정', action: () => { this.showStandSetting(this.gameCharacter) } },
       ContextMenuSeparator,
       {
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.gameCharacter.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -673,7 +673,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         }),
@@ -682,33 +682,33 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
       ContextMenuSeparator,
       (this.gameCharacter.isInventoryIndicate
         ? {
-          name: '☑ テーブルインベントリに表示', action: () => {
+          name: '☑ 테이블 인벤토리에 표시', action: () => {
             this.gameCharacter.isInventoryIndicate = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         } : {
-          name: '☐ テーブルインベントリに表示', action: () => {
+          name: '☐ 테이블 인벤토리에 표시', action: () => {
             this.gameCharacter.isInventoryIndicate = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
           }
         }),
-      { name: 'テーブルから移動', action: null, subActions: [
+      { name: '테이블로부터 이동', action: null, subActions: [
         {
-          name: '共有インベントリ', action: () => {
+          name: '공유 인벤토리', action: () => {
             EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: this.gameCharacter.identifier });
             this.gameCharacter.setLocation('common');
             SoundEffect.play(PresetSound.piecePut);
           }
         },
         {
-          name: '個人インベントリ', action: () => {
+          name: '개인 인벤토리', action: () => {
             EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: this.gameCharacter.identifier });
             this.gameCharacter.setLocation(Network.peerId);
             SoundEffect.play(PresetSound.piecePut);
           }
         },
         {
-          name: '墓場', action: () => {
+          name: '묘지', action: () => {
             EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: this.gameCharacter.identifier });
             this.gameCharacter.setLocation('graveyard');
             SoundEffect.play(PresetSound.sweep);
@@ -717,7 +717,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
       ]},
       ContextMenuSeparator,
       {
-        name: 'コピーを作る', action: () => {
+        name: '사본을 작성', action: () => {
           let cloneObject = this.gameCharacter.clone();
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
@@ -726,7 +726,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
         }
       },
       {
-        name: 'コピーを作る（自動採番）', action: () => {
+        name: '사본을 작성(자동번호생성)', action: () => {
           const cloneObject = this.gameCharacter.clone();
           const tmp = cloneObject.name.split('_');
           let baseName;
@@ -750,7 +750,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
       },
       ContextMenuSeparator,
       {
-        name: '削除する（墓場へ移動）', action: () => {
+        name: '삭제(묘지에 이동)', action: () => {
           EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: this.gameCharacter.identifier });
           this.gameCharacter.setLocation('graveyard');
           SoundEffect.play(PresetSound.sweep);
@@ -785,7 +785,7 @@ export class GameCharacterComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private showDetail(gameObject: GameCharacter) {
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'キャラクターシート';
+    let title = '캐릭터 시트';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x - 400, top: coordinate.y - 300, width: 800, height: 600 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
