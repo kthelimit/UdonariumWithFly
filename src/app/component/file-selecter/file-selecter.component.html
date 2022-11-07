@@ -21,12 +21,12 @@
   </span>
   <span style="white-space: nowrap">
     <select [(ngModel)]="serchCondIsOr" style="margin-left: 3px">
-      <option value="true">いずれか (OR)</option>
-      <option value="">すべて (AND)</option>
+      <option value="true">아무거나 만족(OR)</option>
+      <option value="">전부 만족(AND)</option>
     </select>
     <label sytle="white-space: nowrap" title="최근 사용한 태그의 이미지를 앞으로">
       <input name="is-sort" value="Sort" type="checkbox" [(ngModel)]="isSort" checked="{{isSort ? 'checked' : ''}}" (change)="isSort = (isSort ? true : false)">
-      <b style="font-size: smaller; margin-right: 3px">ソート</b>
+      <b style="font-size: smaller; margin-right: 3px">정렬</b>
     </label>
   </span>
 </div>
