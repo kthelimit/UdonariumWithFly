@@ -155,7 +155,7 @@ export class TabletopActionService {
     if (suit == 'x') {
       ret += `（${(number == 1) ? '빨강' : '검정' }）`;
     } else {
-      ret += `の${number == 1 ? '에이스' : number >= 11 ? jqk[number - 11] : number }`
+      ret += `의 ${number == 1 ? '에이스' : number >= 11 ? jqk[number - 11] : number }`
     }
     return ret;
   }
