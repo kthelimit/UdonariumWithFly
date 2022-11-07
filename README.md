@@ -5,7 +5,7 @@ NANASUNANA님의 개조판 유드나리움 : [원본주소](https://github.com/N
 빌드해둔 한국어버전 파일
 [UdonariumWithFly 1.7.5f](https://github.com/kthelimit/UdonariumWithFly/blob/main/udonariumWithFly1.7.5f.zip)
 
-
+[테스트 가능한 링크](http://nght0114.dothome.co.kr/udonarium2/index.html)
 
 **↓↓↓↓　以下、ユドナリウムwithFlyより　↓↓↓↓**  
 [ユドナリウム（Udonarium）](https://github.com/TK11235/udonarium)の私家改造版、高度とかチャットテキストの色とか立ち絵（ユドナリウムだとキャラクターの画像と紛らわしいのでスタンドと呼称）とか。
