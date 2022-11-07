@@ -34,7 +34,7 @@
   <span style="white-space: nowrap">
     <select [(ngModel)]="serchCondIsOr" style="margin-left: 3px">
       <option value="true">아무거나 만족(OR)</option>
-      <option value="">전부(AND)</option>
+      <option value="">전부 만족(AND)</option>
     </select>
     <label sytle="white-space: nowrap" title="최근 사용한 태그의 이미지를 앞으로">
       <input name="is-sort" value="Sort" type="checkbox" [(ngModel)]="isSort" checked="{{isSort ? 'checked' : ''}}" (change)="isSort = (isSort ? true : false)">
