@@ -1,5 +1,11 @@
 NANASUNANA님의 개조판 유드나리움 : [원본주소](https://github.com/NanasuNANA/UdonariumWithFly)   
 한국어로 번역해보려고 포크해둠... 일단 빼먹은 부분이 있는게 아니라면 어느 정도 번역 다 한 거 같음.
+코인의 이미지가 자동으로 연결되지 않는 부분만 빼면 나머지는 완료... 코인을 사용하는 경우 생성후 이미지를 수동으로 변경 부탁드리겠습니다.
+
+빌드해둔 한국어버전 파일
+[UdonariumWithFly 1.7.5f](https://github.com/kthelimit/UdonariumWithFly/blob/main/udonariumWithFly1.7.5f.zip)
+
+
 
 **↓↓↓↓　以下、ユドナリウムwithFlyより　↓↓↓↓**  
 [ユドナリウム（Udonarium）](https://github.com/TK11235/udonarium)の私家改造版、高度とかチャットテキストの色とか立ち絵（ユドナリウムだとキャラクターの画像と紛らわしいのでスタンドと呼称）とか。
