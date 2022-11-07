@@ -40,12 +40,12 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
   @Input() compact: boolean = false;
   
   sampleMessages: ChatMessageContext[] = [
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: 'チュートリアル', text: '서버를 사용하지 않는 TRPG 온라인세션 툴입니다. 참가자끼리 접속해 게임말이나 이미지 등을 동기화합니다.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: 'チュートリアル', text: '모든 데이터가 각 참가자의 브라우저 내에 있기 때문에 방의 상태를 다음에도 가져가고 싶은 경우에는 반드시 「저장」을 실행해 세이브 데이터(zip)를 생성해 주세요. 저장한 zip의 불러오기는 브라우저 화면에 파일을 드롭하는 것으로 실시합니다.' },
+    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '서버를 사용하지 않는 TRPG 온라인세션 툴입니다. 참가자끼리 접속해 게임말이나 이미지 등을 동기화합니다.' },
+    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '모든 데이터가 각 참가자의 브라우저 내에 있기 때문에 방의 상태를 다음에도 가져가고 싶은 경우에는 반드시 「저장」을 실행해 세이브 데이터(zip)를 생성해 주세요. 저장한 zip의 불러오기는 브라우저 화면에 파일을 드롭하는 것으로 실시합니다.' },
     { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', toColor: '#444444', tag: 'mine direct', name: '튜토리얼', toName: '플레이어' ,text: '다이렉트 메세지(비밀대화)는 세이브 데이터에 기록되지 않습니다.' },
     { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', toColor: '#444444', tag: 'mine direct', name: '튜토리얼', toName: '플레이어', text: '또, 과거의 다이렉트 메세지는 당신의 ID가 갱신되면 같은 방에 있어도 보이지 않게 됩니다. 주의해주세요.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: 'チュートリアル', text: '동작 권장 환경은 데스크탑 Chrome입니다. 현재는 스마트폰으로 잘 조작할 수 없습니다.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: 'チュートリアル', text: '튜토리얼은 이상입니다. 이 튜토리얼은 최초의 채팅을 입력하면 사라집니다.' },
+    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '동작 권장 환경은 데스크탑 Chrome입니다. 현재는 스마트폰으로 잘 조작할 수 없습니다.' },
+    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '튜토리얼은 이상입니다. 이 튜토리얼은 최초의 채팅을 입력하면 사라집니다.' },
   ];
 
   private topTimestamp = 0;
