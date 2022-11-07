@@ -112,28 +112,28 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
         if (this.tabletopObject && this.tabletopObject.identifier === event.data.identifier) {
           switch (this.tabletopObject.aliasName) {
             case 'terrain':
-              this.panelService.title = `地形設定 - ${this.tableTopObjectName}`;
+              this.panelService.title = `지형 설정 - ${this.tableTopObjectName}`;
               break;
             case 'card':
               const card = this.tabletopObject;
               if (card instanceof Card) { 
-                this.panelService.title = `カード設定 - ${card.isFront ? this.tableTopObjectName : 'カード（裏面）'}`;
+                this.panelService.title = `카드 설정 - ${card.isFront ? this.tableTopObjectName : '카드(뒷면)'}`;
               } 
               break;
             case 'card-stack':
-              this.panelService.title = `山札設定 - ${this.tableTopObjectName}`;
+              this.panelService.title = `카드 더미 설정 - ${this.tableTopObjectName}`;
               break;
             case 'table-mask':
-              this.panelService.title = `マップマスク設定 - ${this.tableTopObjectName}`;
+              this.panelService.title = `맵마스크 설정 - ${this.tableTopObjectName}`;
               break;
             case 'text-note':
-              this.panelService.title = `共有メモ設定 - ${this.tableTopObjectName}`;
+              this.panelService.title = `공유메모 설정 - ${this.tableTopObjectName}`;
               break;
             case 'dice-symbol':
-              this.panelService.title = `ダイスシンボル設定 - ${this.tableTopObjectName}`;
+              this.panelService.title = `다이스심볼 설정 - ${this.tableTopObjectName}`;
               break;
             case 'character':
-              this.panelService.title = `キャラクターシート - ${this.tableTopObjectName}`;
+              this.panelService.title = `캐릭터시트 - ${this.tableTopObjectName}`;
               break;
           }  
         }
@@ -153,8 +153,8 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
 
   addDataElement() {
     if (this.tabletopObject.detailDataElement) {
-      let title = DataElement.create('見出し', '', {});
-      let tag = DataElement.create('タグ', '', {});
+      let title = DataElement.create('색인', '', {});
+      let tag = DataElement.create('태그', '', {});
       title.appendChild(tag);
       this.tabletopObject.detailDataElement.appendChild(title);
     }
