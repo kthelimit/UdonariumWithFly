@@ -110,7 +110,7 @@ export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit() {
-    Promise.resolve().then(() => this.modalService.title = this.panelService.title = 'ファイル一覧');
+    Promise.resolve().then(() => this.modalService.title = this.panelService.title = '파일 리스트');
     this.searchWords = this.allImagesOwnWords;
     //FileStorageComponent.sortOrder = [null].concat(this.searchWords);
     // 非表示も含めた数
@@ -206,9 +206,9 @@ export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '非表示設定の画像を表示', 
-        text: '非表示設定の画像を表示しますか？',
-        help: 'ネタバレなどにご注意ください。',
+        title: '숨김 설정의 이미지를 표시', 
+        text: '숨김 설정의 이미지를 표시합니까?',
+        help: '스포일러 등에 주의해주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
