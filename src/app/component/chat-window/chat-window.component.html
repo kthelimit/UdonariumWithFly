@@ -12,7 +12,7 @@
         <div><span [style.cursor]="chatTabidentifier != chatTab.identifier ? 'pointer' : ''" [style.color]="chatTab.name == '' && chatTabidentifier != chatTab.identifier ? 'gray' : ''">{{chatTab.name == '' ? '(이름없는 탭)' : chatTab.name}}</span><i *ngIf="chatTab.isUseStandImage" class="material-icons small-font">how_to_reg</i><i *ngIf="chatTab.recieveOperationLogLevel > 0" class="material-icons small-font">history_edu</i><badge *ngIf="chatTab.hasUnread" class="badge" [count]="chatTab.unreadLength"></badge></div>
       </label>
       <button class="tab-setting small-font" (click)="showTabSetting()"><i class="material-icons small-font">settings</i>탭 설정</button>
-      <button class="tab-setting small-font" (click)="showLogOutput()"><i class="material-icons small-font">history_edu</i>ログ</button>
+      <button class="tab-setting small-font" (click)="showLogOutput()"><i class="material-icons small-font">history_edu</i>로그</button>
       <label class="small-font" style="float: right; padding: 1px 4px 1px 2px; margin-left: 2px; height: 24px; box-sizing: border-box"><input name="isCompact" type="checkbox" [(ngModel)]="isCompact" [value]="true" [checked]="isCompact" ><b>간이표시<sup style="color: red">*</sup></b></label>
     </div>
   </form>
