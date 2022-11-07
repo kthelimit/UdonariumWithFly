@@ -217,7 +217,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
         if (this.owner && !this.isLock) {
           this.owner = '';
           SoundEffect.play(PresetSound.unlock);
-          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(無名の' + (this.isCoin ? 'コイン' : 'ダイス') + ')' : this.diceSymbol.name} の${this.isCoin ? '表／裏' : '目'}を公開 → ${this.face}`);
+          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름없는' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name} 의 ${this.isCoin ? '앞／뒤를' : '눈을'} 공개 → ${this.face}`);
         }
       })
       .on<object>('TABLE_VIEW_ROTATE', -1000, event => {
@@ -319,7 +319,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
 
     //if (this.isVisible) {
       actions.push({
-        name: this.isCoin ? 'コイントス' : 'ダイスを振る', action: () => {
+        name: this.isCoin ? '코인 토스' : '다이스를 굴린다', action: () => {
           this.diceRoll();
         },
         disabled: !this.isVisible,
@@ -329,31 +329,31 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
     actions.push(ContextMenuSeparator);
     if (this.isMine || this.hasOwner) {
       actions.push({
-        name: `${this.isCoin ? 'コイン' : 'ダイス'}を公開`, action: () => {
+        name: `${this.isCoin ? '코인을' : '다이스를'} 공개`, action: () => {
           this.owner = '';
           SoundEffect.play(PresetSound.unlock);
-          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(無名の' + (this.isCoin ? 'コイン' : 'ダイス') + ')' : this.diceSymbol.name} の${this.isCoin ? '表／裏' : '目'}を公開 → ${this.face}`);
+          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름없는' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name} 의 ${this.isCoin ? '앞／뒤를' : '눈을'} 공개 → ${this.face}`);
         }
       });
     }
     if (!this.isMine) {
       actions.push({
-        name: '自分だけ見る', action: () => {
+        name: '자신만 본다', action: () => {
           this.owner = Network.peerContext.userId;
-          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(無名の' + (this.isCoin ? 'コイン' : 'ダイス') + ')' : this.diceSymbol.name} を自分だけ見た`);
+          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름없는' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name} 을/ 자신만 봤다`);
           SoundEffect.play(PresetSound.lock);
         }
       });
     }
     actions.push((this.isLock
       ? {
-        name: '☑ 一斉公開しない', action: () => {
+        name: '☑ 함께 공개하지 않는다', action: () => {
           this.isLock = false;
           SoundEffect.play(PresetSound.unlock);
         },
         disabled: this.hasOwner && !this.isVisible
       } : {
-        name: '☐ 一斉公開しない', action: () => {
+        name: '☐ 함께 공개하지 않는다', action: () => {
           this.isLock = true;
           SoundEffect.play(PresetSound.lock);
         },
@@ -377,32 +377,32 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
         subActions.push({
           name: `${this.face == face ? '◉' : '○'} ${face}　`, action: () => {
             if (this.owner === '') SoundEffect.play(PresetSound.dicePut);
-            if (this.owner === '' && this.face != face) this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(無名の' + (this.isCoin ? 'コイン' : 'ダイス') + ')' : this.diceSymbol.name} の${this.isCoin ? '表／裏' : '目'}を変更 → ${face}`);
+            if (this.owner === '' && this.face != face) this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름없는' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name} 의 ${this.isCoin ? '앞／뒤를' : '눈을'} 변경 → ${face}`);
             this.face = face;
           }
         });
       });
-      actions.push({ name: this.isCoin ? '表／裏' : 'ダイス目', action: null, subActions: subActions });
+      actions.push({ name: this.isCoin ? '앞／뒤' : '다이스눈', action: null, subActions: subActions });
     }
 
     actions.push(ContextMenuSeparator);
 
     actions.push((this.isDropShadow
       ? {
-        name: '☑ 影の表示', action: () => {
+        name: '☑ 그림자의 표시', action: () => {
           this.isDropShadow = false;
         }
       } : {
-        name: '☐ 影の表示', action: () => {
+        name: '☐ 그림자의 표시', action: () => {
           this.isDropShadow = true;
         }
       }));
 
     actions.push(ContextMenuSeparator);
-    actions.push({ name: '詳細を表示', action: () => { this.showDetail(this.diceSymbol); } });
+    actions.push({ name: '상세를 표시', action: () => { this.showDetail(this.diceSymbol); } });
     if (this.diceSymbol.getUrls().length > 0) {
       actions.push({
-        name: '参照URLを開く', action: null,
+        name: '참조URL을 연다', action: null,
         subActions: this.diceSymbol.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -415,7 +415,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URLが不正です' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다.' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         }),
@@ -423,7 +423,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
       actions.push(ContextMenuSeparator);
     }
     actions.push({
-      name: 'コピーを作る', action: () => {
+      name: '사본을 작성', action: () => {
         let cloneObject = this.diceSymbol.clone();
         cloneObject.location.x += this.gridSize;
         cloneObject.location.y += this.gridSize;
@@ -432,7 +432,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
     actions.push({
-      name: '削除する', action: () => {
+      name: '삭제', action: () => {
         this.diceSymbol.destroy();
         SoundEffect.play(PresetSound.sweep);
       }
@@ -458,7 +458,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     //}
     let face = this.diceSymbol.diceRoll();
-    let message = `${this.diceSymbol.name == '' ? '(無名の' + (this.isCoin ? 'コイン' : 'ダイス') + ')' : this.diceSymbol.name} を${this.isCoin ? 'トスした' : '振った'}`;
+    let message = `${this.diceSymbol.name == '' ? '(이름없는' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name}을/ ${this.isCoin ? '토스했다' : '굴렸다'}`;
     if (this.owner === '') message += ` → ${face}`;
     this.chatMessageService.sendOperationLog(message);
     return face;
@@ -467,7 +467,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
   showDetail(gameObject: DiceSymbol) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'ダイスシンボル設定';
+    let title = '다이스심볼 설정';
     if (gameObject.name.length) title += ' - ' + gameObject.name;
     let option: PanelOption = { title: title, left: coordinate.x - 300, top: coordinate.y - 300, width: 600, height: 490 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
