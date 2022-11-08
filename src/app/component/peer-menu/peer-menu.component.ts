@@ -229,7 +229,7 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
             PeerCursor.isGMHold = false;
             this.isGMMode = false;
             (<HTMLInputElement>$event.target).checked = false;
-            this.chatMessageService.sendOperationLog('GM모드를 제');
+            this.chatMessageService.sendOperationLog('GM모드를 해제');
             EventSystem.trigger('CHANGE_GM_MODE', null);
             //this.changeDetector.markForCheck();
             if (GameCharacter.isStealthMode) {
