@@ -263,7 +263,7 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
           this.modalService.open(ConfirmationComponent, {
             title: 'GM모드가 된다', 
             text: '아직 GM모드가 아닙니다.',
-            helpHtml: 'GM모드가 되기 위해서는 채팅으로부터 <b>GM이 된다</b> 또는 <b>GM이 됩니다</b> 를 포함한 문장을 보내주세요.',
+            helpHtml: 'GM모드가 되기 위해서는 채팅으로부터 <b>GM모드가 된다</b> 또는 <b>GM모드가 됩니다</b> 를 포함한 문장을 보내주세요.',
             type: ConfirmationType.OK,
             materialIcon: 'person_add'
           });
