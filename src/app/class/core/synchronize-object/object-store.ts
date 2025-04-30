@@ -22,7 +22,7 @@ export class ObjectStore {
 
   private queueMap: Map<ObjectIdentifier, ObjectContext> = new Map();
   private updateInterval: number = null;
-  private garbageCollectionInterval: NodeJS.Timer = null;
+  private garbageCollectionInterval: NodeJS.Timeout = null;
   private updateCallback = () => { this.updateQueue(); }
 
   private constructor() { console.log('ObjectStore ready...'); };
@@ -65,7 +65,7 @@ export class ObjectStore {
 
   private _delete(object: GameObject, shouldBroadcast: boolean): GameObject {
     if (this.remove(object) === null) return null;
-    if (shouldBroadcast) EventSystem.call('DELETE_GAME_OBJECT', { identifier: object.identifier });
+    if (shouldBroadcast) EventSystem.call('DELETE_GAME_OBJECT', { aliasName: object.aliasName, identifier: object.identifier });
 
     return object;
   }

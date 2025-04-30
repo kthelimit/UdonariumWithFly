@@ -1,4 +1,4 @@
-import { animate, keyframes, state, style, transition, trigger } from '@angular/animations';
+import { animate, keyframes, style, transition, trigger } from '@angular/animations';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -8,30 +8,32 @@ import {
   HostListener,
   Input,
   NgZone,
-  OnDestroy,
-  OnInit,
+  OnChanges,
+  OnDestroy
 } from '@angular/core';
 import { Card } from '@udonarium/card';
 import { CardStack } from '@udonarium/card-stack';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
-import { ObjectNode } from '@udonarium/core/synchronize-object/object-node';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
+import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { CardStackListComponent } from 'component/card-stack-list/card-stack-list.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { OpenUrlComponent } from 'component/open-url/open-url.component';
-import { InputHandler } from 'directive/input-handler';
+import { ObjectInteractGesture } from 'component/game-table/object-interact-gesture';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
-import { ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
+import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
 import { ImageService } from 'service/image.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { ModalService } from 'service/modal.service';
 import { ChatMessageService } from 'service/chat-message.service';
+import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
+import { ObjectNode } from '@udonarium/core/synchronize-object/object-node';
 
 @Component({
   selector: 'card-stack',
@@ -40,7 +42,6 @@ import { ChatMessageService } from 'service/chat-message.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('shuffle', [
-      state('active', style({ transform: '' })),
       transition('* => active', [
         animate('800ms ease', keyframes([
           style({ transform: 'scale3d(0, 0, 0) rotateZ(0deg)', offset: 0 }),
@@ -76,7 +77,7 @@ import { ChatMessageService } from 'service/chat-message.service';
     ]),
   ]
 })
-export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() cardStack: CardStack = null;
   @Input() is3D: boolean = false;
 
@@ -89,19 +90,24 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   get isEmpty(): boolean { return this.cardStack.isEmpty; }
   get size(): number {
     let card = this.cardStack.topCard;
-    return (card ? card.size : 2);
+    return card ? MathUtil.clampMin(card.size) : 2;
   }
 
   get hasOwner(): boolean { return this.cardStack.hasOwner; }
+  get ownerIsOnline(): boolean { return this.cardStack.ownerIsOnline; }
   get ownerName(): string { return this.cardStack.ownerName; }
   get ownerColor(): string { return this.cardStack.ownerColor; }
 
   get topCard(): Card { return this.cardStack.topCard; }
   get imageFile(): ImageFile { return this.imageService.getSkeletonOr(this.cardStack.imageFile); }
 
+  get selectionState(): SelectionState { return this.selectionService.state(this.cardStack); }
+  get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
+  get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
+
   animeState: string = 'inactive';
 
-  private iconHiddenTimer: NodeJS.Timer = null;
+  private iconHiddenTimer: NodeJS.Timeout = null;
   get isIconHidden(): boolean { return this.iconHiddenTimer != null };
 
   get rubiedText(): string { return StringUtil.rubyToHtml(StringUtil.escapeHtml(this.topCard.text)) }
@@ -120,11 +126,8 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     const rotate = Math.abs(this.viewRotateZ + this.rotate) % 360;
     return 90 < rotate && rotate < 270
   }
-  
-  private doubleClickTimer: NodeJS.Timer = null;
-  private doubleClickPoint = { x: 0, y: 0 };
 
-  private input: InputHandler = null;
+  private interactGesture: ObjectInteractGesture = null;
 
   constructor(
     private ngZone: NgZone,
@@ -132,27 +135,29 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     private panelService: PanelService,
     private elementRef: ElementRef<HTMLElement>,
     private changeDetector: ChangeDetectorRef,
+    private selectionService: TabletopSelectionService,
     private imageService: ImageService,
     private pointerDeviceService: PointerDeviceService,
     private modalService: ModalService,
     private chatMessageService: ChatMessageService
   ) { }
 
-  ngOnInit() {
+  ngOnChanges(): void {
+    EventSystem.unregister(this);
     EventSystem.register(this)
-      .on('SHUFFLE_CARD_STACK', -1000, event => {
+      .on('SHUFFLE_CARD_STACK', event => {
         if (event.data.identifier === this.cardStack.identifier) {
           this.animeState = 'active';
           this.changeDetector.markForCheck();
         }
       })
-      .on('INVERSE_CARD_STACK', -1000, event => {
+      .on('INVERSE_CARD_STACK', event => {
         if (event.data.identifier === this.cardStack.identifier) {
           this.animeState = 'inverse';
           this.changeDetector.markForCheck();
         }
       })
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
+      .on('UPDATE_GAME_OBJECT', event => {
         let object = ObjectStore.instance.get(event.data.identifier);
         if (!this.cardStack || !object) return;
         if ((this.cardStack === object)
@@ -170,10 +175,25 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       .on('CARD_STACK_DECREASED', event => {
         if (event.data.cardStackIdentifier === this.cardStack.identifier && this.cardStack) this.changeDetector.markForCheck();
       })
+      .on(`UPDATE_GAME_OBJECT/aliasName/${PeerCursor.aliasName}`, event => {
+        let object = ObjectStore.instance.get<PeerCursor>(event.data.identifier);
+        if (this.cardStack && object && object.userId === this.cardStack.owner) {
+          this.changeDetector.markForCheck();
+        }
+      })
+      .on(`UPDATE_GAME_OBJECT/identifier/${this.cardStack?.identifier}`, event => {
+        this.changeDetector.markForCheck();
+      })
+      .on(`UPDATE_OBJECT_CHILDREN/identifier/${this.cardStack?.identifier}`, event => {
+        this.changeDetector.markForCheck();
+      })
       .on('SYNCHRONIZE_FILE_LIST', event => {
         this.changeDetector.markForCheck();
       })
-      .on('UPDATE_FILE_RESOURE', -1000, event => {
+      .on('UPDATE_FILE_RESOURE', event => {
+        this.changeDetector.markForCheck();
+      })
+      .on(`UPDATE_SELECTION/identifier/${this.cardStack?.identifier}`, event => {
         this.changeDetector.markForCheck();
       })
       .on('DISCONNECT_PEER', event => {
@@ -192,13 +212,15 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     this.ngZone.runOutsideAngular(() => {
-      this.input = new InputHandler(this.elementRef.nativeElement);
+      this.interactGesture = new ObjectInteractGesture(this.elementRef.nativeElement);
     });
-    this.input.onStart = e => this.ngZone.run(() => this.onInputStart(e));
+
+    this.interactGesture.onstart = this.onInputStart.bind(this);
+    this.interactGesture.oninteract = this.onDoubleClick.bind(this);
   }
 
   ngOnDestroy() {
-    this.input.destroy();
+    this.interactGesture.destroy();
     EventSystem.unregister(this);
   }
 
@@ -221,60 +243,36 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (e.detail instanceof Card) {
       let card: Card = e.detail;
-      let distance: number = (card.location.x - this.cardStack.location.x) ** 2 + (card.location.y - this.cardStack.location.y) ** 2 + (card.posZ - this.cardStack.posZ) ** 2;
+      let distance: number = this.cardStack.calcSqrDistance(card);
       if (distance < 50 ** 2) {
-        this.chatMessageService.sendOperationLog(`${card.isFront ? (card.name == '' ? '(이름없는 카드)' : card.name) : '엎어둔 카드'} 를 ${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 에 올렸다`);
+        this.chatMessageService.sendOperationLog(`${card.isFront ? (card.name == '' ? '(이름 없는 카드)' : card.name) : '엎어둔 카드'}를 ${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}에 올렸다.`);
         this.cardStack.putOnTop(card);
       }
     } else if (e.detail instanceof CardStack) {
       let cardStack: CardStack = e.detail;
-      let distance: number = (cardStack.location.x - this.cardStack.location.x) ** 2 + (cardStack.location.y - this.cardStack.location.y) ** 2 + (cardStack.posZ - this.cardStack.posZ) ** 2;
+      let distance: number = this.cardStack.calcSqrDistance(cardStack);
       if (distance < 25 ** 2) {
-        this.chatMessageService.sendOperationLog(`${cardStack.name == '' ? '(이름없는 카드 더미)' : cardStack.name} 를 전부 ${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 에 올렸다`);
+        this.chatMessageService.sendOperationLog(`${cardStack.name == '' ? '(이름 없는 카드 더미)' : cardStack.name} 를 전부 ${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}에 올렸다.`);
         this.concatStack(cardStack);
       }
     }
   }
 
-  startDoubleClickTimer(e) {
-    if (!this.doubleClickTimer) {
-      this.stopDoubleClickTimer();
-      this.doubleClickTimer = setTimeout(() => this.stopDoubleClickTimer(), e.touches ? 500 : 300);
-      this.doubleClickPoint = this.input.pointer;
-      return;
-    }
-
-    if (e.touches) {
-      this.input.onEnd = this.onDoubleClick.bind(this);
-    } else {
-      this.onDoubleClick();
-    }
-  }
-
-  stopDoubleClickTimer() {
-    clearTimeout(this.doubleClickTimer);
-    this.doubleClickTimer = null;
-    this.input.onEnd = null;
-  }
-
   onDoubleClick() {
-    this.stopDoubleClickTimer();
-    let distance = (this.doubleClickPoint.x - this.input.pointer.x) ** 2 + (this.doubleClickPoint.y - this.input.pointer.y) ** 2;
-    if (distance < 10 ** 2) {
-      console.log('onDoubleClick !!!!');
-
+    this.ngZone.run(() => {
+      //if (this.drawCard() != null) SoundEffect.play(PresetSound.cardDraw);
       const card = this.drawCard();
       if (card) {
         SoundEffect.play(PresetSound.cardDraw);
         let text: string;
         if (card.isFront) {
-          text = `${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 ${card.name == '' ? '(이름없는 카드)' : card.name} 를 뽑았다`
+          text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다.`
         } else {
-          text = `${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아서 엎었다`
+          text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아 엎어두었다`
         }
         this.chatMessageService.sendOperationLog(text);
       }
-    }
+    });
   }
 
   @HostListener('dragstart', ['$event'])
@@ -284,16 +282,18 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onInputStart(e: MouseEvent | TouchEvent) {
-    this.startDoubleClickTimer(e);
-    this.cardStack.toTopmost();
-    this.startIconHiddenTimer();
-
-    // TODO:もっと良い方法考える
+    // TODO:좀 더 좋은 방법 생각해봄
     if (this.isLocked) {
+      this.cardStack.toTopmost();
       EventSystem.trigger('DRAG_LOCKED_OBJECT', {});
+      return;
     }
 
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: this.cardStack.identifier, className: 'GameCharacter' });
+    this.ngZone.run(() => {
+      this.cardStack.toTopmost();
+      this.startIconHiddenTimer();
+    });
   }
 
   @HostListener('contextmenu', ['$event'])
@@ -303,219 +303,16 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return;
     let position = this.pointerDeviceService.pointers[0];
-    this.contextMenuService.open(position, [
-      (this.isLocked
-        ? {
-          name: '☑ 고정', action: () => {
-            this.isLocked = false;
-            SoundEffect.play(PresetSound.unlock);
-          }
-        } : {
-          name: '☐ 고정', action: () => {
-            this.isLocked = true;
-            SoundEffect.play(PresetSound.lock);
-          }
-        }),
-      ContextMenuSeparator,
-      {
-        name: '카드를 １장 뽑는다', action: () => {
-          const card = this.drawCard();
-          if (card) {
-            SoundEffect.play(PresetSound.cardDraw);
-            let text: string;
-            if (card.isFront) {
-              text = `${this.cardStack.name} 로부터 ${card.name == '' ? '(이름없는 카드)' : card.name} 를 뽑았다`
-            } else {
-              text = `${this.cardStack.name} 로부터 1장 뽑아서 엎었다`
-            }
-            this.chatMessageService.sendOperationLog(text);
-          }
-        },
-        default: this.cards.length > 0,
-        disabled: this.cards.length == 0
-      },
-      {
-        name: '카드를 뽑는다', action: null,
-        subActions: [2, 3, 4, 5, 10].map(n => {
-          return {
-            name: `${n}장`,
-            action: () => {
-              const cards: Card[] = [];
-              for (let i = 0; i < n; i++) {
-                const card = this.drawCard();
-                if (card) {
-                  cards.push(card);
-                  if (i == 0 || i == 3 || i == 9) SoundEffect.play(PresetSound.cardDraw);
-                }
-              }
-              if (cards.length > 0) {
-                const frontCards = cards.filter(card => card.isFront);
-                if (frontCards.length == 0) {
-                  this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 ${cards.length}장 뽑아서 엎었다`);
-                } else {
-                  const counter = new Map();
-                  for (const card of frontCards) {
-                    let count = counter.get(card.name) || 0;
-                    count += 1;
-                    counter.set(card.name == '' ? '(이름없는 카드)' : card.name, count);
-                  }
-                  let text = `${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 ${[...counter.keys()].map(key => `${key} 를 ${counter.get(key)}장`).join('、')}`;
-                  if (frontCards.length === cards.length) {
-                    text += '뽑았다'
-                  } else {
-                    text += `뽑고, ${cards.length - frontCards.length}장 뽑아서 엎었다`;
-                  }
-                  this.chatMessageService.sendOperationLog(text);
-                }
-              }
-            }
-          };
-        }),
-        disabled: this.cards.length == 0
-      },
-      ContextMenuSeparator,
-      (this.cards.length == 0 || !this.cardStack.topCard.isFront ? {
-        name: '가장 위를 앞면으로 한다', action: () => {
-          if (!this.cardStack.topCard) return;
-          if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 의 가장 위에 있는 ${this.cardStack.topCard.name == '' ? '(이름없는 카드)' : this.cardStack.topCard.name} 를 공개했다`);
-          this.cardStack.faceUp();
-          SoundEffect.play(PresetSound.cardDraw);
-        }, 
-        disabled: this.cards.length == 0        
-      } : {
-        name: '가장 위를 뒷면으로 한다', action: () => {
-          this.cardStack.faceDown();
-          SoundEffect.play(PresetSound.cardDraw);
-        }, 
-        disabled: this.cards.length == 0
-      }),
-      ContextMenuSeparator,
-      {
-        name: '전부 앞면으로 한다', action: () => {
-          //if (!this.cardStack.topCard) return;
-          //if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name} 를 전부 앞면으로 하고, 가장 위의 ${this.cardStack.topCard.name} 를 공개했다`);
-          this.cardStack.faceUpAll();
-          SoundEffect.play(PresetSound.cardDraw);
-        }, 
-        disabled: this.cards.length == 0
-      },
-      {
-        name: '전부 뒷면으로 한다', action: () => {
-          this.cardStack.faceDownAll();
-          SoundEffect.play(PresetSound.cardDraw);
-        }, 
-        disabled: this.cards.length == 0
-      },
-      {
-        name: '전부 정방향으로 한다', action: () => {
-          this.cardStack.uprightAll();
-          SoundEffect.play(PresetSound.cardDraw);
-        }, 
-        disabled: this.cards.length == 0
-      },
-      ContextMenuSeparator,
-      {
-        name: '섞는다', action: () => {
-          this.cardStack.shuffle();
-          SoundEffect.play(PresetSound.cardShuffle);
-          EventSystem.call('SHUFFLE_CARD_STACK', { identifier: this.cardStack.identifier });
-        }, 
-        disabled: this.cards.length == 0
-      },
-      { name: '카드 리스트를 본다', action: () => {
-        this.showStackList(this.cardStack);
-        this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 의 카드 리스트를 보았다`);
-      }, disabled: this.cards.length == 0 },
-      ContextMenuSeparator,
-      (this.isShowTotal
-        ? { name: '☑ 장수를 표시', action: () => { this.cardStack.isShowTotal = false; } }
-        : { name: '☐ 장수를 표시', action: () => { this.cardStack.isShowTotal = true; } }
-      ),
-      { name: '카드 사이즈를 맞춘다', action: () => { if (this.cardStack.topCard) this.cardStack.unifyCardsSize(this.cardStack.topCard.size); }, disabled: this.cards.length == 0 },
-      ContextMenuSeparator,
-      {
-        name: '카드 더미를 분할한다', 
-        subActions: [
-          {
-            name: '사람 수대로 분할',
-            action: () => {
-              this.splitStack(Network.peerIds.length);
-              SoundEffect.play(PresetSound.cardDraw);
-            }
-          },
-          ContextMenuSeparator,
-          ...[2, 3, 4, 5, 6].map(num => {
-            return {
-              name: `${num}개로 분할`,
-              action: () => {
-                this.splitStack(num);
-                SoundEffect.play(PresetSound.cardDraw);
-              }
-            }
-          })
-        ],
-        disabled: this.cards.length == 0
-      },
-      {
-        name: '카드 더미를 부순다', action: () => {
-          this.breakStack();
-          SoundEffect.play(PresetSound.cardShuffle);
-        }, 
-        disabled: this.cards.length == 0
-      },
-      {
-        name: '카드 더미 전체를 뒤집는다', action: () => {
-          this.cardStack.inverse();
-          SoundEffect.play(PresetSound.cardDraw);
-          SoundEffect.play(PresetSound.cardDraw);
-          EventSystem.call('INVERSE_CARD_STACK', { identifier: this.cardStack.identifier });
-        }, 
-        disabled: this.cards.length == 0
-      },
-      ContextMenuSeparator,
-      { name: '상세를 표시', action: () => { this.showDetail(this.cardStack); } },
-      (this.cardStack.getUrls().length <= 0 ? null : {
-        name: '참조URL을 연다', action: null,
-        subActions: this.cardStack.getUrls().map((urlElement) => {
-          const url = urlElement.value.toString();
-          return {
-            name: urlElement.name ? urlElement.name : url,
-            action: () => {
-              if (StringUtil.sameOrigin(url)) {
-                window.open(url.trim(), '_blank', 'noopener');
-              } else {
-                this.modalService.open(OpenUrlComponent, { url: url, title: this.cardStack.name, subTitle: urlElement.name });
-              } 
-            },
-            disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다.' : null,
-            isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
-          };
-        })
-      }),
-      (this.cardStack.getUrls().length <= 0 ? null : ContextMenuSeparator),
-      {
-        name: '사본을 작성', action: () => {
-          let cloneObject = this.cardStack.clone();
-          cloneObject.location.x += this.gridSize;
-          cloneObject.location.y += this.gridSize;
-          cloneObject.owner = '';
-          cloneObject.isLocked = false;
-          cloneObject.toTopmost();
-          SoundEffect.play(PresetSound.cardPut);
-        }
-      },
-      {
-        name: '카드 더미를 삭제', action: () => {
-          this.cardStack.setLocation('graveyard');
-          this.cardStack.destroy();
-          SoundEffect.play(PresetSound.sweep);
-        }
-      },
-    ], this.name);
+
+    let menuActions: ContextMenuAction[] = [];
+    menuActions = menuActions.concat(this.makeSelectionContextMenu());
+    menuActions = menuActions.concat(this.makeContextMenu());
+
+    this.contextMenuService.open(position, menuActions, this.name);
   }
 
   onMove() {
+    this.contextMenuService.close();
     SoundEffect.play(PresetSound.cardPick);
   }
 
@@ -527,12 +324,23 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   private drawCard(): Card {
     let card = this.cardStack.drawCard();
     if (card) {
-      this.cardStack.update(); // todo
       card.location.x += 100 + (Math.random() * 50);
       card.location.y += 25 + (Math.random() * 50);
       card.setLocation(this.cardStack.location.name);
     }
     return card;
+  }
+
+  textShadowCss(textColor: string): string {
+    const shadow = StringUtil.textShadowColor(textColor);
+    return `${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px,
+    ${shadow} 0px 0px 2px,
+    ${shadow} 0px 0px 2px`;
   }
 
   private breakStack() {
@@ -606,6 +414,279 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private makeSelectionContextMenu(): ContextMenuAction[] {
+    if (this.selectionService.objects.length < 1) return [];
+
+    let actions: ContextMenuAction[] = [];
+
+    let size = this.cardStack.topCard?.size ?? 2;
+    let objectPosition = {
+      x: this.cardStack.location.x + (size * this.gridSize) / 2,
+      y: this.cardStack.location.y + (size * this.gridSize) / 2,
+      z: this.cardStack.posZ
+    };
+    actions.push({ name: '여기에 모은다', action: () => this.selectionService.congregate(objectPosition) });
+
+    if (this.isSelected) {
+      let selectedCardStacks = () => this.selectionService.objects.filter(object => object.aliasName === this.cardStack.aliasName) as CardStack[];
+      actions.push(
+        {
+          name: '선택한 카드 더미', action: null, subActions: [
+            {
+              name: '전부 앞면으로 한다', action: () => {
+                selectedCardStacks().forEach(cardStack => cardStack.faceUpAll());
+                SoundEffect.play(PresetSound.cardDraw);
+              }
+            },
+            {
+              name: '전부 뒷면으로 한다', action: () => {
+                selectedCardStacks().forEach(cardStack => cardStack.faceDownAll());
+                SoundEffect.play(PresetSound.cardDraw);
+              }
+            },
+            {
+              name: '전부 정방향으로 한다', action: () => {
+                selectedCardStacks().forEach(cardStack => cardStack.uprightAll());
+                SoundEffect.play(PresetSound.cardDraw);
+              }
+            },
+            ContextMenuSeparator,
+            {
+              name: '전부 섞는다', action: () => {
+                SoundEffect.play(PresetSound.cardShuffle);
+                selectedCardStacks().forEach(cardStack => {
+                  cardStack.shuffle();
+                  EventSystem.call('SHUFFLE_CARD_STACK', { identifier: cardStack.identifier });
+                });
+              }
+            },
+          ]
+        }
+      );
+    }
+    actions.push(ContextMenuSeparator);
+    return actions;
+  }
+
+  private makeContextMenu(): ContextMenuAction[] {
+    let actions: ContextMenuAction[] = [
+      (this.isLocked
+        ? {
+          name: '☑ 고정', action: () => {
+            this.isLocked = false;
+            SoundEffect.play(PresetSound.unlock);
+          },
+          checkBox: 'check'
+        } : {
+          name: '☐ 고정', action: () => {
+            this.isLocked = true;
+            SoundEffect.play(PresetSound.lock);
+          },
+          checkBox: 'check'
+        }),
+      ContextMenuSeparator,
+      {
+        name: '카드를 1장 뽑는다', action: () => {
+          const card = this.drawCard();
+          if (card) {
+            SoundEffect.play(PresetSound.cardDraw);
+            let text: string;
+            if (card.isFront) {
+              text = `${this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다`
+            } else {
+              text = `${this.cardStack.name} 로부터 1장 뽑아서 엎었다`
+              text = `${this.cardStack.name} 로부터 1장 뽑아서 엎어두었다`
+            }
+            this.chatMessageService.sendOperationLog(text);
+          }
+        },
+        default: this.cards.length > 0,
+        disabled: this.cards.length == 0
+      },
+      {
+        name: '카드를 뽑는다', action: null,
+        subActions: [2, 3, 4, 5, 10].map(n => {
+          return {
+            name: `${n}장`,
+            action: () => {
+              const cards: Card[] = [];
+              for (let i = 0; i < n; i++) {
+                const card = this.drawCard();
+                if (card) {
+                  cards.push(card);
+                  if (i == 0 || i == 3 || i == 9) SoundEffect.play(PresetSound.cardDraw);
+                }
+              }
+              if (cards.length > 0) {
+                const frontCards = cards.filter(card => card.isFront);
+                if (frontCards.length == 0) {
+                  this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${cards.length}장 뽑아서 엎어두었다`);
+                } else {
+                  const counter = new Map();
+                  for (const card of frontCards) {
+                    const name = card.name == '' ? '(이름 없는 카드)' : card.name;
+                    let count = counter.get(name) || 0;
+                    count += 1;
+                    counter.set(name, count);
+                  }
+                  let text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${[...counter.keys()].map(key => key + (counter.get(key) <= 1 ? '' : ` ×${counter.get(key)}장`)).join('、')}`;
+                  if (frontCards.length === cards.length) {
+                    text += ' 뽑았다'
+                  } else {
+                    text += ` 뽑아, ${cards.length - frontCards.length}장 엎어두었다`;
+                  }
+                  this.chatMessageService.sendOperationLog(text);
+                }
+              }
+            }
+          };
+        }),
+        disabled: this.cards.length == 0
+      },
+      ContextMenuSeparator,
+      (this.cards.length == 0 || !this.cardStack.topCard.isFront ? {
+        name: '가장 위를 앞면으로 한다', action: () => {
+          if (!this.cardStack.topCard) return;
+          if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 의 가장 위의 ${this.cardStack.topCard.name == '' ? '(이름 없는 카드)' : this.cardStack.topCard.name} 를 공개했다`);
+          this.cardStack.faceUp();
+          SoundEffect.play(PresetSound.cardDraw);
+        },
+        disabled: this.cards.length == 0
+      } : {
+        name: '가장 위를 뒷면으로 한다', action: () => {
+          this.cardStack.faceDown();
+          SoundEffect.play(PresetSound.cardDraw);
+        },
+        disabled: this.cards.length == 0
+      }),
+      ContextMenuSeparator,
+      {
+        name: '전부 앞면으로 한다', action: () => {
+          //if (!this.cardStack.topCard) return;
+          //if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name} 를 전부 잎면으로 하고 가장 위의 ${this.cardStack.topCard.name} 를 공개했다`);
+          this.cardStack.faceUpAll();
+          SoundEffect.play(PresetSound.cardDraw);
+        },
+        disabled: this.cards.length == 0
+      },
+      {
+        name: '전부 뒷면으로 한다', action: () => {
+          this.cardStack.faceDownAll();
+          SoundEffect.play(PresetSound.cardDraw);
+        },
+        disabled: this.cards.length == 0
+      },
+      {
+        name: '전부 정방향으로 한다', action: () => {
+          this.cardStack.uprightAll();
+          SoundEffect.play(PresetSound.cardDraw);
+        },
+        disabled: this.cards.length == 0
+      },
+      ContextMenuSeparator,
+      {
+        name: '섞는다', action: () => {
+          this.cardStack.shuffle();
+          SoundEffect.play(PresetSound.cardShuffle);
+          EventSystem.call('SHUFFLE_CARD_STACK', { identifier: this.cardStack.identifier });
+        },
+        disabled: this.cards.length == 0
+      },
+      { name: '카드 리스트를 본다...', action: () => {
+        this.showStackList(this.cardStack);
+        this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 의 카드 리스트를 봤다`);
+      }, disabled: this.cards.length == 0 },
+      ContextMenuSeparator,
+      (this.isShowTotal
+        ? { name: '☑ 장수를 표시', action: () => { this.cardStack.isShowTotal = false; }, checkBox: 'check' }
+        : { name: '☐ 장수를 표시', action: () => { this.cardStack.isShowTotal = true; }, checkBox: 'check' }
+      ),
+      { name: '카드 사이즈를 같게 한다', action: () => { if (this.cardStack.topCard) this.cardStack.unifyCardsSize(this.cardStack.topCard.size); }, disabled: this.cards.length == 0 },
+      ContextMenuSeparator,
+      {
+        name: '카드 더미를 분할한다',
+        subActions: [
+          {
+            name: '사람 수대로 분할',
+            action: () => {
+              this.splitStack(Network.peerIds.length);
+              SoundEffect.play(PresetSound.cardDraw);
+            }
+          },
+          ContextMenuSeparator,
+          ...[2, 3, 4, 5, 6].map(num => {
+            return {
+              name: `${num}개로 분할`,
+              action: () => {
+                this.splitStack(num);
+                SoundEffect.play(PresetSound.cardDraw);
+              }
+            }
+          })
+        ],
+        disabled: this.cards.length == 0
+      },
+      {
+        name: '카드 더미를 부순다', action: () => {
+          this.breakStack();
+          SoundEffect.play(PresetSound.cardShuffle);
+        },
+        disabled: this.cards.length == 0
+      },
+      {
+        name: '카드 더미를 통째로 뒤집는다', action: () => {
+          this.cardStack.inverse();
+          SoundEffect.play(PresetSound.cardDraw);
+          SoundEffect.play(PresetSound.cardDraw);
+          EventSystem.call('INVERSE_CARD_STACK', { identifier: this.cardStack.identifier });
+        },
+        disabled: this.cards.length == 0
+      },
+      ContextMenuSeparator,
+      { name: '상세 표시...', action: () => { this.showDetail(this.cardStack); } },
+      (this.cardStack.getUrls().length <= 0 ? null : {
+        name: '참조 URL을 연다', action: null,
+        subActions: this.cardStack.getUrls().map((urlElement) => {
+          const url = urlElement.value.toString();
+          return {
+            name: urlElement.name ? urlElement.name : url,
+            action: () => {
+              if (StringUtil.sameOrigin(url)) {
+                window.open(url.trim(), '_blank', 'noopener');
+              } else {
+                this.modalService.open(OpenUrlComponent, { url: url, title: this.cardStack.name, subTitle: urlElement.name });
+              }
+            },
+            disabled: !StringUtil.validUrl(url),
+            error: !StringUtil.validUrl(url) ? 'URL이 올바르지 않습니다' : null,
+            isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
+          };
+        })
+      }),
+      (this.cardStack.getUrls().length <= 0 ? null : ContextMenuSeparator),
+      {
+        name: '사본을 작성', action: () => {
+          let cloneObject = this.cardStack.clone();
+          cloneObject.location.x += this.gridSize;
+          cloneObject.location.y += this.gridSize;
+          cloneObject.owner = '';
+          cloneObject.isLocked = false;
+          cloneObject.toTopmost();
+          SoundEffect.play(PresetSound.cardPut);
+        }
+      },
+      {
+        name: '카드 더미를 삭제', action: () => {
+          this.cardStack.setLocation('graveyard');
+          this.cardStack.destroy();
+          SoundEffect.play(PresetSound.sweep);
+        }
+      },
+    ];
+
+    return actions;
+  }
+
   private showDetail(gameObject: CardStack) {
     EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName });
     let coordinate = this.pointerDeviceService.pointers[0];
@@ -622,7 +703,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     let coordinate = this.pointerDeviceService.pointers[0];
     let option: PanelOption = { left: coordinate.x - 200, top: coordinate.y - 300, width: 400, height: 600 };
 
-    this.cardStack.owner = Network.peerContext.userId;
+    this.cardStack.owner = Network.peer.userId;
     let component = this.panelService.open<CardStackListComponent>(CardStackListComponent, option);
     component.cardStack = gameObject;
   }

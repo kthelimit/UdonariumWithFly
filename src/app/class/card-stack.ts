@@ -2,11 +2,11 @@ import { Card, CardState } from './card';
 import { ImageFile } from './core/file-storage/image-file';
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
 import { ObjectNode } from './core/synchronize-object/object-node';
-import { EventSystem } from './core/system';
 import { DataElement } from './data-element';
 import { PeerCursor } from './peer-cursor';
 import { TabletopObject } from './tabletop-object';
-import { moveToTopmost } from './tabletop-object-util';
+import { EventSystem, Network } from './core/system';
+import { moveToBackmost, moveToTopmost } from './tabletop-object-util';
 
 @SyncObject('card-stack')
 export class CardStack extends TabletopObject {
@@ -26,6 +26,7 @@ export class CardStack extends TabletopObject {
     return object ? object.color : '#444444';
   }
   get hasOwner(): boolean { return 0 < this.owner.length; }
+  get ownerIsOnline(): boolean { return this.hasOwner && Network.peers.some(peer => peer.userId === this.owner && peer.isOpen); }
 
   private get cardRoot(): ObjectNode {
     for (let node of this.children) {
@@ -37,6 +38,10 @@ export class CardStack extends TabletopObject {
   get topCard(): Card { return this.isEmpty ? null : this.cards[0]; }
   get isEmpty(): boolean { return this.cards.length < 1 }
   get imageFile(): ImageFile { return this.topCard ? this.topCard.imageFile : null; }
+
+  complement(): void {
+    this.cards.forEach(card => card.complement());
+  }
 
   // ObjectNode Lifecycle
   onChildRemoved(child: ObjectNode) {
@@ -142,7 +147,7 @@ export class CardStack extends TabletopObject {
     if (180 < delta) delta = 360 - delta;
     card.rotate = delta <= 90 ? 0 : 180;
     this.setSamePositionFor(card);
-    return this.cardRoot.insertBefore(card, this.topCard);
+    return this.cardRoot.prependChild(card);
   }
 
   putOnBottom(card: Card): Card {
@@ -158,6 +163,10 @@ export class CardStack extends TabletopObject {
 
   toTopmost() {
     moveToTopmost(this, ['card']);
+  }
+
+  toBackmost() {
+    moveToBackmost(this, ['card']);
   }
 
   // override

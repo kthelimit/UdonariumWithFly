@@ -50,6 +50,11 @@
           <s class="grow" style="color:gray; display: block; padding-left: 2px; font-weight: bold; text-overflow: ellipsis; white-space: nowrap; pointer-events: none">No Tag</s>
         </div>
       </ng-template>
+      <div class="zoom-in" style="z-index: 10; position: absolute; right: 0px; bottom: 2px">
+        <button class="zoom-button" (click)="chanageImageView(file)">
+          <i class="material-icons">zoom_in</i>
+        </button>
+      </div>
     </div>
     <div *ngIf="getHidden(file)" style="position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
       <i class="material-icons red-eye" style="z-index: 5; margin-right: 2px; font-size: 16px; display: block">visibility</i>
@@ -57,7 +62,7 @@
     <div *ngIf="getCurrent(file)" style="position: absolute; top: 0px; left: 0px; pointer-events: none; z-index: 5">
       <b class="grow" style="font-size: 13px; color: red; padding-left: 2px">설정중</b>
     </div>
-    <img *ngIf="0 < file.url.length" [src]="file.url | safe: 'resourceUrl'" [alt]="file.name" height="120" (click)="getCurrent(file) ? false : onSelectedFile(file)">
-    <img *ngIf="file.url.length <= 0" src="assets/images/loading.gif" alt="{{file.name}}">
+    <img *ngIf="0 < file.url.length" [src]="file.url | safe: 'resourceUrl'" [alt]="file.name" height="120" (click)="getCurrent(file) ? false : onSelectedFile(file)" draggable="false" />
+    <img *ngIf="file.url.length <= 0" src="assets/images/loading.gif" alt="{{file.name}}" draggable="false" />
   </div>
 </div>

@@ -73,12 +73,12 @@ export class ImageSharingSystem {
         }
 
         if (this.isLimitSendTask() === false && 0 < randomRequest.length && !this.existsSendTask(event.data.receiver)) {
-          // 送信
+          // 송신
           let updateImages: ImageContext[] = this.makeSendUpdateImages(randomRequest);
           console.log('REQUEST_FILE_RESOURE ImageStorageService Send!!! ' + event.data.receiver + ' -> ' + updateImages.length);
           this.startSendTask(updateImages, event.data.receiver);
         } else {
-          // 中継
+          // 중계
           let candidatePeers: string[] = event.data.candidatePeers;
           let index = candidatePeers.indexOf(Network.peerId);
           if (-1 < index) candidatePeers.splice(index, 1);
@@ -88,10 +88,10 @@ export class ImageSharingSystem {
             EventSystem.call(event, peerId);
             return;
           }
-          console.log('REQUEST_FILE_RESOURE ImageStorageService 엉망이다...' + event.data.receiver, randomRequest.length);
+          console.log('REQUEST_FILE_RESOURE ImageStorageService 허탕쳤다...' + event.data.receiver, randomRequest.length);
         }
       })
-      .on('UPDATE_FILE_RESOURE', event => {
+      .on('UPDATE_FILE_RESOURE', 1000, event => {
         let updateImages: ImageContext[] = event.data.updateImages;
         console.log('UPDATE_FILE_RESOURE ImageStorageService ' + event.sendFrom + ' -> ', updateImages);
         for (let context of updateImages) {
@@ -173,7 +173,6 @@ export class ImageSharingSystem {
   private request(request: CatalogItem[], peerId: string) {
     console.log('requestFile() ' + peerId);
     let peerIds = Network.peerIds;
-    peerIds.splice(peerIds.indexOf(Network.peerId), 1);
     EventSystem.call('REQUEST_FILE_RESOURE', { identifiers: request, receiver: Network.peerId, candidatePeers: peerIds }, peerId);
   }
 

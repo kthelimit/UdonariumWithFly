@@ -61,8 +61,6 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   get text(): string { return <string>this.value; }
   set text(text: string) { this.value = (text == null) ? '' : text; }
 
-  isAnimated = false;
-
   get timestamp(): number {
     let timestamp = this.getAttribute('timestamp');
     let num = timestamp ? +timestamp : 0;
@@ -71,6 +69,14 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   private _to: string;
   private _sendTo: string[] = [];
   get sendTo(): string[] {
+    // 응급처치
+    if (this.to === 'undefined') {
+      if (this._to !== '') {
+        this._to = '';
+        this._sendTo = [];
+      }
+      return this._sendTo;
+    }
     if (this._to !== this.to) {
       this._to = this.to;
       this._sendTo = this.to != null && 0 < this.to.trim().length ? this.to.trim().split(/\s+/) : [];
@@ -97,8 +103,9 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
 
   get index(): number { return this.minorIndex + this.timestamp; }
   get isDirect(): boolean { return 0 < this.sendTo.length || -1 < this.tags.indexOf('direct') ? true : false; }
-  get isSendFromSelf(): boolean { return this.from === Network.peerContext.userId || this.originFrom === Network.peerContext.userId || -1 < this.tags.indexOf('mine'); }
-  get isRelatedToMe(): boolean { return (-1 < this.sendTo.indexOf(Network.peerContext.userId)) || this.isSendFromSelf || this.isGMMode; }
+  get isSendFromSelf(): boolean { return this.from === Network.peer.userId || this.originFrom === Network.peer.userId || -1 < this.tags.indexOf('mine'); }
+  get isSendToMe(): boolean { return (-1 < this.sendTo.indexOf(Network.peer.userId)); }
+  get isRelatedToMe(): boolean { return (this.isSendToMe || this.isSendFromSelf || this.isGMMode); }
   get isDisplayable(): boolean { return this.isDirect ? this.isRelatedToMe : true; }
   get isSystem(): boolean { return -1 < this.tags.indexOf('system') ? true : false; }
   get isDicebot(): boolean { return this.isSystem && this.from.indexOf('Dice') >= 0 && !/^C\(.+\) →/i.test(this.text); }
@@ -106,7 +113,7 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   get isSecret(): boolean { return -1 < this.tags.indexOf('secret') ? true : false; }
   get isEmptyDice(): boolean { return !this.isDicebot || -1 < this.tags.indexOf('empty'); }
   get isSpecialColor(): boolean { return this.isDirect || this.isSecret || this.isSystem || this.isOperationLog || this.isDicebot || this.isCalculate; }
-  get isEditable(): boolean { return !this.isSystem && !this.isOperationLog && this.from === Network.peerContext.userId }
+  get isEditable(): boolean { return !this.isSystem && !this.isOperationLog && this.from === Network.peer.userId }
   get isFaceIcon(): boolean { return !this.isSystem && (!this.characterIdentifier || this.tags.indexOf('noface') < 0); }
   get isOperationLog(): boolean { return -1 < this.tags.indexOf('opelog') ? true : false; }
 
@@ -117,10 +124,17 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
 
   get isGMMode(): boolean{ return PeerCursor.myCursor ? PeerCursor.myCursor.isGMMode : false; }
 
-  //とりあえず
+  //일단
   private locale = 'en-US';
   
-  logFragment(logForamt: number, tabName: string=null, dateFormat='HH:mm', noImage=true) {
+  plainText(): string {
+    if (this.isSecret && !this.isSendFromSelf) return '(시크릿 다이스)';
+    let text = StringUtil.rubyToText(this.text);
+    if (this.isDicebot) text = text.replace(/###(.+?)###/g, '*$1').replace(/\~\~\~(.+?)\~\~\~/g, '~$1');
+    return text;
+  }
+
+  logFragment(logForamt: number, tabName: string=null, dateFormat='HH:mm', noImage=true): string {
     if (logForamt == 0) {
       return this.logFragmentText(tabName, dateFormat);
     } else {
@@ -132,11 +146,11 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
     tabName = (!tabName || tabName.trim() == '') ? '' : `[${ tabName }] `;
     const dateStr = (dateFormat == '') ? '' : formatDate(new Date(this.timestamp), dateFormat, this.locale) + '：';
     const lastUpdateStr = !this.isEdited ? '' : 
-      (dateFormat == '') ? ' (編集済)' : ` (編集済 ${ formatDate(new Date(this.lastUpdate), dateFormat, this.locale) })`;
+      (dateFormat == '') ? ' (수정)' : ` (수정 ${ formatDate(new Date(this.lastUpdate), dateFormat, this.locale) })`;
     let text = StringUtil.rubyToText(this.text);
     if (this.isDicebot) text = text.replace(/###(.+?)###/g, '*$1').replace(/\~\~\~(.+?)\~\~\~/g, '~$1');
     if (text.lastIndexOf('\n') == text.length - 1 && !lastUpdateStr) {
-      // 最終行の調整
+      // 최종 행의 조정
       text += "\n";
     }
     return `${ tabName }${ dateStr }${ this.name }${ this.toColor ? (' ➡ ' + this.toName) : '' }：${ (this.isSecret && !this.isSendFromSelf) ? '（シークレットダイス）' : text + lastUpdateStr }`
@@ -171,7 +185,7 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
       if (this.isFumble) messageTextClassNames.push('is-fumble');
     }
 
-    let textAutoLinkedHtml = (this.isSecret && !this.isSendFromSelf) ? '<s>（シークレットダイス）</s>' 
+    let textAutoLinkedHtml = (this.isSecret && !this.isSendFromSelf) ? '<s>(시크릿 다이스)</s>' 
       : Autolinker.link(this.isOperationLog ? StringUtil.escapeHtml(this.text) : StringUtil.rubyToHtml(StringUtil.escapeHtml(this.text)), {
         urls: {schemeMatches: true, wwwMatches: true, tldMatches: false}, 
         truncate: {length: 96, location: 'end'}, 
@@ -190,15 +204,15 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
       let lastUpdateHtml = '';
       if (this.isEdited) {
         if (dateFormat == '') {
-          lastUpdateHtml = '<span class="is-edited">編集済</span>';
+          lastUpdateHtml = '<span class="is-edited">수정</span>';
         } else {
           const lastUpdate = new Date(this.lastUpdate);
-          lastUpdateHtml = `<span class="is-edited"><b>編集済</b> <time datetime="${ lastUpdate.toISOString() }">${ StringUtil.escapeHtml(formatDate(lastUpdate, dateFormat, this.locale)) }</time></span>`;
+          lastUpdateHtml = `<span class="is-edited"><b>수정</b> <time datetime="${ lastUpdate.toISOString() }">${ StringUtil.escapeHtml(formatDate(lastUpdate, dateFormat, this.locale)) }</time></span>`;
         }
       }
       
       if (textAutoLinkedHtml.lastIndexOf('\n') == textAutoLinkedHtml.length - 1 && !lastUpdateHtml) {
-        // 最終行の調整
+        // 최종 행의 조정
         textAutoLinkedHtml += "\n";
       }
 

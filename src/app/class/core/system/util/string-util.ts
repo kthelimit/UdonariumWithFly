@@ -1,3 +1,23 @@
+export interface OperateCommand {
+  targetName?: string,
+  operator?: string,
+  value?: string,
+  isEscapeRoll?: boolean,
+  isIncomplete?: boolean
+}
+
+export interface OperateCommandsInfo {
+  commands: OperateCommand[],
+  commandString: string,
+  endString: string
+}
+
+export enum CompareOption {
+  None = 0,
+  IgnoreCase = 1,
+  IgnoreWidth = 2,
+}
+
 export namespace StringUtil {
 
   const EMOJI_REGEXP = new RegExp([
@@ -8,10 +28,6 @@ export namespace StringUtil {
     '[\u2600-\u27BF]'
   ].join('|'));
 
-  export function toHalfWidth(str: String): string {
-    return str.replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
-  }
-
   export function isEmote(str: string): boolean {
     if (!str) return false;
     str = this.cr(str).replace(/[\s\r\n]/g, '');
@@ -19,7 +35,7 @@ export namespace StringUtil {
   }
 
   export function cr(str: string): string {
-    if (!str) return '';
+    if (str == null || str == '') return '';
     let ret = '';
     let flg = '';
     [...str].forEach(c => {
@@ -28,6 +44,10 @@ export namespace StringUtil {
           case 'n':
           case 'ｎ':
             ret += "\n";
+            break;
+          case 's':
+          case 'ｓ':
+            ret += (c === 's' ? " " : "　");
             break;
           case '\\':
           case '￥':
@@ -43,7 +63,112 @@ export namespace StringUtil {
         ret += c;
       }
     });
-    return ret;
+    return ret + flg;
+  }
+
+  export function parseCommands(input: string, quote=false): OperateCommandsInfo {
+    const separatorRegExp = /[:：]/;
+    const operatorRegExp = /[＋＝+\-=―—‐－>＞]/; 
+    const spaceRegExp = /[\s　]/; 
+    const endRegExp = /[:：\s　]/; 
+    const qupteOpenTestRegExps = [separatorRegExp, operatorRegExp];
+    const qupteCloseTestRegExps = [operatorRegExp, endRegExp];
+    const stateEndRegExp = [operatorRegExp, separatorRegExp];
+    
+    const charAry = [...input];
+
+    const commands: OperateCommand[] = [];
+    let commandString = '';
+
+    let i = 0;
+    let state = 0; // 0:操作対象 1:値
+    let command: OperateCommand = {};
+    let currentPart = '';
+    let quoteChar = '';
+    let escapeChar = '';
+    let tmpCommandString = '';
+    for (; i < charAry.length; i++) {
+      const char = charAry[i];
+      if ((!quote || !quoteChar) && spaceRegExp.test(char)) break;
+
+      if (escapeChar) {
+        if (!(separatorRegExp.test(char) || operatorRegExp.test(char) || (quote && char === quoteChar))) currentPart += escapeChar;
+        currentPart += char;
+        tmpCommandString += char;
+        escapeChar = '';
+        continue;
+      }
+  
+      if (char === "\\" || char === "￥") {
+        escapeChar = char;
+        tmpCommandString += char;
+        continue;
+      }
+  
+      if (quote && quoteChar) {
+        if (char === quoteChar && (charAry[i - 1] == null || qupteCloseTestRegExps[state].test(charAry[i + 1]))) {
+          quoteChar = '';
+        } else {
+          currentPart += char;
+        }
+        tmpCommandString += char;
+      } else if (quote && (char === '"' || char === "'") && (charAry[i - 1] == null || qupteOpenTestRegExps[state].test(charAry[i - 1]))) {
+        quoteChar = char;
+        tmpCommandString += char;
+      } else if (stateEndRegExp[state].test(char)) {
+        tmpCommandString += char;
+        switch (state) {
+        case 0:
+          command.targetName = quoteChar + currentPart;
+          command.operator = this.toHalfWidth(char.replace(/[―ー—‐]/g, '-'));
+          state = 1;
+          break;
+        case 1:
+          command.value = quoteChar + currentPart;
+          //if (/^\\[^\\\s]/.test(this.toHalfWidth(command.value).trimLeft())) {
+          //  command.isEscapeRoll = true;
+          //  command.value = command.value.replace(/[\\￥]/, '');
+          //}
+          commands.push(command);
+          command = {};
+          state = 0;
+          break;
+        }
+        commandString += tmpCommandString;
+        tmpCommandString = ''
+        currentPart = '';
+        quoteChar = '';
+      } else {
+        currentPart += char;
+        tmpCommandString += char;
+      }
+    }
+
+    const flagment = quoteChar + currentPart + escapeChar;
+    switch (state) {
+    case 0:
+      if (flagment == '') break;
+      command.targetName = flagment;
+      commandString += flagment;
+      command.isIncomplete = true;
+      commands.push(command);
+      break;
+    case 1:
+      command.value = flagment;
+      //if (/^\\[^\\]/.test(this.toHalfWidth(command.value).trimLeft())) {
+      //  command.isEscapeRoll = true;
+      //  command.value = command.value.replace(/[\\￥]/, '');
+      //}
+      commandString += flagment;
+      commands.push(command);
+      break;
+    }
+
+    return { 
+      commands: commands, 
+      commandString: commandString,
+      endString: ((i < charAry.length) ? charAry.slice(i).join('') : '').replace(/^[\s　]/, '')
+    };
   }
 
   export function validUrl(url: string): boolean {
@@ -112,15 +237,43 @@ export namespace StringUtil {
       case 'card':
         return '카드';
       case 'dice-symbol':
-        return '다이스심볼';
+        return '다이스 심볼';
       case 'card-stack':
         return '카드 더미';
       case 'game-table':
         return '테이블';
       case 'chat-tab':
         return '채팅 탭';
+      case 'range':
+        return '사정・범위';
       default:
        return aliasName;
     }
+  }
+
+  export function textShadowColor(textColor: string, lightColor='#ffffff', darkColor='#333333'): string {
+    //let str = textColor && /^\#[0-9a-f]{6}$/i.test(textColor) ? '#' + (textColor.substring(1, 7).match(/.{2}/g).reduce((a, c) => { let d = (255 - parseInt(c, 16)).toString(16).toLowerCase(); return a + ('0' + d).substring(d.length - 1); }, '')) : '#ffffff';
+    //console.log(str)
+    //return str;
+    return textColor && /^\#[0-9a-f]{6}$/i.test(textColor) ? (textColor.substring(1, 7).match(/.{2}/g).reduce((a, c) => { return a + parseInt(c, 16); }, 0) > 255 * 2 ? darkColor : lightColor) : lightColor;
+  }
+
+  export function toHalfWidth(str: String): string {
+    if (str == null || str.toString() == '') return '';
+    return str.toString().replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  }
+  
+  export function equals(str1: string, str2: string, option: CompareOption = CompareOption.None): boolean {
+    return str1.length === str2.length && (str1 === str2 || normalize(str1, option) === normalize(str2, option));
+  }
+
+  export function normalize(str: string, option: CompareOption): string {
+    if (option === CompareOption.None) return str;
+    let normalize = str;
+
+    if (option & CompareOption.IgnoreCase) normalize = normalize.toLocaleLowerCase();
+    if (option & CompareOption.IgnoreWidth) normalize = toHalfWidth(normalize);
+
+    return normalize;
   }
 }

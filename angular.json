@@ -19,27 +19,36 @@
             "outputPath": "dist/udonarium",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
               "src/assets",
               "src/manifest.webmanifest",
-              "src/card.png"
+              "src/card.png",
+              "src/mobile.jpg"
             ],
             "styles": [
               "src/styles.css"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
+              "base-x",
               "bcdice",
-              "hammerjs",
-              "crypto-js/sha256",
               "crypto-js/lib-typedarrays",
+              "crypto-js/sha256",
+              "events",
               "file-saver",
-              "msgpack-lite",
+              "hammerjs",
               "lzbase62",
-              "pako"
+              "localforage",
+              "lodash",
+              "msgpack-lite",
+              "pako",
+              "skyway-js",
+              "vkbeautify"
             ]
           },
           "configurations": {
@@ -63,7 +72,8 @@
                 }
               ],
               "serviceWorker": true,
-              "ngswConfigPath": "ngsw-config.json"
+              "ngswConfigPath": "ngsw-config.json",
+              "outputHashing": "all"
             },
             "development": {
               "buildOptimizer": false,
@@ -82,10 +92,10 @@
           },
           "configurations": {
             "production": {
-              "browserTarget": "udonarium:build:production"
+              "buildTarget": "udonarium:build:production"
             },
             "development": {
-              "browserTarget": "udonarium:build:development"
+              "buildTarget": "udonarium:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -93,16 +103,17 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "udonarium:build"
+            "buildTarget": "udonarium:build"
           }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
             "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
             "assets": [
               "src/favicon.ico",
               "src/assets",
@@ -145,5 +156,7 @@
       }
     }
   },
-  "defaultProject": "udonarium"
+  "cli": {
+    "analytics": false
+  }
 }

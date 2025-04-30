@@ -89,7 +89,7 @@ export class AudioSharingSystem {
           console.log('REQUEST_FILE_RESOURE AudioStorageService あぶれた...' + event.data.receiver, randomRequest.length);
         }
       })
-      .on('UPDATE_AUDIO_RESOURE', event => {
+      .on('UPDATE_AUDIO_RESOURE', 1000, event => {
         let updateAudios: AudioFileContext[] = event.data;
         console.log('UPDATE_AUDIO_RESOURE AudioStorageService ' + event.sendFrom + ' -> ', updateAudios);
         for (let context of updateAudios) {
@@ -148,9 +148,9 @@ export class AudioSharingSystem {
     let task = BufferSharingTask.createReceiveTask<AudioFileContext>(identifier);
     this.receiveTaskMap.set(identifier, task);
 
-    task.onprogress = (task, loded, total) => {
+    task.onprogress = (task, loaded, total) => {
       let context = audio.toContext();
-      context.name = (loded * 100 / total).toFixed(1) + '%';
+      context.name = (loaded * 100 / total).toFixed(1) + '%';
       audio.apply(context);
     }
     task.onfinish = (task, data) => {
@@ -182,7 +182,6 @@ export class AudioSharingSystem {
   private request(request: CatalogItem[], peerId: string) {
     console.log('requestFile() ' + peerId);
     let peerIds = Network.peerIds;
-    peerIds.splice(peerIds.indexOf(Network.peerId), 1);
     EventSystem.call('REQUEST_AUDIO_RESOURE', { identifiers: request, receiver: Network.peerId, candidatePeers: peerIds }, peerId);
   }
 

@@ -17,7 +17,6 @@ import { ContextMenuComponent } from 'component/context-menu/context-menu.compon
 import { DiceSymbolComponent } from 'component/dice-symbol/dice-symbol.component';
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
-import { GameCharacterGeneratorComponent } from 'component/game-character-generator/game-character-generator.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { GameCharacterComponent } from 'component/game-character/game-character.component';
 import { GameDataElementComponent } from 'component/game-data-element/game-data-element.component';
@@ -74,6 +73,7 @@ import { YouTubePlayerModule } from "@angular/youtube-player";
 import { CardListImageComponent } from './component/card-list-image/card-list-image.component';
 import { LoggingInputDirective } from './directive/logging-input.directive';
 import { ConfirmationComponent } from './component/confirmation/confirmation.component';
+import { RangeComponent } from './component/range/range.component';
 
 @NgModule({
   declarations: [
@@ -90,7 +90,6 @@ import { ConfirmationComponent } from './component/confirmation/confirmation.com
     ContextMenuComponent,
     FileSelecterComponent,
     FileStorageComponent,
-    GameCharacterGeneratorComponent,
     GameCharacterSheetComponent,
     GameCharacterComponent,
     GameDataElementComponent,
@@ -130,7 +129,8 @@ import { ConfirmationComponent } from './component/confirmation/confirmation.com
     ChatLogOutputComponent,
     CardListImageComponent,
     LoggingInputDirective,
-    ConfirmationComponent
+    ConfirmationComponent,
+    RangeComponent
   ],
   imports: [
     BrowserModule,

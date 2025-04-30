@@ -15,39 +15,52 @@ interface BoxSize {
   selector: '[appResizable]'
 })
 export class ResizableDirective implements AfterViewInit, OnDestroy {
-  @Input('resizable.disable') set isDisable(isDisable: boolean) { this._isDisable = isDisable; this.handleMap.forEach(handle => handle.cursor(!isDisable)); };
-  get isDisable(): boolean { return this._isDisable; }
-
   @Input('resizable.bounds') boundsSelector: string = 'body';
+  @Input('resizable.stack') stackSelector: string = '';
   @Input('resizable.minWidth') minWidth: number = 100;
-  @Input('resizable.minHeight') minHeight: number = 100
+  @Input('resizable.minHeight') minHeight: number = 100;
 
-  @Input('resizable.align') set align(align: string) { this._align = align; this.handleMap.forEach(handle => handle.able(align)); };
-  get align(): string { return this._align; }
-
+  @Input('resizable.disable') set isDisable(isDisable: boolean) { this._isDisable = isDisable; this.initialize(); };
+  @Input('resizable.align') set align(align: string) { this._align = align; this.initialize(); };
+  
   @Output('resizable.start') ostart: EventEmitter<MouseEvent | TouchEvent> = new EventEmitter();
   @Output('resizable.move') onmove: EventEmitter<MouseEvent | TouchEvent> = new EventEmitter();
   @Output('resizable.end') onend: EventEmitter<MouseEvent | TouchEvent> = new EventEmitter();
 
   private handleMap = new Map<HandleType, ResizeHandler>();
-  private handleTypes: HandleType[] = [
-    HandleType.N,
-    HandleType.E,
-    HandleType.W,
-    HandleType.S,
-    HandleType.NE,
-    HandleType.NW,
-    HandleType.SE,
-    HandleType.SW
-  ];
+  private _isDisable = false;
+  private _align = 'normal';
+
+  private get handleTypes(): HandleType[] {
+    if (this._isDisable || this._align === 'none') return [];
+    if (this._align === 'horizontal') {
+      return [
+        HandleType.E,
+        HandleType.W
+      ];  
+    }
+    if (this._align === 'vertical') {
+      return [
+        HandleType.N,
+        HandleType.S
+      ];
+    }
+    return [
+      HandleType.N,
+      HandleType.E,
+      HandleType.W,
+      HandleType.S,
+      HandleType.NE,
+      HandleType.NW,
+      HandleType.SE,
+      HandleType.SW
+    ];
+  }
 
   private startPosition: BoxSize = { left: 0, top: 0, width: 0, height: 0 };
 
   private startPointer: PointerCoordinate = { x: 0, y: 0, z: 0 };
   private prevTrans: BoxSize = { left: 0, top: 0, width: 0, height: 0 };
-
-  private _isDisable = false;
-  private _align = 'normal';
 
   constructor(
     private ngZone: NgZone,
@@ -56,6 +69,7 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     this.initialize();
+    this.setForeground();
   }
 
   ngOnDestroy() {
@@ -65,6 +79,8 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
 
   private initialize() {
     this.ngZone.runOutsideAngular(() => {
+      this.handleMap.forEach(handle => handle.destroy());
+      this.handleMap.clear();
       this.handleTypes.forEach(type => {
         let handle = new ResizeHandler(this.elementRef.nativeElement, type);
         this.handleMap.set(type, handle);
@@ -72,7 +88,6 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
         handle.input.onMove = ev => this.onResizeMove(ev, handle);
         handle.input.onEnd = ev => this.onResizeEnd(ev, handle);
         handle.input.onContextMenu = ev => this.onContextMenu(ev, handle);
-        handle.able(this.align);
       });
     });
   }
@@ -82,12 +97,13 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
   }
 
   destroy() {
-    this.handleMap.forEach(handle => handle.input.destroy());
+    this.handleMap.forEach(handle => handle.destroy());
+    this.handleMap.clear();
   }
 
   private onResizeStart(e: MouseEvent | TouchEvent, handle: ResizeHandler) {
-    if (this.isDisable) return this.cancel();
-    if ((e as MouseEvent).button === 1 || (e as MouseEvent).button === 2) return this.cancel();
+    if (this._isDisable || (e as MouseEvent).button === 1 || (e as MouseEvent).button === 2) return this.cancel();
+    this.setForeground();
     this.handleMap.forEach(h => {
       if (h !== handle) h.input.cancel();
     });
@@ -96,6 +112,9 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
     this.startPointer = handle.input.pointer;
     this.prevTrans = { left: 0, top: 0, width: 0, height: 0 };
 
+    this.removeSelectionRanges();
+    this.removeFocus();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
   }
 
@@ -170,6 +189,7 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
     this.elementRef.nativeElement.style.height = trans.height + this.startPosition.height + 'px';
 
     this.prevTrans = trans;
+
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
   }
@@ -215,5 +235,37 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
       width: CSSNumber.relation(css.width, target.parentElement.offsetWidth, target.parentElement.offsetWidth * 0.5),
       height: CSSNumber.relation(css.height, target.parentElement.offsetHeight, target.parentElement.offsetHeight * 0.5),
     };
+  }
+
+  private setForeground() {
+    if (this.stackSelector.length < 1) return;
+    let stacks = this.elementRef.nativeElement.ownerDocument.querySelectorAll<HTMLElement>(this.stackSelector);
+    let topZindex: number = 0;
+    let bottomZindex: number = 99999;
+    stacks.forEach(elm => {
+      let zIndex = parseInt(elm.style.zIndex);
+      if (topZindex < zIndex) topZindex = zIndex;
+      if (zIndex < bottomZindex) bottomZindex = zIndex;
+    });
+
+    if (topZindex <= parseInt(this.elementRef.nativeElement.style.zIndex)) return;
+
+    stacks.forEach(elm => {
+      elm.style.zIndex = (parseInt(elm.style.zIndex) - bottomZindex) + '';
+    });
+    this.elementRef.nativeElement.style.zIndex = (topZindex + 1) + '';
+  }
+
+  private removeSelectionRanges() {
+    let selection = window.getSelection();
+    if (!selection.isCollapsed) {
+      selection.removeAllRanges();
+    }
+  }
+
+  private removeFocus() {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   }
 }

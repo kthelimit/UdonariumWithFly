@@ -23,17 +23,21 @@ export class GameCharacter extends TabletopObject {
   @SyncVar() owner: string = '';
   
   text = '';
+  dialog = null;
   isEmote = false;
   isLoaded = false;
+
+  //汚い、別の方法ないか
+  chatBubbleAltitude = 0;
 
   get name(): string { return this.getCommonValue('name', ''); }
   set name(name) { this.setCommonValue('name', name); }
   get size(): number { return this.getCommonValue('size', 1); }
   get height(): number {
     let element = this.getElement('height', this.commonDataElement);
-    if (!element && this.commonDataElement) {
-      this.commonDataElement.insertBefore(DataElement.create('height', 0, { 'currentValue': '' }, 'height_' + this.identifier), this.getElement('altitude', this.commonDataElement));
-    }
+    //if (!element && this.commonDataElement) {
+    //  this.commonDataElement.insertBefore(DataElement.create('height', 0, { 'currentValue': '' }, 'height_' + this.identifier), this.getElement('altitude', this.commonDataElement));
+    //}
     let num = element ? +element.value : 0;
     if (element && element.currentValue) num = (Number.isNaN(num) ? 0 : num) * this.size;
     return Number.isNaN(num) ? 0 : num;
@@ -76,13 +80,24 @@ export class GameCharacter extends TabletopObject {
   }
 
   get isHideIn(): boolean { return !!this.owner; }
-  get isVisible(): boolean { return !this.owner || Network.peerContext.userId === this.owner; }
+  get isVisible(): boolean { return !this.owner || Network.peer.userId === this.owner; }
 
   static get isStealthMode(): boolean {
     for (const character of ObjectStore.instance.getObjects(GameCharacter)) {
       if (character.isHideIn && character.isVisible && character.location.name === 'table') return true;
     }
     return false;
+  }
+
+  complement(): void {
+    let element = this.getElement('altitude', this.commonDataElement);
+    if (!element && this.commonDataElement) {
+      this.commonDataElement.appendChild(DataElement.create('altitude', 0, {}, 'altitude_' + this.identifier));
+    }
+    element = this.getElement('height', this.commonDataElement);
+    if (!element && this.commonDataElement) {
+      this.commonDataElement.insertBefore(DataElement.create('height', 0, { 'currentValue': '' }, 'height_' + this.identifier), this.getElement('altitude', this.commonDataElement));
+    }
   }
 
   createTestGameDataElement(name: string, size: number, imageIdentifier: string) {
@@ -141,9 +156,11 @@ export class GameCharacter extends TabletopObject {
     let gameCharacterXMLDocument: Document = domParser.parseFromString(this.rootDataElement.toXml(), 'application/xml');
 
     let palette: ChatPalette = new ChatPalette('ChatPalette_' + this.identifier);
-    palette.setPalette(`채팅 팔레트 입력 예시：
+    palette.setPalette(`채팅 팔레트 입력 예시 :
 2d6+1 다이스 롤
 １ｄ２０＋{민첩}＋｛격투｝　{name}의 격투！
+:ｈｐ-3d6 2d20KH1+{기용도}+2>=15 《{Lv1}》을 사용　HP｛＄1｝
+:HP={최대 HP}:MP-10 HP점 회복！ MP{$2}, HP{HP} → {$HP}（{$1}점 회복）
 //민첩=10+{민첩A}
 //민첩A=10
 //격투＝１`);

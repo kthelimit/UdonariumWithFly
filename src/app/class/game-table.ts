@@ -25,6 +25,7 @@ export class GameTable extends ObjectNode {
   @SyncVar() gridSize: number = 50;
   @SyncVar() imageIdentifier: string = 'imageIdentifier';
   @SyncVar() backgroundImageIdentifier: string = 'imageIdentifier';
+  @SyncVar() backgroundImageIdentifier2: string = 'imageIdentifier';
   @SyncVar() backgroundFilterType: FilterType = FilterType.NONE;
   @SyncVar() selected: boolean = false;
   @SyncVar() gridType: GridType = GridType.SQUARE;
@@ -32,6 +33,7 @@ export class GameTable extends ObjectNode {
   @SyncVar() isShowNumber: boolean = true;
 
   gridHeight: number = 0;
+  gridClipRect: {top: number, right: number, bottom: number, left: number} = null;
 
   get terrains(): Terrain[] {
     let terrains: Terrain[] = [];

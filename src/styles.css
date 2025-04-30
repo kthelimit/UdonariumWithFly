@@ -45,13 +45,17 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: hsl(0, 0%, 97%);
-  touch-action: manipulation;
+  touch-action: none;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Verdana,
     Meiryo, "M+ 1p", sans-serif;
   position: relative;
+}
+
+img {
+  user-select: none;
 }
 
 .sk-cube-grid {
@@ -183,8 +187,11 @@ span {
   cursor: text;
 }
 
-label, input[type=checkbox], option, select {
+label, input[type=checkbox], input[type=radio], option, select {
   cursor: pointer;
+}
+label:disabled, input[type=checkbox]:disabled, input[type=radio]:disabled, option:disabled, select:disabled {
+  cursor: default;
 }
 select[size] {
   cursor: default;
@@ -209,7 +216,7 @@ a[target=_blank] {
   text-decoration: none;
   word-break: break-all;
 }
-a[target=_blank]:hover {
+a[target=_blank]:hover, a[target=_blank]:active {
   text-decoration: underline;
 }
 a.outer-link::after {
@@ -223,6 +230,27 @@ a.outer-link::after {
   font-size: smaller;
   vertical-align: 25%;
 }
+a.invalid {
+  cursor: auto;
+  text-decoration: none;
+  color: grey;
+}
+a.invalid:hover,
+a.invalid:active {
+  text-decoration: none;
+}
+a.invalid::after {
+  margin-right: 2px;
+  margin-left: 2px;
+  font-family: 'Material Icons';
+  content: '\e16f';
+  font-weight: bolder;
+  text-decoration: none;
+  display: inline-block;
+  font-size: smaller;
+  vertical-align: 25%;
+}
+
 .direct-message a[href] {
   color: #CCF;
 }
@@ -238,24 +266,16 @@ s.drop-dice .dropped {
   color: #999;
 }
 
-/*
- * デスクトップWindows版Chrome 102-103におけるレンダリング速度改善のための定義.
- * このCSSクラスを付与した要素をTabletopObject要素とセットで移動させると再レンダリング処理時間が改善する.
- * GPUによるハードウェアアクセラレーションの改善というより、DOM構造に関するCPU処理時間の改善のように見えるが詳細不明.
- * 将来的なChromeのアップデートでレンダリング速度が改善された場合は削除を検討.
- */
-.chrome-3d-transform-trick {
-  position: absolute;
-  height: 1px;
-  width: 1px;
-  pointer-events: none;
+* {
+  scrollbar-width: thin;
 }
 
 /*
- * デスクトップWindows版Chrome 102-103におけるレンダリング改善のための定義.
+ * デスクトップWindows版Chrome 119におけるレンダリング改善のための定義.
  * 3D表示している画像にこのCSSクラスを付与すると至近距離で表示した時の解像度が鮮明になる.
- * 将来的なChromeのアップデートでレンダリング速度が改善された場合は削除を検討.
+ * 将来的なChromeのアップデートでレンダリングが改善された場合は削除を検討.
  */
-.chrome-smooth-image-trick {
+ .chrome-smooth-image-trick {
   transform-style: inherit;
+  overflow: visible;
 }

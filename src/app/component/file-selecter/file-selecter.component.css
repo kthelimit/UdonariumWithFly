@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .image {
   font-size: 0;
   display: inline-block;
@@ -21,7 +25,6 @@
 
 .image img {
   vertical-align: bottom;
-  transition-duration: 120ms;
 }
 
 .image:hover img {
@@ -130,4 +133,19 @@
   text-shadow: 0px 0px 2px crimson,
   0px 0px 4px white;
   font-weight: bolder;
+}
+
+.zoom-button {
+  width: 24px;
+  height: 24px; 
+  border-radius: 100px; 
+  padding: 1px;
+  pointer-events: auto;
+  cursor: zoom-in;
+}
+
+.zoom-button > .material-icons {
+  display:inline-block;
+  font-size: 16px;
+  vertical-align: bottom;
 }

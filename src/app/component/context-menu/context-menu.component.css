@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .component {
   box-sizing: border-box;
   overflow: visible;
@@ -85,6 +89,13 @@ ul > li {
 ul > li.hasHighlight:hover {
   color: #CCC;
   background-color: rgba(30, 30, 30, 0.8);
+}
+ul > li.has-color.hasHighlight:hover {
+  text-shadow: 
+    1px  0px 1px #ffffff,
+    0px  1px 1px #ffffff,
+    -1px  0px 1px #ffffff,
+    0px -1px 1px #ffffff; 
 }
 
 .menu-title:not(.icon-menu) {
@@ -180,4 +191,9 @@ input.altitude {
 
 .self-only {
   color: red;
+}
+
+.hotkey {
+  float: right;
+  font-size: smaller;
 }

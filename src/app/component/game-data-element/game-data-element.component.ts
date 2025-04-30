@@ -1,15 +1,9 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  Input,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { EventSystem } from '@udonarium/core/system';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
 import { DataElement } from '@udonarium/data-element';
+import { GameCharacter } from '@udonarium/game-character';
+import { TabletopObject } from '@udonarium/tabletop-object';
 import { OpenUrlComponent } from 'component/open-url/open-url.component';
 import { ModalService } from 'service/modal.service';
 
@@ -19,8 +13,8 @@ import { ModalService } from 'service/modal.service';
   styleUrls: ['./game-data-element.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewInit {
-  @Input() tableTopObjectName: string = null;
+export class GameDataElementComponent implements OnInit, OnDestroy {
+  @Input() tabletopObject: TabletopObject = null;
   @Input() gameDataElement: DataElement = null;
   @Input() isEdit: boolean = false;
   @Input() isTagLocked: boolean = false;
@@ -40,13 +34,29 @@ export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewIni
   set value(value: number | string) { this._value = value; this.setUpdateTimer(); }
 
   private _currentValue: number | string = 0;
-  get currentValue(): number | string { return this._currentValue; }
+  get currentValue(): number | string { return this._currentValue == null ? '' : this._currentValue; }
   set currentValue(currentValue: number | string) { this._currentValue = currentValue; this.setUpdateTimer(); }
 
   get abilityScore(): number { return this.gameDataElement.calcAbilityScore(); }
 
-  get isTableTopObjectName() {
+  get isTabletopObjectName() {
     return this.isTagLocked && (this.gameDataElement.name === 'name');
+  }
+
+  get tabletopObjectName() {
+    let element = this.tabletopObject.commonDataElement.getFirstElementByName('name') || this.tabletopObject.commonDataElement.getFirstElementByName('title');
+    return element ? <string>element.value : '';
+  }
+
+  get checkValue(): string {
+    if (this.currentValue == null) return '';
+    let ary = this.currentValue.toString().split(/[|｜]/, 2);
+    if (ary.length <= 1) return (this.value == null || this.value == '') ? '' : this.currentValue.toString();
+    let ret = (this.value == null || this.value == '') ? ary[1] : ary[0];
+    if (this.tabletopObject instanceof GameCharacter && this.tabletopObject.chatPalette) {
+      ret = this.tabletopObject.chatPalette.evaluate(ret, this.tabletopObject.rootDataElement);
+    }
+    return ret;
   }
 
   get isCommonValue(): boolean {
@@ -55,18 +65,36 @@ export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewIni
         || this.gameDataElement.name === 'width'
         || this.gameDataElement.name === 'height'
         || this.gameDataElement.name === 'depth'
+        || this.gameDataElement.name === 'length'
         || this.gameDataElement.name === 'fontsize'
         || this.gameDataElement.name === 'opacity'
-        || this.gameDataElement.name === 'altitude');
+        || this.gameDataElement.name === 'altitude'
+        || this.gameDataElement.name === 'color');
     }
     return false;
+  }
+
+  get isNotApplicable(): boolean {
+    return this.isCommonValue && this.descriptionType === 'range-not-width' && this.gameDataElement.name === 'width';
+  }
+
+  get colorSampleTextShadowCss(): string {
+    const shadow = StringUtil.textShadowColor(this.value.toString());
+    return `${shadow} -1px -1px 0px, 
+      ${shadow} 0px -1px 0px, 
+      ${shadow} 1px -1px 0px, 
+      ${shadow} -1px 0px 0px, 
+      ${shadow} 1px 0px 0px,
+      ${shadow} -1px 1px 0px,
+      ${shadow} 0px 1px 0px,
+      ${shadow} 1px 1px 0px`;
   }
 
   get identifier(): string {
     return this.gameDataElement.identifier;
   }
 
-  private updateTimer: NodeJS.Timer = null;
+  private updateTimer: NodeJS.Timeout = null;
 
   constructor(
     private changeDetector: ChangeDetectorRef,
@@ -75,15 +103,26 @@ export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewIni
 
   ngOnInit() {
     if (this.gameDataElement) this.setValues(this.gameDataElement);
+  }
 
+  ngOnChanges(): void {
+    EventSystem.unregister(this);
     EventSystem.register(this)
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
+      .on('UPDATE_GAME_OBJECT', event => {
+        let isDetectChange = false;
         if (this.gameDataElement && event.data.identifier === this.gameDataElement.identifier) {
           this.setValues(this.gameDataElement);
-          this.changeDetector.markForCheck();
+          isDetectChange = true;
+        } else if (this.tabletopObject && this.tabletopObject.contains(this.gameDataElement)) {
+          isDetectChange = true;
         }
+        if (isDetectChange) this.changeDetector.markForCheck();
       })
-      .on('DELETE_GAME_OBJECT', -1000, event => {
+      .on(`UPDATE_GAME_OBJECT/identifier/${this.gameDataElement?.identifier}`, event => {
+        this.setValues(this.gameDataElement);
+        this.changeDetector.markForCheck();
+      })
+      .on('DELETE_GAME_OBJECT', event => {
         if (this.gameDataElement && this.gameDataElement.identifier === event.data.identifier) {
           this.changeDetector.markForCheck();
         }
@@ -92,10 +131,6 @@ export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewIni
 
   ngOnDestroy() {
     EventSystem.unregister(this);
-  }
-
-  ngAfterViewInit() {
-
   }
 
   addElement() {
@@ -136,7 +171,7 @@ export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewIni
     if (StringUtil.sameOrigin(url)) {
       window.open(url.trim(), '_blank', 'noopener');
     } else {
-      this.modalService.open(OpenUrlComponent, { url: url, title: this.tableTopObjectName, subTitle: this.name });
+      this.modalService.open(OpenUrlComponent, { url: url, title: this.tabletopObjectName, subTitle: this.name });
     } 
   }
 

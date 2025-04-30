@@ -29,7 +29,7 @@ export class DiceSymbol extends TabletopObject {
   get size(): number { return this.getCommonValue('size', 1); }
   set size(size: number) { this.setCommonValue('size', size); }
 
-  get faces(): string[] { return this.imageDataElement ? this.imageDataElement.children.filter(element => (element as DataElement).currentValue != 'nothing').map(element => (element as DataElement).name) : []; }
+  get faces(): string[] { return this.imageDataElement?.children.filter(element => (element as DataElement).currentValue != 'nothing').map(element => (element as DataElement).name) ?? []; }
   get imageFile(): ImageFile {
     return this.isVisible ?
       this.getImageFile(this.face)
@@ -56,9 +56,10 @@ export class DiceSymbol extends TabletopObject {
   }
   
   get hasOwner(): boolean { return 0 < this.owner.length; }
-  get isMine(): boolean { return Network.peerContext.userId === this.owner; }
+  get ownerIsOnline(): boolean { return this.hasOwner && Network.peers.some(peer => peer.userId === this.owner && peer.isOpen); }
+  get isMine(): boolean { return Network.peer.userId === this.owner; }
   get isVisible(): boolean { return !this.hasOwner || this.isMine || this.isGMMode; }
-  get isCoin(): boolean { return this.faces.length === 2; }
+  get isCoin(): boolean { return this.faces.length === 2; }S
 
   diceRoll(): string {
     let faces = this.faces;

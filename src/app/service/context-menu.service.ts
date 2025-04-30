@@ -26,6 +26,7 @@ export interface ContextMenuAction {
   type?: ContextMenuType,
   subActions?: ContextMenuAction[],
   altitudeHande?: TabletopObject,
+  altitudeDisabled?: boolean,
   default?: boolean,
   icon?: ImageFile,
   error?: string,
@@ -34,7 +35,10 @@ export interface ContextMenuAction {
   selfOnly?: boolean,
   level?: number,
   color?: string,
-  center?: boolean
+  center?: boolean,
+  colorSample?: boolean,
+  hotkey?: string,
+  checkBox?: string
 }
 
 @Injectable()
@@ -51,10 +55,6 @@ export class ContextMenuService {
   titleColor: string = PeerCursor.CHAT_DEFAULT_COLOR;
   titleBold: boolean = false;
 
-  constructor(
-    //private componentFactoryResolver: ComponentFactoryResolver
-  ) { }
-
   get isShow(): boolean {
     return this.panelComponentRef ? true : false;
   }
@@ -63,15 +63,10 @@ export class ContextMenuService {
     this.close();
     if (!parentViewContainerRef) {
       parentViewContainerRef = ContextMenuService.defaultParentViewContainerRef;
-      console.log('Context Open');
     }
-    let panelComponentRef: ComponentRef<any>;
 
-    //const injector = parentViewContainerRef.injector;
-    //const panelComponentFactory = this.componentFactoryResolver.resolveComponentFactory(ContextMenuService.ContextMenuComponentClass);
-
-    //panelComponentRef = parentViewContainerRef.createComponent(panelComponentFactory, parentViewContainerRef.length, injector);
-    panelComponentRef = parentViewContainerRef.createComponent(ContextMenuService.ContextMenuComponentClass, {index: parentViewContainerRef.length, injector: parentViewContainerRef.injector});
+    const injector = parentViewContainerRef.injector;
+    let panelComponentRef: ComponentRef<any> = parentViewContainerRef.createComponent(ContextMenuService.ContextMenuComponentClass, { index: parentViewContainerRef.length, injector: injector });
 
     const childPanelService: ContextMenuService = panelComponentRef.injector.get(ContextMenuService);
 

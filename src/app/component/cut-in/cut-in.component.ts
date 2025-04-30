@@ -3,7 +3,7 @@ import { Component, ElementRef, HostListener, Input, NgZone, OnDestroy, OnInit, 
 import { YouTubePlayer } from '@angular/youtube-player';
 import { AudioPlayer, VolumeType } from '@udonarium/core/file-storage/audio-player';
 import { AudioStorage } from '@udonarium/core/file-storage/audio-storage';
-import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { ImageFile, ImageState } from '@udonarium/core/file-storage/image-file';
 import { ImageStorage } from '@udonarium/core/file-storage/image-storage';
 import { EventSystem } from '@udonarium/core/system';
 import { CutIn } from '@udonarium/cut-in';
@@ -114,11 +114,15 @@ export class CutInComponent implements OnInit, OnDestroy {
   private _naturalWidth = 0;
   private _naturalHeight = 0;
   private get naturalWidth(): number {
-    if (this.videoId && !this.isSoundOnly) return 480;
+    if (this.videoId && !this.isSoundOnly) {
+      return (this.cutIn.videoUrl.indexOf('/shorts/') >= 0) ? 270 : 480;
+    }
     return this._naturalWidth;
   }
   private get naturalHeight(): number {
-    if (this.videoId && !this.isSoundOnly) return 270;
+    if (this.videoId && !this.isSoundOnly) {
+      return (this.cutIn.videoUrl.indexOf('/shorts/') >= 0) ? 480 : 270;
+    }
     return this._naturalHeight;
   }
 
@@ -136,12 +140,18 @@ export class CutInComponent implements OnInit, OnDestroy {
     EventSystem.register(this)
       .on('CHANGE_JUKEBOX_VOLUME', -100, event => {
         if (this.videoPlayer) this.videoPlayer.setVolume(this.videoVolume);
+        //if (this.videoPlayer) console.log(this.videoPlayer.getVolume())
       })
       .on('PLAY_VIDEO_CUT_IN', -1000, event => {
         if (this.cutIn && this.cutIn.identifier != event.data.identifier && !!this.videoId) {
           this.stop();
         }
       });
+    if (this.cutInImage.state === ImageState.COMPLETE && !this._cutInImgageUrl) {
+      this._cutInImgageUrl = URL.createObjectURL(this.cutInImage.blob);
+    } else {
+      this._cutInImgageUrl = this.cutInImage.url;
+    }
   }
 
   ngOnDestroy(): void {
@@ -150,6 +160,7 @@ export class CutInComponent implements OnInit, OnDestroy {
     EventSystem.unregister(this, 'PLAY_VIDEO_CUT_IN');
     clearTimeout(this._timeoutId);
     clearTimeout(this._timeoutIdVideo);
+    if (this._cutInImgageUrl) URL.revokeObjectURL(this._cutInImgageUrl);
   }
 
   get isPointerDragging(): boolean { return this._dragging; }
@@ -342,7 +353,10 @@ export class CutInComponent implements OnInit, OnDestroy {
   }
 */
   get videoVolume(): number {
-    return (this.isTest ? AudioPlayer.auditionVolume : AudioPlayer.volume) * 100;
+    if (this.isTest) {
+      return AudioPlayer.isAuditionMute ? 0 : AudioPlayer.auditionVolume * 100;
+    }
+    return AudioPlayer.isMute ? 0 : AudioPlayer.volume * 100;
   }
 
   get isBordered(): boolean { return this.cutIn && this.cutIn.borderStyle > 0; }
@@ -373,6 +387,15 @@ export class CutInComponent implements OnInit, OnDestroy {
     return ret;
   }
 
+  private _cutInImgageUrl: string = '';
+  get cutInImgageUrl(): string {
+    return this._cutInImgageUrl; 
+  }
+
+  get videoStart(): number {
+    return parseInt(this.cutIn.videoStart);
+  }
+
   play() {
     if (this.isEnd) return;
     if (this._isVisible) {
@@ -388,7 +411,7 @@ export class CutInComponent implements OnInit, OnDestroy {
           this.stop();
           clearTimeout(this._timeoutId);
           this._timeoutId = null;
-        }, this.cutIn.duration * 1000);
+        }, (this.cutIn.videoId ? 12 : this.cutIn.duration) * 1000);
       }
     }
   }
@@ -433,8 +456,9 @@ export class CutInComponent implements OnInit, OnDestroy {
   }
 
   onPlayerReady($event) {
-    $event.target.setVolume(this.videoVolume);
+    //$event.target.setVolume(this.videoVolume);
     //console.log('ready')
+    if (this.videoPlayer) this.videoPlayer.setVolume(this.videoVolume);
     $event.target.playVideo();
   }
 
@@ -442,6 +466,7 @@ export class CutInComponent implements OnInit, OnDestroy {
     const state = $event.data;
     //console.log($event.data)
     if (state == 1) {
+      if (this.videoPlayer) this.videoPlayer.setVolume(this.videoVolume);
       this.videoStateTransition = true;
       this._timeoutIdVideo = setTimeout(() => {
         this.ngZone.run(() => {
@@ -449,7 +474,22 @@ export class CutInComponent implements OnInit, OnDestroy {
           this._timeoutIdVideo = null;
         });
       }, 200);
-      if (this.cutIn) EventSystem.trigger('PLAY_VIDEO_CUT_IN', {identifier: this.cutIn.identifier})
+      //Timeoutの変更
+      if (this.cutIn.duration > 0) {
+        clearTimeout(this._timeoutId);
+        const timeLimit = this.cutIn.duration - this.videoPlayer.getCurrentTime() + (this.cutIn.videoStart ? parseInt(this.cutIn.videoStart) : 0);
+        //console.log(timeLimit)
+        if (timeLimit <= 0) {
+          this.stop();
+        } else {
+          this._timeoutId = setTimeout(() => {
+            this.stop();
+            clearTimeout(this._timeoutId);
+            this._timeoutId = null;
+          }, (this.cutIn.duration > timeLimit ? timeLimit : this.cutIn.duration) * 1000);
+        }
+      }
+      if (this.cutIn) EventSystem.trigger('PLAY_VIDEO_CUT_IN', {identifier: this.cutIn.identifier});
     }
     if (state == 2) {
       this.videoStateTransition = true;
@@ -496,17 +536,20 @@ export class CutInComponent implements OnInit, OnDestroy {
       {
         name: `${this.isIndicateSender ? '☑' : '☐'}송신자를 표시`,
         action: () => { this.isIndicateSender = !this.isIndicateSender; },
-        selfOnly: true
+        selfOnly: true,
+        checkBox: 'check'
       },
       {
         name: `${this.isBackyard ? '☑' : '☐'}창 뒤에 표시`,
         action: () => { this.isBackyard = !this.isBackyard; },
-        selfOnly: true
+        selfOnly: true,
+        checkBox: 'check'
       },
       {
         name: `${this.isMinimize ? '☑' : '☐'}최소화`,
         action: () => { this.isMinimize = !this.isMinimize; },
-        selfOnly: true
+        selfOnly: true,
+        checkBox: 'check'
       },
             /*
       (!this.videoId ? null : ContextMenuSeparator),

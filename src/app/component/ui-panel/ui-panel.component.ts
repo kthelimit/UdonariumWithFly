@@ -43,6 +43,8 @@ export class UIPanelComponent implements OnInit {
 
   @Output() rotateEvent = new EventEmitter<boolean>();
 
+  @Input() showTitleButtons: boolean = true;
+
   get title(): string { return this.panelService.title; }
   get left() { return this.panelService.left; }
   get top() { return this.panelService.top; }
@@ -70,7 +72,7 @@ export class UIPanelComponent implements OnInit {
   isFullScreen: boolean = false;
   isHorizontal: boolean = false;
 
-  get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging; }
+  get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging || this.pointerDeviceService.isTablePickGesture; }
 
   constructor(
     public panelService: PanelService,
@@ -81,7 +83,12 @@ export class UIPanelComponent implements OnInit {
     this.panelService.scrollablePanel = this.scrollablePanel.nativeElement;
   }
 
-  toggleMinimize() {
+  toggleMinimize(e: Event = null) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
     const panel = this.draggablePanel.nativeElement;
     const cntent = this.scrollablePanel.nativeElement;
     panel.style.transition = 'width 0.1s ease-in-out, height 0.1s ease-in-out';
@@ -117,7 +124,12 @@ export class UIPanelComponent implements OnInit {
     */
   }
 
-  toggleFullScreen() {
+  toggleFullScreen(e: Event = null) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
     const panel = this.draggablePanel.nativeElement;
     const cntent = this.scrollablePanel.nativeElement;
     panel.style.transition = 'width 0.1s ease-in-out, height 0.1s ease-in-out';
@@ -174,7 +186,12 @@ export class UIPanelComponent implements OnInit {
     */
   }
 
-  toggleRotate() {
+  toggleRotate(e: Event = null) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
     //if (this.isMinimized) return;
     const panel = this.draggablePanel.nativeElement;
     const cntent = this.scrollablePanel.nativeElement;
@@ -183,7 +200,7 @@ export class UIPanelComponent implements OnInit {
     setTimeout(() => {
       panel.style.transition = null;
       cntent.style.overflowY = null;
-    }, 100);
+    }, 500);
 
     const saveWidth = panel.offsetWidth;
     const saveHeight = panel.offsetHeight;
@@ -207,9 +224,23 @@ export class UIPanelComponent implements OnInit {
     this.isMinimized = false;
     this.isFullScreen = false;
     this.rotateEvent.emit(this.isHorizontal);
+
+    return false;
   }
 
-  close() {
+  close(e: Event = null) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     if (this.panelService) this.panelService.close();
+  }
+
+  notOperaion(e: Event = null) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    return false;
   }
 }

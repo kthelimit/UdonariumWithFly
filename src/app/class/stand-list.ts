@@ -23,6 +23,7 @@ export class StandList extends DataElement {
   @SyncVar() position = 5;
   @SyncVar() height = 35;
   @SyncVar() overviewIndex = -1;
+  @SyncVar() isSortNameList = true;
 
   get standElements(): DataElement[] {
     return this.getElementsByName('stand');
@@ -92,7 +93,7 @@ export class StandList extends DataElement {
           && (conditionType == StandConditionType.Postfix || conditionType == StandConditionType.PostfixOrImage || conditionType == StandConditionType.PostfixAndImage)) {
           for (let postfix of postfixes.split(/[\r\n]+/g)) {
             if (postfix == null || postfix.trim().length == 0) continue;
-            if (StringUtil.toHalfWidth(text).toUpperCase().trimRight().endsWith(StringUtil.toHalfWidth(postfix).trimRight().toUpperCase())) {
+            if (StringUtil.toHalfWidth(text.replaceAll('＞', '→')).toUpperCase().trimRight().endsWith(StringUtil.toHalfWidth(postfix.replaceAll('＞', '→')).trimRight().toUpperCase())) {
               if ((postfix.slice(0, 1) == '@' || postfix.slice(0, 1) == '＠') && textTagMatch.length < postfix.length) textTagMatch = postfix;
               conditionPostfix = true;
             }

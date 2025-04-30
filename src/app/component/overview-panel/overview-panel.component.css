@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .component {
   position: absolute;
   max-height: 100%;
@@ -106,6 +110,7 @@
   height: 42px; 
   border-radius: 100px; 
   padding: 4px;
+  cursor: zoom-in;
 }
 
 .zoom-button > .material-icons {
@@ -157,7 +162,6 @@
 
 .character-image-box {
   width: 100px;
-  overflow: hidden;
   vertical-align: bottom;
   margin-left: 0.5em;
   margin-bottom: -6px;
@@ -166,9 +170,10 @@
   overflow: visible;
 }
 .character-image-box img {
+  max-height: 150px;
   vertical-align: bottom;
   object-fit: contain;
-  object-position: bottom left;
+  object-position: bottom center;
 }
 
 .character-image-box.has-icon {
@@ -287,7 +292,7 @@
   color: #444;
   padding: 0;
   box-sizing: border-box;
-  resize: both;
+  resize: none;
   overflow: hidden;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -547,6 +552,32 @@ input[type='range']::-ms-tooltip {
   filter: drop-shadow(0 -6px 6px #fff);
 }
 
+.aura-following.black {
+  filter: drop-shadow(0 -2px 2px black);
+}
+.aura-following.blue {
+  filter: drop-shadow(0 -2px 2px #33f);
+}
+.aura-following.green {
+  filter: drop-shadow(0 -2px 2px #3f3);
+}
+.aura-following.cyan {
+  filter: drop-shadow(0 -2px 2px #3ff);
+}
+.aura-following.red {
+  filter: drop-shadow(0 -2px 2px #f00);
+}
+.aura-following.magenta {
+  filter: drop-shadow(0 -2px 2px #f0f);
+}
+.aura-following.yellow {
+  filter: drop-shadow(0 -2px 2px #ff3);
+}
+.aura-following.white {
+  filter: drop-shadow(0 -2px 2px #fff);
+}
+
+
 button.link {
 /*.input {*/
   background: none;
@@ -640,4 +671,27 @@ button.link:disabled:hover {
 
 .hide-text-area {
   color: transparent;
+}
+
+input + .move {
+  display: inline-block;
+  transform: translateX(-1em);
+  transition: transform 18ms;
+}
+input:hover + .move,
+input:active + .move,
+input:focus + .move {
+  display: inline-block;
+  transform: translateX(0px);
+  transition: transform 18ms;
+}
+.url-link {
+  cursor: inherit;
+}
+
+@supports (-moz-user-select: -moz-none) {
+  /* 汚いけどとりあえず */
+  input + .move {
+    transform: translateX(0px);
+  }
 }

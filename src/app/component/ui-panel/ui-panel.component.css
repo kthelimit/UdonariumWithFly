@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .draggable-panel {
   box-sizing: border-box;
   overflow: visible;
@@ -35,17 +39,29 @@
   box-sizing: border-box;
   font-size: 12px;
   height: 25px;
-  padding: 2px 5px;
   width: 100%;
   background-color: #555;
   color: #CCC;
   user-select: none;
+
+  display: flex;
+}
+
+.title-text {
+  align-self: center;
+  flex-grow: 1;
+  padding: 0 5px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.title-text.rotateble {
+  padding: 3px 0 0 0;
+  overflow: visible;
 }
 
 .title-button {
-  position: absolute;
-  right: 0;
-  top: 0;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .title button {
@@ -97,4 +113,8 @@
 .draggable-panel.i-am-gm {
   background: linear-gradient(-30deg, rgba(240, 208, 208, 0.9), rgba(255, 236, 236, 0.9));
   /*background: linear-gradient(-30deg, rgba(240,218,189, 0.9), rgba(255, 244, 232, 0.9));*/
+}
+
+.scrollable-panel {
+  scrollbar-width: thin;
 }

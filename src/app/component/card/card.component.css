@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .is-grab {
   cursor: -moz-grab;
   cursor: -webkit-grab;
@@ -58,6 +62,7 @@
   margin: auto;
   height: auto;
   width: 100%;
+  backface-visibility: hidden;
 }
 
 .thumbnail-transform {
@@ -67,6 +72,7 @@
 
 .is-translucent {
   filter: opacity(0.8);
+  z-index: 2;
 }
 
 .rotate-grab {
@@ -93,6 +99,8 @@
 .component:hover .rotate-grab {
   display: block;
   opacity: 0.5;
+  transform-style: preserve-3d;
+  transform: translateZ(0.01px);
 }
 
 .component:active .rotate-grab {
@@ -128,6 +136,22 @@
   border-radius: 14px;
 }
 
+.selected-highlight {
+  pointer-events: none;
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 3px;
+  background-color: hsla(200, 100%, 75%, 0.6);
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+
+.selected-highlight.is-magnetic {
+  background-color: hsla(60, 100%, 75%, 0.6);
+}
+
 .border-bg {
   position: absolute;
   box-sizing: border-box;
@@ -158,10 +182,11 @@
   padding: 3px 9px;
   border-radius: 24px;
   position: absolute;
-  top: 0;
+  top: 50%;
   color: whitesmoke !important;
   opacity: 0.9;
   z-index: 10;
+  backface-visibility: hidden;
 }
 
 .has-length-limit {
@@ -193,7 +218,8 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  
+
+  backface-visibility: hidden;
   font-weight: bolder;
   text-align: center;
   white-space: pre-wrap;
@@ -214,4 +240,12 @@
   #fff 0px 0px 2px,
   #fff 0px 0px 2px,
   #fff 0px 0px 2px;
+}
+
+.is-inverse {
+  transform: rotateZ(180deg);
+}
+
+.component:hover .name-tag {
+  visibility: hidden;
 }

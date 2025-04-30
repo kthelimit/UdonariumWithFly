@@ -1,7 +1,7 @@
 import { trigger, transition, animate, keyframes, style } from '@angular/animations';
-import { ElementRef, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { ElementRef, NgZone, OnChanges, OnDestroy, SimpleChanges, ViewChild } from '@angular/core';
 import { Component, Input, OnInit } from '@angular/core';
-import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { ImageFile, ImageState } from '@udonarium/core/file-storage/image-file';
 import { ImageStorage } from '@udonarium/core/file-storage/image-storage';
 import { EventSystem } from '@udonarium/core/system';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
@@ -54,7 +54,6 @@ export class StandImageComponent implements OnInit, OnDestroy {
   @Input() gameCharacter: GameCharacter;
   @Input() standElement: DataElement;
   @Input() color: string;
-
   @ViewChild('standImageElement', { static: false }) standImageElement: ElementRef;
   @ViewChild('dialogElement', { static: false }) dialogElement: ElementRef;
 
@@ -62,7 +61,7 @@ export class StandImageComponent implements OnInit, OnDestroy {
   static isShowNameTag = true;
   static isCanBeGone = true;
 
-  private _imageFile: ImageFile = ImageFile.Empty;
+  //private _imageFile: ImageFile = ImageFile.Empty;
   private _timeoutId;
   private _dialogTimeoutId;
   private _chatIntervalId;
@@ -72,19 +71,24 @@ export class StandImageComponent implements OnInit, OnDestroy {
   isBackyard = false;
   isVisible = false;
   isSecret = false;
-  standImageTransformOrigin = 'center';
+  isImageLoaded = false; 
 
   private naturalWidth = 0;
   private naturalHeight = 0;
-  
+
   isSpeaking = false;
   math = Math;
+
+  private _speakingImageIdentifier: string;
+  private _imageIdentifier: string;
+  private _speakingImageUrl: string;
+  private _imageUrl: string = ImageFile.Empty.url;
 
   constructor(
     private ngZone: NgZone
   ) { }
 
-  onSpeaking(event: AnimationEvent) {
+  onSpeaking(event: any) {
     //キャラクターの吹き出し表示に合わせる
     if (this.gameCharacter && this.gameCharacter.text && (this.isApplyDialog || this.isSpeakable || this.gameCharacter.isShowChatBubble)) {
       clearTimeout(this._timeoutId);
@@ -94,9 +98,13 @@ export class StandImageComponent implements OnInit, OnDestroy {
         });
       }, 12000);
     }
-    if (this.isSpeakable) {
+    //ToDO エモート時画像
+    if (this.isSpeakable && !this.gameCharacter.isEmote) {
       clearTimeout(this._dialogTimeoutId);
-      if (this.gameCharacter && this.gameCharacter.text) this.isSpeaking = true;
+      if (this.gameCharacter && this.gameCharacter.text) {
+        if (!this.isSpeaking) this.refleshSpeakingImageUrl();
+        this.isSpeaking = true;
+      }
       this._dialogTimeoutId = setTimeout(() => {
         this.ngZone.run(() => {
           this.isSpeaking = false;
@@ -104,6 +112,9 @@ export class StandImageComponent implements OnInit, OnDestroy {
       }, 300);
     }
   }
+
+  get imageUrl(): string { return this._imageUrl; }
+  get speakingImageUrl(): string { return this._speakingImageUrl ? this._speakingImageUrl : this._imageUrl; }
 
   get isShowStand(): boolean {
     return StandImageComponent.isShowStand;
@@ -138,19 +149,17 @@ export class StandImageComponent implements OnInit, OnDestroy {
         rubyLength += ary[2].length;
       }
     }
-    //if (rubys.length > 0) this.isRubied = true; 
-
+ 
     let speechDelay = 1000 / Array.from(text).length > 36 ? 1000 / Array.from(text).length : 36;
     if (speechDelay > 200) speechDelay = 200;
     this._dialogTimeoutId = setTimeout(() => {
-      //this.dialog = null;
+      this.gameCharacter.dialog = null;
       this.gameCharacter.text = '';
       this.gameCharacter.isEmote = false; 
-      //this.isRubied = false; 
       //this.changeDetector.markForCheck();
     }, Array.from(text).length * speechDelay + 6000);
 
-    //this.dialog = dialog;
+    this.gameCharacter.dialog = dialog;
     this.gameCharacter.isEmote = isEmote;
     count = 0;
     let countLength = 0;
@@ -192,9 +201,13 @@ export class StandImageComponent implements OnInit, OnDestroy {
         if (count >= charAry.length) {
           clearInterval(this._chatIntervalId);
         }
-        //countLength += c.length;
       }, speechDelay);
     }
+  }
+
+  get dialog() {
+    if (!this.gameCharacter) return null;
+    return this.gameCharacter.dialog;
   }
 
   get dialogText(): string {
@@ -203,7 +216,7 @@ export class StandImageComponent implements OnInit, OnDestroy {
     //const ary = this.gameCharacter.text.replace(/。/g, "。\n\n").split(/[\r\n]{2,}/g).filter(str => str.trim());
     //return ary.length > 0 ? ary.reverse()[0].trim() : '';
   }
-
+  /*
   get standImage(): ImageFile {
     if (!this.standElement) return this._imageFile;
     let elm = null;
@@ -221,40 +234,105 @@ export class StandImageComponent implements OnInit, OnDestroy {
     }
     return this._imageFile;
   }
-
+  */
   get isSpeakable(): boolean {
     if (!this.standElement) return false;
     let elm = this.standElement.getFirstElementByName('speakingImageIdentifier');
     return elm && elm.value && elm.value !== ImageFile.Empty.identifier;
   }
 
+  get dialogFaceIcon(): ImageFile {
+    if (!this.dialog || !this.dialog.faceIconIdentifier) return null;
+    return ImageStorage.instance.get(<string>this.dialog.faceIconIdentifier);
+  }
+
+  get isUseFaceIcon(): ImageFile {
+    return this.dialog && this.dialog.faceIconIdentifier;
+  }
+  
+  get isRubied(): boolean {
+    if (!this.gameCharacter || !this.gameCharacter.text) return false;
+    return -1 < this.dialogText.indexOf('<ruby>');
+  }
+
   ngOnInit(): void {
     EventSystem.register(this)
-    .on('POPUP_CHAT_BALLOON', -1000, event => {
-      if (this.gameCharacter && this.gameCharacter.identifier == event.data.characterIdentifier) {
-        this.ngZone.run(() => {
-          this.dialog = event.data;
-          //this.changeDetector.markForCheck();
-        });
+      .on('POPUP_CHAT_BALLOON', -1000, event => {
+        if (this.gameCharacter && this.gameCharacter.identifier == event.data.characterIdentifier) {
+          this.ngZone.run(() => {
+            this.dialog = event.data;
+            //this.changeDetector.markForCheck();
+          });
+        }
+      })
+      .on('FAREWELL_CHAT_BALLOON', -1000, event => {
+        if (this.gameCharacter && this.gameCharacter.identifier == event.data.characterIdentifier) {
+          this.ngZone.run(() => {
+            this.dialog = null;
+            this.gameCharacter.text = '';
+            this.gameCharacter.isEmote = false;
+            //this.changeDetector.markForCheck();
+          });
+          clearTimeout(this._dialogTimeoutId);
+          clearInterval(this._chatIntervalId);
+        }
+      });
+    this.refleshImageUrls();
+  }
+
+  refleshImageUrls(force: boolean=false) {
+    const imageElement = this.standElement.getFirstElementByName('imageIdentifier');
+    if (force || !imageElement || this._imageIdentifier !== imageElement.value) {
+      force = true;
+      const revokeUrl = this._imageUrl;
+      if (imageElement) {
+        const iamgeFile: ImageFile = ImageStorage.instance.get(<string>imageElement.value);
+        if (iamgeFile) {
+          if (iamgeFile.state === ImageState.COMPLETE) {
+            this._imageUrl = URL.createObjectURL(iamgeFile.blob);
+          } else {
+            this._imageUrl = iamgeFile.url;
+          }
+        } else {
+          this._imageUrl = ImageFile.Empty.url;
+        }
+      } else {
+        this._imageUrl = ImageFile.Empty.url;
       }
-    })
-    .on('FAREWELL_CHAT_BALLOON', -1000, event => {
-      if (this.gameCharacter && this.gameCharacter.identifier == event.data.characterIdentifier) {
-        this.ngZone.run(() => {
-          this.dialog = null;
-          this.gameCharacter.text = '';
-          this.gameCharacter.isEmote = false;
-          //this.changeDetector.markForCheck();
-        });
-        clearTimeout(this._dialogTimeoutId);
-        clearInterval(this._chatIntervalId);
+      URL.revokeObjectURL(revokeUrl);
+      this._imageIdentifier = (imageElement && imageElement.value) ? imageElement.value.toString() : null;
+    }
+    this.refleshSpeakingImageUrl(force);
+  }
+
+  refleshSpeakingImageUrl(force: boolean=true) {
+    const speakingImageElement = this.standElement.getFirstElementByName('speakingImageIdentifier');
+    if (force || !speakingImageElement || this._speakingImageIdentifier !== speakingImageElement.value) {
+      const revokeUrl = this._speakingImageUrl;
+      if (speakingImageElement) {
+        const iamgeFile: ImageFile = ImageStorage.instance.get(<string>speakingImageElement.value);
+        if (iamgeFile) {
+          if (iamgeFile.state === ImageState.COMPLETE) {
+            this._speakingImageUrl = URL.createObjectURL(iamgeFile.blob);
+          } else {
+            this._speakingImageUrl = iamgeFile.url;
+          }
+        } else {
+          this._speakingImageUrl = null;
+        }
+      } else {
+        this._speakingImageUrl = null;
       }
-    })
+      URL.revokeObjectURL(revokeUrl);
+      this._speakingImageIdentifier = (speakingImageElement && speakingImageElement.value) ? speakingImageElement.value.toString() : null;
+    }
   }
 
   ngOnDestroy(): void {
     clearTimeout(this._timeoutId);
-    clearTimeout(this._dialogTimeoutId);
+    clearInterval(this._chatIntervalId);
+    URL.revokeObjectURL(this._speakingImageUrl);
+    URL.revokeObjectURL(this._imageUrl);
   }
 
   get group(): string {
@@ -382,16 +460,6 @@ export class StandImageComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  calcStandImageTransformOrigin(): string {
-    return 'center 66%';
-    /*
-    if (!this.standImageElement) return 'center';
-    let ratio = 1 - this.naturalWidth / (this.naturalHeight * 2);
-    if (ratio > 0.66) ratio = 0.66;
-    return 'center ' + (ratio * 100) + '%';
-    */
-  } 
-
   toGhostly() {
     this.ngZone.run(() => {
       this.isGhostly = true;
@@ -424,11 +492,14 @@ export class StandImageComponent implements OnInit, OnDestroy {
       this.isFarewell = true;
       this.isVisible = false;
     });
+    //this.gameCharacter.text = '';
+    clearTimeout(this._timeoutId);
+    clearInterval(this._chatIntervalId);
   }
 
   onImageLoad() {
     this.naturalWidth = this.standImageElement.nativeElement.naturalWidth;
     this.naturalHeight = this.standImageElement.nativeElement.naturalHeight;
-    this.standImageTransformOrigin = this.calcStandImageTransformOrigin();
+    this.isImageLoaded = true;
   }
 }

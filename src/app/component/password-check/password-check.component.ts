@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
 import { EventSystem, Network } from '@udonarium/core/system';
 import { PeerContext } from '@udonarium/core/system/network/peer-context';
@@ -11,29 +11,33 @@ import { PanelService } from 'service/panel.service';
   templateUrl: './password-check.component.html',
   styleUrls: ['./password-check.component.css']
 })
-export class PasswordCheckComponent implements OnInit, OnDestroy {
+export class PasswordCheckComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('passwordInput', { static: true }) passwordInputElementRef: ElementRef<HTMLInputElement>;
+
   password: string = '';
   help: string = '';
 
-  private targetPeerContext: PeerContext = null;
+  private targetPeers: PeerContext[] = [];
   title: string = '';
 
   get peerId(): string { return Network.peerId; }
-  get isConnected(): boolean {
-    return Network.peerIds.length <= 1 ? false : true;
-  }
+  get isConnected(): boolean { return 0 < Network.peerIds.length; }
 
   constructor(
     private panelService: PanelService,
     private modalService: ModalService
   ) {
-    this.targetPeerContext = modalService.option.peerId ? PeerContext.parse(modalService.option.peerId) : PeerContext.parse('???');
+    this.targetPeers = modalService.option.peers ?? [];
     this.title = modalService.option.title ? modalService.option.title : '';
   }
 
   ngOnInit() {
     Promise.resolve().then(() => this.modalService.title = this.panelService.title = `패스워드〈${this.title}〉`);
     EventSystem.register(this);
+  }
+
+  ngAfterViewInit() {
+    this.passwordInputElementRef.nativeElement.focus();
   }
 
   ngOnDestroy() {
@@ -45,7 +49,7 @@ export class PasswordCheckComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    if (this.targetPeerContext.verifyPassword(this.password)) this.modalService.resolve(this.password);
     this.help = '패스워드가 다릅니다.';
+    if (this.targetPeers.find(peer => peer.verifyPassword(this.password))) this.modalService.resolve(this.password);
   }
 }

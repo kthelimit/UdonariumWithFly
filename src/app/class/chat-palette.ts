@@ -1,8 +1,7 @@
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
 import { ObjectContext } from './core/synchronize-object/game-object';
 import { ObjectNode } from './core/synchronize-object/object-node';
-import { StringUtil } from './core/system/util/string-util';
-
+import { CompareOption, StringUtil } from './core/system/util/string-util';
 import { DataElement } from './data-element';
 import { PeerCursor } from './peer-cursor';
 
@@ -19,17 +18,14 @@ export interface PaletteVariable {
 export class ChatPalette extends ObjectNode {
   @SyncVar() dicebot: string = '';
   @SyncVar() paletteColor: string = '';
-  //TODO: キャラシ項目のコピー
+  //TODO: 캐릭터 시트 항목의 복사본
 
-  get color() {
-    if (this.paletteColor && this.paletteColor != '#ffffff') {
+  get color(): string {
+    if (this.paletteColor && this.paletteColor != PeerCursor.CHAT_TRANSPARENT_COLOR) {
       return this.paletteColor;
-    }
-    if (window.localStorage 
-      && localStorage.getItem(PeerCursor.CHAT_MY_COLOR_LOCAL_STORAGE_KEY) 
-      && localStorage.getItem(PeerCursor.CHAT_MY_COLOR_LOCAL_STORAGE_KEY) != '#ffffff') {
-      return localStorage.getItem(PeerCursor.CHAT_MY_COLOR_LOCAL_STORAGE_KEY);
-    }
+    } else if (PeerCursor.myCursor && PeerCursor.myCursor.color != PeerCursor.CHAT_TRANSPARENT_COLOR) {
+      return PeerCursor.myCursor.color;
+    } 
     return PeerCursor.CHAT_DEFAULT_COLOR;
   }
   set color(color: string) {
@@ -61,58 +57,83 @@ export class ChatPalette extends ObjectNode {
     this.isAnalized = false;
   }
 
-  evaluate(line: PaletteLine, extendVariables?: DataElement): string
-  evaluate(line: string, extendVariables?: DataElement): string
-  evaluate(line: any, extendVariables?: DataElement): string {
+  evaluate(line: PaletteLine, extendVariables?: DataElement, delayRefs?: string[]): string
+  evaluate(line: string, extendVariables?: DataElement, delayRefs?: string[]): string
+  evaluate(line: any, extendVariables?: DataElement, delayRefs?: string[]): string {
     let evaluate: string = '';
     if (typeof line === 'string') {
       evaluate = line;
     } else {
       evaluate = line.palette;
     }
-
-    console.log(evaluate);
+    
+    const delayRefName = [];
+    //console.log(evaluate);
     let limit = 128;
     let loop = 0;
     let isContinue = true;
     while (isContinue) {
       loop++;
       isContinue = false;
-      evaluate = evaluate.replace(/[{｛]\s*([^{}｛｝]+)\s*[}｝]/g, (match, name) => {
+      evaluate = evaluate.replace(/[{｛][\s　]*([^{}｛｝]+)[\s　]*[}｝]/g, (match, name) => {
+        if (delayRefName.includes(name)) return match;
         //name = StringUtil.toHalfWidth(name);
         //console.log(name);
         isContinue = true;
         //name = StringUtil.toHalfWidth(name).toLocaleLowerCase();
         let ret: number|string = '';
         for (let variable of this.paletteVariables) {
-          if (variable.name == name) ret = variable.value;
+          //if (variable.name == name) ret = variable.value;
+          if (StringUtil.cr(StringUtil.toHalfWidth(variable.name.replace(/[―ー—‐]/g, '-')).toLowerCase()).replace(/[\s\r\n]+/, ' ').trim()
+           === StringUtil.cr(StringUtil.toHalfWidth(name.replace(/[―ー—‐]/g, '-'))).toLowerCase().replace(/[\s\r\n]+/, ' ').trim()) ret = variable.value;
         }
         if (extendVariables) {
           let element = extendVariables.getFirstElementByNameUnsensitive(name);
           if (element) {
             ret = element.isNumberResource ? element.currentValue
-              : element.isCheckProperty ? (element.currentValue + '').split(/[|｜]/g)[ element.value ? 0 : 1 ]
+              //: element.isCheckProperty ? (element.currentValue + '').split(/[|｜]/g)[ element.value ? 0 : 1 ]
+              : element.isCheckProperty ? element.checkValue()
               : element.isAbilityScore ? element.calcAbilityScore()
               : element.value;
             if (ret == null) ret = '';
           } else {
             if ((
-              element = extendVariables.getFirstElementByNameUnsensitive(name.replace(/^最大/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/^Max[\:\_\-\s]?/i, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/^基本/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/^初期/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/^原/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/基本値$/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/初期値$/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/原点$/, ''))
+              element = extendVariables.getFirstElementByNameUnsensitive(name, /^최대/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /^Max[\:\_\-\s]*/i)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /^초기/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /초기치$/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /최대치$/)
+            ) && (element.isNumberResource || element.isAbilityScore)) { // 호환을 위해 일단 남겨두고 미래에 소스로 쓸지도?
+              ret = element.value;
+            } else if ((
+              element = extendVariables.getFirstElementByNameUnsensitive(name, /^기본/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /^원래/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /\^$/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /기본치$/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /원점$/)
             ) && (element.isNumberResource || element.isAbilityScore)) {
               ret = element.value;
-            }
-            if ((element = extendVariables.getFirstElementByNameUnsensitive(name.replace(/修正値?$/, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/\s*Mod(ifier|\.)?$/i, ''))
-              || extendVariables.getFirstElementByNameUnsensitive(name.replace(/ボーナス$/, ''))
+            } else if ((
+              element = extendVariables.getFirstElementByNameUnsensitive(name, /수정치?$/)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /\s*Mod(ifier|\.)?$/i)
+              || extendVariables.getFirstElementByNameUnsensitive(name, /보너스$/)
             ) && element.isAbilityScore) {
               ret = element.calcAbilityScore();
+            }
+          }
+          if (ret == '') {
+            let delayMatch;
+            if (delayMatch = /^\$(.+)$/.exec(StringUtil.toHalfWidth(name.replace(/[―ー—‐]/g, '-')))) { 
+              if (delayRefs) {
+                if (/^\d+$/.test(StringUtil.toHalfWidth(delayMatch[1]))) {
+                  const indexNo = parseInt(StringUtil.toHalfWidth(delayMatch[1]));
+                  return delayRefs[indexNo - 1] != null ? delayRefs[indexNo - 1] : '';
+                }
+                return match.replace(name, delayMatch[1]);
+              } else {
+                delayRefName.push(name);
+                return match;
+              }
             }
           }
           return ret + '';
@@ -143,7 +164,7 @@ export class ChatPalette extends ObjectNode {
   }
 
   private parseVariable(palette: string): PaletteVariable {
-    let array = /^\s*[/／]{2}([^=＝{}｛｝\s]+)\s*[=＝]\s*(.+)\s*/gi.exec(palette);
+    let array = /^[\s　]*[/／]{2}([^=＝{}｛｝\s　]+)[\s　]*[=＝][\s　]*(.+)[\s　]*/gi.exec(palette);
     if (!array) return null;
     let variable: PaletteVariable = {
       name: StringUtil.toHalfWidth(array[1]),

@@ -4,18 +4,21 @@
       <div class="chat-tab">
         <label *ngFor="let chatTab of chatMessageService.chatTabs">
           <input name="chat-tab" type="radio" value="{{chatTab.identifier}}" ng-control="options" [(ngModel)]="chatTabidentifier">
-          <div><span [style.cursor]="chatTabidentifier != chatTab.identifier ? 'pointer' : ''" [style.color]="chatTab.name == '' && chatTabidentifier != chatTab.identifier ? 'gray' : ''">{{chatTab.name == '' ? '(無名のタブ)' : chatTab.name}}</span><i *ngIf="chatTab.isUseStandImage" class="material-icons small-font">how_to_reg</i><i *ngIf="chatTab.recieveOperationLogLevel > 0" class="material-icons small-font">history_edu</i><badge *ngIf="chatTab.hasUnread" class="badge" [count]="chatTab.unreadLength"></badge></div>
+          <div><span [style.cursor]="chatTabidentifier != chatTab.identifier ? 'pointer' : ''" [style.color]="chatTab.name == '' && chatTabidentifier != chatTab.identifier ? 'gray' : ''">{{chatTab.name == '' ? '(이름 없는 탭)' : chatTab.name}}</span><i *ngIf="chatTab.isUseStandImage" class="material-icons small-font">how_to_reg</i><i *ngIf="chatTab.recieveOperationLogLevel > 0" class="material-icons small-font">history_edu</i><badge *ngIf="chatTab.hasUnread" class="badge" [count]="chatTab.unreadLength"></badge></div>
         </label>
       </div>
     </form>
-    <chat-input [onlyCharacters]="true" [chatTabidentifier]="chatTabidentifier" 
-    [(gameType)]="gameType" [(sendFrom)]="sendFrom" [(text)]="text" (chat)="sendChat($event)" #chatInput></chat-input>
-    <div *ngIf="isEdit" class="edit-info"><i class="material-icons" style="vertical-align: bottom; size:0.8rem;">info_outline</i> 채팅 팔레트를 편집중입니다.</div>
+    <chat-input [onlyCharacters]="true" [chatTabidentifier]="chatTabidentifier" (moveToPalette)="moveToPalette($event)"
+    [(gameType)]="gameType" [(sendFrom)]="sendFrom" [(text)]="text" [(filterText)]="filterText" (chat)="sendChat($event)" #chatInput></chat-input>
+    <div *ngIf="isEdit" class="edit-info" style="display: flex">
+      <div style="width: calc(100% - 1.6em); text-align: center"><i class="material-icons" style="vertical-align: middle; font-size: 1.05rem">info_outline</i> 채팅 팔레트 편집중</div>
+      <div style="width: 1.6em; text-align: right"><button style="padding: 2px 6px; vertical-align: baseline; font-size: x-small; height: 1.24rem; cursor: help" (click)="helpChatPallet()">?</button></div>
+    </div>
   </div>
   <div *ngIf="!isEdit" style="flex-grow: 1; height: 0; min-height: 100px;">
-    <select class="palette" style="overflow-y: auto;" size="5" (input)="selectPalette($event.target.value)" (click)="clickPalette($event.target.value)" #chatPlette>
+    <select #chatPlette class="palette" style="overflow-y: auto;" size="5" (focus)="arrowPalette()" (keydown.arrowUp)="moveToInput($event)" (keyup.arrowUp)="arrowPalette()" (keyup.arrowDown)="arrowPalette()" (keydown.enter)="enterPalette(chatPlette.value, $event)" (click)="clickPalette(chatPlette.value)">
       <ng-container *ngIf="palette">
-        <ng-container *ngFor="let palette of palette.getPalette()">
+        <ng-container *ngFor="let palette of filteredPaletteStrings">
           <option *ngIf="filter(palette)" value="{{palette}}" [style.color]="color">{{palette}}</option>
         </ng-container>
       </ng-container>
@@ -25,9 +28,10 @@
     <textarea class="palette" style="resize: none;" [(ngModel)]="editPalette" placeholder="채팅 팔레트"></textarea>
   </div>
   <div style="flex-grow: 0;">
-    <button type="submit" (click)="toggleEditMode()">
-      <span *ngIf="!isEdit">채팅 팔레트를 편집</span>
       <span *ngIf="isEdit">채팅 팔레트를 확정</span>
+    <button type="submit" style="margin: 0px" (click)="toggleEditMode()">
+      <span *ngIf="!isEdit">채팅 팔레트 편집</span>
+      <span *ngIf="isEdit">채팅 팔레트 확정</span>
     </button>
   </div>
 </div>

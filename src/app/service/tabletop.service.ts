@@ -8,7 +8,6 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { CutIn } from '@udonarium/cut-in';
 import { CutInList } from '@udonarium/cut-in-list';
-import { DiceBot } from '@udonarium/dice-bot';
 import { DiceRollTable } from '@udonarium/dice-roll-table';
 import { DiceRollTableList } from '@udonarium/dice-roll-table-list';
 import { DiceSymbol } from '@udonarium/dice-symbol';
@@ -16,6 +15,7 @@ import { GameCharacter } from '@udonarium/game-character';
 import { GameTable } from '@udonarium/game-table';
 import { GameTableMask } from '@udonarium/game-table-mask';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { RangeArea } from '@udonarium/range';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 import { TabletopObject } from '@udonarium/tabletop-object';
@@ -25,6 +25,7 @@ import { TextNote } from '@udonarium/text-note';
 import { CoordinateService } from './coordinate.service';
 
 type ObjectIdentifier = string;
+type ObjecNodeIndex = number;
 type LocationName = string;
 
 @Injectable()
@@ -38,6 +39,7 @@ export class TabletopService {
 
   private locationMap: Map<ObjectIdentifier, LocationName> = new Map();
   private parentMap: Map<ObjectIdentifier, ObjectIdentifier> = new Map();
+  private indexMap: Map<ObjectIdentifier, ObjecNodeIndex> = new Map();
   private characterCache = new TabletopCache<GameCharacter>(() => ObjectStore.instance.getObjects(GameCharacter).filter(obj => obj.isVisibleOnTable));
   private cardCache = new TabletopCache<Card>(() => ObjectStore.instance.getObjects(Card).filter(obj => obj.isVisibleOnTable));
   private cardStackCache = new TabletopCache<CardStack>(() => ObjectStore.instance.getObjects(CardStack).filter(obj => obj.isVisibleOnTable));
@@ -45,6 +47,7 @@ export class TabletopService {
     let viewTable = this.tableSelecter.viewTable;
     return viewTable ? viewTable.masks : [];
   });
+  private rangeCache = new TabletopCache<RangeArea>(() => ObjectStore.instance.getObjects(RangeArea).filter(obj => obj.isVisibleOnTable));
   private terrainCache = new TabletopCache<Terrain>(() => {
     let viewTable = this.tableSelecter.viewTable;
     return viewTable ? viewTable.terrains : [];
@@ -56,6 +59,7 @@ export class TabletopService {
   get cards(): Card[] { return this.cardCache.objects; }
   get cardStacks(): CardStack[] { return this.cardStackCache.objects; }
   get tableMasks(): GameTableMask[] { return this.tableMaskCache.objects; }
+  get ranges(): RangeArea[] { return this.rangeCache.objects; }
   get terrains(): Terrain[] { return this.terrainCache.objects; }
   get textNotes(): TextNote[] { return this.textNoteCache.objects; }
   get diceSymbols(): DiceSymbol[] { return this.diceSymbolCache.objects; }
@@ -70,7 +74,7 @@ export class TabletopService {
   private initialize() {
     this.refreshCacheAll();
     EventSystem.register(this)
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
+      .on('UPDATE_GAME_OBJECT', event => {
         if (event.data.identifier === this.currentTable.identifier || event.data.identifier === this.tableSelecter.identifier) {
           this.refreshCache(GameTableMask.aliasName);
           this.refreshCache(Terrain.aliasName);
@@ -85,12 +89,12 @@ export class TabletopService {
           this.updateMap(object);
         }
       })
-      .on('DELETE_GAME_OBJECT', -1000, event => {
-        let garbage = ObjectStore.instance.get(event.data.identifier);
-        if (garbage == null || garbage.aliasName.length < 1) {
+      .on('DELETE_GAME_OBJECT', event => {
+        let aliasName = event.data.aliasName;
+        if (!aliasName) {
           this.refreshCacheAll();
         } else {
-          this.refreshCache(garbage.aliasName);
+          this.refreshCache(aliasName);
         }
       })
       .on('XML_LOADED', event => {
@@ -137,6 +141,8 @@ export class TabletopService {
         return this.textNoteCache;
       case DiceSymbol.aliasName:
         return this.diceSymbolCache;
+      case RangeArea.aliasName:
+        return this.rangeCache;
       default:
         return null;
     }
@@ -155,33 +161,47 @@ export class TabletopService {
     this.terrainCache.refresh();
     this.textNoteCache.refresh();
     this.diceSymbolCache.refresh();
-
+    this.rangeCache.refresh();
     this.clearMap();
   }
 
   private shouldRefreshCache(object: TabletopObject): boolean {
-    return this.locationMap.get(object.identifier) !== object.location.name || this.parentMap.get(object.identifier) !== object.parentId;
+    return this.locationMap.get(object.identifier) !== object.location.name
+      || this.parentMap.get(object.identifier) !== object.parentId
+      || (object.isVisibleOnTable && this.indexMap.get(object.identifier) !== object.index);
   }
 
   private updateMap(object: TabletopObject) {
     this.locationMap.set(object.identifier, object.location.name);
     this.parentMap.set(object.identifier, object.parentId);
+    this.indexMap.set(object.identifier, object.index);
   }
 
   private clearMap() {
     this.locationMap.clear();
     this.parentMap.clear();
+    this.indexMap.clear();
   }
 
   private placeToTabletop(gameObject: TabletopObject) {
     switch (gameObject.aliasName) {
       case GameTableMask.aliasName:
-        if (gameObject instanceof GameTableMask) gameObject.isLock = false;
+        if (gameObject instanceof GameTableMask) { 
+          gameObject.isLock = false;
+          gameObject.isPreview = false;
+        }
+        // フォールスルー
       case Terrain.aliasName:
         if (gameObject instanceof Terrain) gameObject.isLocked = false;
         if (!this.tableSelecter || !this.tableSelecter.viewTable) return;
         this.tableSelecter.viewTable.appendChild(gameObject);
         break;
+      case Card.aliasName:
+      case CardStack.aliasName:
+      case RangeArea.aliasName:
+      case TextNote.aliasName:
+        if (gameObject instanceof Card || gameObject instanceof CardStack || gameObject instanceof RangeArea || gameObject instanceof TextNote) gameObject.isLocked = false;
+        if (gameObject instanceof RangeArea) gameObject.followingCharctorIdentifier = null;
       default:
         gameObject.setLocation('table');
         break;

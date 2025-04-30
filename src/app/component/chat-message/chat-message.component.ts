@@ -1,9 +1,7 @@
 import { animate, keyframes, style, transition, trigger } from '@angular/animations';
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ChatMessage } from '@udonarium/chat-message';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
-import { ChatMessageService } from 'service/chat-message.service';
 
 import { StringUtil } from '@udonarium/core/system/util/string-util';
 import { ModalService } from 'service/modal.service';
@@ -53,19 +51,22 @@ import Autolinker from 'autolinker';
   ]
 })
 
-export class ChatMessageComponent implements OnInit, AfterViewInit {
+export class ChatMessageComponent implements OnInit {
   @Input() chatMessage: ChatMessage;
   @Input() compact: boolean = false;
   @ViewChild('edit', { static: false }) editElm: ElementRef<HTMLTextAreaElement>;
 
   imageFile: ImageFile = ImageFile.Empty;
   toImageFile: ImageFile;
-  animeState: string = 'inactive';
+  //animeState: string = 'inactive';
   isEditing = false;
   editingText = '';
 
+  get isGMMode(): boolean {
+    return this.chatMessage.isGMMode;
+  }
+
   constructor(
-    private chatMessageService: ChatMessageService,
     private modalService: ModalService,
     private changeDetector: ChangeDetectorRef,
   ) { }
@@ -87,13 +88,7 @@ export class ChatMessageComponent implements OnInit, AfterViewInit {
     if (file) this.imageFile = file;
     file = this.chatMessage.toImage;
     if (file) this.toImageFile = file;
-    let time = this.chatMessageService.getTime();
-    if (time - 10 * 1000 < this.chatMessage.timestamp) this.animeState = 'active';
-  }
-
-  ngAfterViewInit() {
-    this.chatMessage.isAnimated = true;
-
+    //if (this.chatMessageService.getTime() - 10 * 1000 < this.chatMessage.timestamp) this.animeState = 'active';
   }
 
   get isMine(): boolean {
@@ -136,7 +131,7 @@ export class ChatMessageComponent implements OnInit, AfterViewInit {
             return true;
           } else {
             const tag = m.buildTag();
-            tag.setAttr('rel', 'nofollow');
+            tag.setAttr('rel', 'noreferrer');
             tag.addClass('outer-link');
             return tag;
           }
@@ -159,7 +154,7 @@ export class ChatMessageComponent implements OnInit, AfterViewInit {
     });
   }
 
-  editEnd(event: KeyboardEvent=null) {
+  editEnd(event: Partial<KeyboardEvent>=null) {
     if (event) event.preventDefault();
     if (event && event.keyCode !== 13) return;
 

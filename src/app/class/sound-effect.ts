@@ -1,4 +1,4 @@
-import { ChatMessage, ChatMessageContext } from './chat-message';
+import { ChatMessage } from './chat-message';
 import { AudioFile } from './core/file-storage/audio-file';
 import { AudioPlayer } from './core/file-storage/audio-player';
 import { AudioStorage } from './core/file-storage/audio-storage';
@@ -26,6 +26,7 @@ export class PresetSound {
   static puyon: string = '';
   static surprise: string = '';
   static coinToss: string = '';
+  static selectionStart: string = '';
 }
 
 @SyncObject('sound-effect')
@@ -35,7 +36,7 @@ export class SoundEffect extends GameObject {
     super.onStoreAdded();
     EventSystem.register(this)
       .on<string>('SOUND_EFFECT', event => {
-        AudioPlayer.play(AudioStorage.instance.get(event.data), 0.5);
+        AudioPlayer.playSoundEffect(AudioStorage.instance.get(event.data));
       })
       .on('SEND_MESSAGE', event => {
         let chatMessage = ObjectStore.instance.get<ChatMessage>(event.data.messageIdentifier);
@@ -74,5 +75,21 @@ export class SoundEffect extends GameObject {
 
   private static _play(identifier: string) {
     EventSystem.call('SOUND_EFFECT', identifier);
+  }
+
+  static playLocal(identifier: string)
+  static playLocal(audio: AudioFile)
+  static playLocal(arg: any) {
+    let identifier = '';
+    if (typeof arg === 'string') {
+      identifier = arg;
+    } else {
+      identifier = arg.identifier;
+    }
+    SoundEffect._playLocal(identifier);
+  }
+
+  private static _playLocal(identifier: string) {
+    EventSystem.trigger('SOUND_EFFECT', identifier);
   }
 }

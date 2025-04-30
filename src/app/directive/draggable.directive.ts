@@ -1,4 +1,5 @@
 import { AfterViewInit, Directive, ElementRef, EventEmitter, Input, NgZone, OnDestroy, Output } from '@angular/core';
+import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { CSSNumber } from '@udonarium/transform/css-number';
 import { PointerCoordinate } from 'service/pointer-device.service';
 
@@ -11,7 +12,7 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
   @Input('draggable.disable') isDisable: boolean = false;
   @Input('draggable.bounds') boundsSelector: string = 'body';
   @Input('draggable.handle') handleSelector: string = '';
-  @Input('draggable.unhandle') unhandleSelector: string = 'input,textarea,button,select,option,span';
+  @Input('draggable.unhandle') unhandleSelector: string = 'input,textarea,button,select,option,span,label,li';
   @Input('draggable.stack') stackSelector: string = '';
   @Input('draggable.opacity') opacity: number = 0.7;
   @Input('draggable.allowOverHalf') allowOverHalf: boolean = false;
@@ -81,6 +82,10 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
       return;
     }
     this.elementRef.nativeElement.style.cursor = 'grabbing';
+
+    this.removeSelectionRanges();
+    this.removeFocus();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
   }
 
@@ -102,15 +107,17 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
     trans.y += correction.y;
     trans.z += correction.z;
 
-    if (0 < trans.x ** 2 + trans.y ** 2 + trans.z ** 2) {
+    if (0 < MathUtil.sqrMagnitude(trans)) {
       this.elementRef.nativeElement.style.opacity = this.opacity + '';
     }
 
+    this.elementRef.nativeElement.style.willChange = 'top, left';
     this.elementRef.nativeElement.style.left = trans.x + this.startPosition.x + 'px';
     this.elementRef.nativeElement.style.top = trans.y + this.startPosition.y + 'px';
     this.elementRef.nativeElement.style.cursor = 'grabbing';
 
     this.prevTrans = trans;
+
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
   }
@@ -118,6 +125,7 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
   private onInputEnd(e: MouseEvent | TouchEvent) {
     this.elementRef.nativeElement.style.opacity = null;
     this.elementRef.nativeElement.style.cursor = null;
+    this.elementRef.nativeElement.style.willChange = null;
     if (this.input.isDragging && e.cancelable) {
       this.preventClickIfNeeded(e);
       e.preventDefault();
@@ -132,10 +140,7 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
   private preventClickIfNeeded(e: MouseEvent | TouchEvent) {
     if ((e as TouchEvent).touches != null) return;
 
-    let diffX = this.input.pointer.x - this.startPointer.x;
-    let diffY = this.input.pointer.y - this.startPointer.y;
-    let diffZ = this.input.pointer.z - this.startPointer.z;
-    let distance = diffX ** 2 + diffY ** 2 + diffZ ** 2;
+    let distance = MathUtil.sqrMagnitude(this.input.pointer, this.startPointer);
 
     if (15 ** 2 > distance) return;
 
@@ -191,7 +196,7 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
     let correction: PointerCoordinate = { x: 0, y: 0, z: 0 };
     let box = this.elementRef.nativeElement.getBoundingClientRect();
     let bounds = this.elementRef.nativeElement.ownerDocument.querySelector(this.boundsSelector).getBoundingClientRect();
-    
+
     if (this.allowOverHalf) {
       const boxWidth = box.right - box.left;
       const boxHeight = box.bottom - box.top;
@@ -250,5 +255,18 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
       elm.style.zIndex = (parseInt(elm.style.zIndex) - bottomZindex) + '';
     });
     this.elementRef.nativeElement.style.zIndex = (topZindex + 1) + '';
+  }
+
+  private removeSelectionRanges() {
+    let selection = window.getSelection();
+    if (!selection.isCollapsed) {
+      selection.removeAllRanges();
+    }
+  }
+
+  private removeFocus() {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   }
 }

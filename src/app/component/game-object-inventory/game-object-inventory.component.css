@@ -1,5 +1,10 @@
+:host {
+  display: block;
+}
+
 .component {
   width: 100%;
+  overflow-x: hidden;
 }
 
 .box {
@@ -370,6 +375,7 @@ input[type='range']::-ms-tooltip {
 
 .aura {
   transition: filter 0.3s ease-in-out;
+  pointer-events: none;
 }
 
 .aura.black {
@@ -500,6 +506,19 @@ button.link {
 
 .object-container {
   position: relative;
+  /* 
+  transition: all 700ms 0s ease;
+  animation: fadeIn 0.7s cubic-bezier(0.33, 1, 0.68, 1) alternate;
+    */
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .owner-tag {
@@ -522,5 +541,15 @@ button.link {
 }
 
 .url-link {
-  cursor: pointer;
+  cursor: inherit;
+}
+
+.muluti-selected {
+  border-top: 2px dotted #666;
+  border-bottom: 2px dotted #666;
+  border-right: 5px solid hsla(200, 100%, 75%, 0.6);
+}
+.muluti-selected:not(.selected) {
+  padding-left: 6px;
+  border-left: 2px dotted #666;
 }

@@ -33,7 +33,7 @@ export class GameObjectInventoryService {
   indicateAll: boolean = false;
   
   private _sortStop: boolean = false;
-  get sortStop(): boolean { return this.sortStop }
+  get sortStop(): boolean { return this._sortStop; }
   set sortStop(sortStop: boolean) { 
     const oldState = this._sortStop;
     this._sortStop = sortStop;
@@ -43,8 +43,8 @@ export class GameObjectInventoryService {
   private locationMap: Map<ObjectIdentifier, LocationName> = new Map();
   private tagNameMap: Map<ObjectIdentifier, ElementName> = new Map();
 
-  readonly newLineString: string = '/';
-  readonly newLineDataElement: DataElement = DataElement.create(this.newLineString);
+  static _newLineDataElement = createMockElement('/');
+  get newLineDataElement(): DataElement { return GameObjectInventoryService._newLineDataElement; }
 
   constructor() {
     this.initialize();
@@ -55,7 +55,7 @@ export class GameObjectInventoryService {
       .on('OPEN_NETWORK', event => { this.refresh(); })
       .on('CONNECT_PEER', event => { this.refresh(); })
       .on('DISCONNECT_PEER', event => { this.refresh(); })
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
+      .on('UPDATE_GAME_OBJECT', event => {
         let object = ObjectStore.instance.get(event.data.identifier);
         if (!object) return;
 
@@ -73,13 +73,14 @@ export class GameObjectInventoryService {
             this.tagNameMap.set(object.identifier, object.name);
             this.refreshDataElements();
           }
-          if (this.sortTag === object.name) {
-            this.refreshSort();
-          }
+          //if (this.sortTag === object.name) {
+          //  this.refreshSort();
+          //}
           if (0 < object.children.length) {
             this.refreshDataElements();
-            this.refreshSort();
+            //this.refreshSort();
           }
+          this.refreshSort();
           this.callInventoryUpdate();
         } else if (object instanceof DataSummarySetting) {
           this.refreshDataElements();
@@ -87,7 +88,7 @@ export class GameObjectInventoryService {
           this.callInventoryUpdate();
         }
       })
-      .on('DELETE_GAME_OBJECT', 1000, event => {
+      .on('DELETE_GAME_OBJECT', event => {
         this.locationMap.delete(event.data.identifier);
         this.tagNameMap.delete(event.data.identifier);
         this.refresh();
@@ -129,7 +130,7 @@ export class GameObjectInventoryService {
   }
 
   private refreshSort() {
-    if (this._sortStop) return;
+    if (this.sortStop) return;
     //console.log('refreshSort')
     this.tableInventory.refreshSort();
     this.commonInventory.refreshSort();
@@ -143,8 +144,8 @@ export class GameObjectInventoryService {
 
   private isAnyLocation(location: string): boolean {
     if (location === 'table' || location === Network.peerId || location === 'graveyard') return true;
-    for (let conn of Network.peerContexts) {
-      if (conn.isOpen && location === conn.peerId) {
+    for (let peer of Network.peers) {
+      if (peer.isOpen && location === peer.peerId) {
         return true;
       }
     }
@@ -154,7 +155,7 @@ export class GameObjectInventoryService {
 
 class ObjectInventory {
   newLineString: string = '/';
-  private newLineDataElement: DataElement = DataElement.create(this.newLineString);
+  private newLineDataElement: DataElement = GameObjectInventoryService._newLineDataElement;
 
   private get summarySetting(): DataSummarySetting { return DataSummarySetting.instance; }
 
@@ -170,6 +171,7 @@ class ObjectInventory {
   get dataTags(): string[] { return this.summarySetting.dataTags; }
 
   private _tabletopObjects: TabletopObject[] = [];
+  private _tempSortOrder: Map<string, number> = new Map();
   get tabletopObjects(): TabletopObject[] {
     if (this.needsRefreshObjects) {
       this._tabletopObjects = this.searchTabletopObjects();
@@ -196,8 +198,8 @@ class ObjectInventory {
       this._dataElementMap.clear();
       let caches = this.tabletopObjects;
       for (let object of caches) {
-        if (!object.rootDataElement) continue;
-        let elements = this.dataTags.map(tag => tag === this.newLineString ? this.newLineDataElement : object.rootDataElement.getFirstElementByName(tag));
+        if (!object.detailDataElement) continue;
+        let elements = this.dataTags.map(tag => (this.newLineString === StringUtil.toHalfWidth(tag)) ? this.newLineDataElement : object.detailDataElement.getFirstElementByNameUnsensitive(tag));
         this._dataElementMap.set(object.identifier, elements);
       }
       this.needsRefreshElements = false;
@@ -240,25 +242,77 @@ class ObjectInventory {
     if (sortTag.length < 1) return objects;
 
     objects.sort((a, b) => {
-      let aElm = a.rootDataElement?.getFirstElementByName(sortTag);
-      let bElm = b.rootDataElement?.getFirstElementByName(sortTag);
+      let aElm = a.rootDataElement?.getFirstElementByName('name');
+      let bElm = b.rootDataElement?.getFirstElementByName('name');
       if (!aElm && !bElm) return 0;
       if (!bElm) return -1;
       if (!aElm) return 1;
 
-      let aValue = this.convertToSortableValue(aElm);
-      let bValue = this.convertToSortableValue(bElm);
+      let aValue = this.convertToSortableValue(aElm, a);
+      let bValue = this.convertToSortableValue(bElm, b);
+      if (aValue < bValue) return -1;
+      if (aValue > bValue) return 1;
+      return 0;
+    }).sort((a, b) => {
+      const orderA = this._tempSortOrder.get(a.identifier);
+      const orderB = this._tempSortOrder.get(b.identifier);
+      if (orderA == null) {
+        return (orderB == null ? 0 : 1);
+      }
+      if (orderB == null) return -1;
+      if (orderA == orderB) return 0;
+      return (orderA - orderB) < 0 ? -1 : 1;
+    }).sort((a, b) => {
+      let aElm = a.rootDataElement?.getFirstElementByNameUnsensitive(sortTag);
+      let bElm = b.rootDataElement?.getFirstElementByNameUnsensitive(sortTag);
+      if (!aElm && !bElm) return 0;
+      if (!bElm) return -1;
+      if (!aElm) return 1;
+
+      let aValue = this.convertToSortableValue(aElm, a);
+      let bValue = this.convertToSortableValue(bElm, b);
       if (aValue < bValue) return sortOrder;
       if (aValue > bValue) return sortOrder * -1;
       return 0;
     });
+
+    this._tempSortOrder.clear();
+    objects.forEach((elm, order) => {
+      this._tempSortOrder.set(elm.identifier, order);
+    });
     return objects;
   }
 
-  private convertToSortableValue(dataElement: DataElement): number | string {
-    let value = dataElement.isNumberResource ? dataElement.currentValue : dataElement.value;
-    let resultStr = StringUtil.toHalfWidth((value + '').trim());
+  private convertToSortableValue(dataElement: DataElement, tabletopObject: TabletopObject=null): number | string {
+    //let value = dataElement.isNumberResource ? dataElement.currentValue : dataElement.value;
+    //let resultStr = StringUtil.toHalfWidth((value + '').trim());
+    let value = this.evaluate(dataElement, tabletopObject);
+    let resultStr = StringUtil.toHalfWidth((value + '').replace(/[―ー—‐]/g, '-')).toLowerCase().trim();
     let resultNum = +resultStr;
     return Number.isNaN(resultNum) ? resultStr : resultNum;
   }
+
+  private evaluate(dataElement, tabletopObject: TabletopObject=null): string {
+    let value;
+    if (dataElement.isCheckProperty) {
+      let ary = dataElement.currentValue.toString().split(/[|｜]/, 2);
+      if (ary.length <= 1) return (dataElement.value == null || dataElement.value == '') ? '' : dataElement.currentValue.toString();
+      value = (dataElement.value == null || dataElement.value == '') ? ary[1] : ary[0];
+    } else if (dataElement.isAbilityScore) {
+      value = dataElement.calcAbilityScore;
+    } else {
+      value = dataElement.isNumberResource ? dataElement.currentValue : dataElement.value;
+    }
+    if (value != null && tabletopObject instanceof GameCharacter && tabletopObject.chatPalette) {
+      value = tabletopObject.chatPalette.evaluate(value + '', tabletopObject.rootDataElement);
+    }
+    return value;
+  }
+}
+
+function createMockElement(name: string): DataElement {
+  let identifier = 'newLineString_DataElement';
+  let dataElement = new DataElement(identifier);
+  dataElement.name = name;
+  return dataElement;
 }

@@ -1,9 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy } from '@angular/core';
 
-import { Card } from '@udonarium/card';
+import { Card, CardState } from '@udonarium/card';
 import { CardStack } from '@udonarium/card-stack';
-import { ObjectNode } from '@udonarium/core/synchronize-object/object-node';
-import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 
@@ -18,10 +16,13 @@ import { PanelOption, PanelService } from 'service/panel.service';
   styleUrls: ['./card-stack-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CardStackListComponent implements OnInit, OnDestroy {
+export class CardStackListComponent implements OnChanges, OnDestroy {
   @Input() cardStack: CardStack = null;
 
-  owner: string = Network.peerContext.userId;
+  owner: string = Network.peer.userId;
+  
+  readonly CardStateFront = CardState.FRONT;
+  readonly CardStateBack = CardState.BACK;
 
   constructor(
     private panelService: PanelService,
@@ -29,21 +30,20 @@ export class CardStackListComponent implements OnInit, OnDestroy {
     private chatMessageService: ChatMessageService
   ) { }
 
-  ngOnInit() {
+  ngOnChanges() {
     Promise.resolve().then(() => this.panelService.title = this.cardStack.name + ' 의 카드 리스트');
+    EventSystem.unregister(this);
     EventSystem.register(this)
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
-        let object = ObjectStore.instance.get(event.data.identifier);
-        if (!this.cardStack || !object) return;
-        if ((this.cardStack === object)
-          || (object instanceof ObjectNode && this.cardStack.contains(object))) {
-          this.changeDetector.markForCheck();
-        }
-        if (event.data.identifier === this.cardStack.identifier && this.cardStack.owner !== this.owner) {
+      .on(`UPDATE_GAME_OBJECT/identifier/${this.cardStack?.identifier}`, event => {
+        this.changeDetector.markForCheck();
+        if (this.cardStack.owner !== this.owner) {
           this.panelService.close();
         }
       })
-      .on('DELETE_GAME_OBJECT', -1000, event => {
+      .on(`UPDATE_OBJECT_CHILDREN/identifier/${this.cardStack?.identifier}`, event => {
+        this.changeDetector.markForCheck();
+      })
+      .on('DELETE_GAME_OBJECT', event => {
         if (this.cardStack && this.cardStack.identifier === event.data.identifier) {
           this.panelService.close();
         }
@@ -67,9 +67,9 @@ export class CardStackListComponent implements OnInit, OnDestroy {
     card.toTopmost();
     SoundEffect.play(PresetSound.cardDraw);
     if (card.isFront) {
-      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터  ${card.name == '' ? '(이름없는 카드)' : card.name} 를 뽑았습니다`);
+      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다.`);
     } else {
-      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아서 엎었다`);
+      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아서 엎어두었다`);
     }
   } 
 

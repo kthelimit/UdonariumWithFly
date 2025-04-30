@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
 .loop-anime {
   -webkit-animation: anime1 1.3s infinite ease-in-out;
   animation: anime1 1.3s infinite ease-in-out;
@@ -99,4 +104,29 @@ label.compact {
 .tab .material-icons {
   vertical-align: top;
   font-size: 0.8rem;
+}
+
+button.indicate {
+  margin: 0px 0px 0px 1px;
+}
+button.indicate:disabled {
+  border-color: transparent;
+}
+button.indicate:disabled .material-icons {
+  color: black;
+}
+button.indicate .material-icons {
+  opacity: 0.5;
+}
+button.indicate.is-active {
+  background-color: white;
+}
+button.indicate.is-active .material-icons {
+  opacity: 1.0;
+}
+
+button.indicate sup {
+  display: inline-block;
+  top: 2px;
+  position: relative;
 }

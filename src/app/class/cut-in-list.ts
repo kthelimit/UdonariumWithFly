@@ -5,6 +5,7 @@ import { StringUtil } from './core/system/util/string-util';
 import { CutIn } from './cut-in';
 
 export interface CutInInfo {
+  names: string[],
   identifiers: string[],
   matchMostLongText: string
 }
@@ -55,7 +56,7 @@ export class CutInList extends ObjectNode implements InnerXml {
 
   // マッチしたものから、タグが空のものすべて、同じタグのものはランダムに1個づつを返す
   matchCutInInfo(text: string): CutInInfo {
-    text = StringUtil.toHalfWidth(text).toUpperCase().trimRight();
+    //text = StringUtil.toHalfWidth(text).toUpperCase().trimRight();
     let textTagMatch = '';
     let tagMatch = new Map<string, CutIn>();
     const matchCutIn: CutIn[] = [];
@@ -66,7 +67,7 @@ export class CutInList extends ObjectNode implements InnerXml {
       if (!cutIn) continue;
       let isMatch = false;
       for (const postfix of cutIn.postfixes) {
-        if (text.endsWith(StringUtil.toHalfWidth(postfix).toUpperCase().trimRight())) {
+        if (StringUtil.toHalfWidth(text.replaceAll('＞', '→')).toUpperCase().trimRight().endsWith(StringUtil.toHalfWidth(postfix.replaceAll('＞', '→')).toUpperCase().trimRight())) {
           isMatch = true;
           if ((postfix.slice(0, 1) == '@' || postfix.slice(0, 1) == '＠') && textTagMatch.length < postfix.length) textTagMatch = postfix;
         }
@@ -96,8 +97,10 @@ export class CutInList extends ObjectNode implements InnerXml {
     }
     */
     // 再度シャッフルして出現順をランダムに
+    const matchCutIns = matchCutIn.map<[number, CutIn]>(cutIn => [Math.random(), cutIn]).sort((a, b) => { return a[0] - b[0]; });
     return {
-      identifiers: matchCutIn.map<[number, CutIn]>(cutIn => [Math.random(), cutIn]).sort((a, b) => { return a[0] - b[0]; }).map(pair => pair[1].identifier),
+      names: matchCutIns.map(pair => pair[1].name),
+      identifiers: matchCutIns.map(pair => pair[1].identifier),
       matchMostLongText: textTagMatch
     };
   }

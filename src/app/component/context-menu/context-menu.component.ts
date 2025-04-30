@@ -3,6 +3,7 @@ import { ContextMenuAction, ContextMenuService } from 'service/context-menu.serv
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { TabletopObject } from '@udonarium/tabletop-object';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { StringUtil } from '@udonarium/core/system/util/string-util';
 
 @Component({
   selector: 'context-menu',
@@ -23,17 +24,20 @@ export class ContextMenuComponent implements OnInit, OnDestroy, AfterViewInit {
   parentMenu: ContextMenuAction;
   subMenu: ContextMenuAction[];
 
-  showSubMenuTimer: NodeJS.Timer;
-  hideSubMenuTimer: NodeJS.Timer;
+  showSubMenuTimer: NodeJS.Timeout;
+  hideSubMenuTimer: NodeJS.Timeout;
 
   private callbackOnOutsideClick = (e) => this.onOutsideClick(e);
 
-  get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging; }
   get altitudeHande(): TabletopObject { 
     for (let action of this.actions) {
       if (action && action.altitudeHande) return action.altitudeHande;
     }
     return null;
+  }
+
+  get isAltitudeDisabled(): boolean {
+    return this.actions.some(action => action && action.altitudeDisabled);
   }
 
   get isIconsMenu(): boolean {
@@ -42,6 +46,7 @@ export class ContextMenuComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     return true;
   }
+  get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging || this.pointerDeviceService.isTablePickGesture; }
 
   constructor(
     private elementRef: ElementRef<HTMLElement>,
@@ -175,5 +180,12 @@ export class ContextMenuComponent implements OnInit, OnDestroy, AfterViewInit {
 
   close() {
     if (this.contextMenuService) this.contextMenuService.close();
+  }
+
+  actionNameHtmlEscape(str, checkBox=null) {
+    if (str == null) return '';
+    if (checkBox == 'check') str = str.replace(/^[☑☐]/, '');
+    if (checkBox == 'radio') str = str.replace(/^[◉○]/, '');
+    return StringUtil.escapeHtml(str).replace(/💭/g, '<span style="text-shadow: #111 0 0 1px">💭</span>');
   }
 }

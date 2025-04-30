@@ -4,7 +4,7 @@ import { Network } from './core/system';
 import { DataElement } from './data-element';
 import { PeerCursor } from './peer-cursor';
 import { TabletopObject } from './tabletop-object';
-import { moveToTopmost } from './tabletop-object-util';
+import { moveToBackmost, moveToTopmost } from './tabletop-object-util';
 
 export enum CardState {
   FRONT,
@@ -31,18 +31,18 @@ export class Card extends TabletopObject {
 
   get fontsize(): number { 
     let element = this.getElement('fontsize', this.commonDataElement);
-    if (!element && this.commonDataElement) {
-      this.commonDataElement.appendChild(DataElement.create('fontsize', 18, { }, 'fontsize_' + this.identifier));
-    }
+    //if (!element && this.commonDataElement) {
+    //  this.commonDataElement.appendChild(DataElement.create('fontsize', 18, { }, 'fontsize_' + this.identifier));
+    //}
     return element ? +element.value : 18;
   }
   set fontsize(fontsize: number) { this.setCommonValue('fontsize', fontsize); }
   
   get text(): string { 
     let element = this.getElement('text', this.commonDataElement);
-    if (!element && this.commonDataElement) {
-      this.commonDataElement.appendChild(DataElement.create('text', '', { type: 'note', currentValue: '' }, 'text_' + this.identifier));
-    }
+    //if (!element && this.commonDataElement) {
+    //  this.commonDataElement.appendChild(DataElement.create('text', '', { type: 'note', currentValue: '' }, 'text_' + this.identifier));
+    //}
     return element ? element.value + '' : '';
   }
   set text(text: string) { this.setCommonValue('text', text); }
@@ -63,9 +63,25 @@ export class Card extends TabletopObject {
   }
   
   get hasOwner(): boolean { return 0 < this.owner.length; }
-  get isHand(): boolean { return Network.peerContext.userId === this.owner; }
+  get ownerIsOnline(): boolean { return this.hasOwner && (this.isHand || Network.peers.some(peer => peer.userId === this.owner && peer.isOpen)); }
+  get isHand(): boolean { return Network.peer.userId === this.owner; }
   get isFront(): boolean { return this.state === CardState.FRONT; }
   get isVisible(): boolean { return this.isHand || this.isFront; }
+
+  complement(): void {
+    let element = this.getElement('fontsize', this.commonDataElement);
+    if (!element && this.commonDataElement) {
+      this.commonDataElement.appendChild(DataElement.create('fontsize', 18, { }, 'fontsize_' + this.identifier));
+    }
+    element = this.getElement('text', this.commonDataElement);
+    if (!element && this.commonDataElement) {
+      this.commonDataElement.appendChild(DataElement.create('text', '', { type: 'note', currentValue: '' }, 'text_' + this.identifier));
+    }
+    element = this.getElement('color', this.commonDataElement);
+    if (!element && this.commonDataElement) {
+      this.commonDataElement.appendChild(DataElement.create('color', "#555555", { type: 'color' }, 'color_' + this.identifier));
+    }
+  }
 
   faceUp() {
     this.state = CardState.FRONT;
@@ -79,6 +95,10 @@ export class Card extends TabletopObject {
 
   toTopmost() {
     moveToTopmost(this, ['card-stack']);
+  }
+
+  toBackmost() {
+    moveToBackmost(this, ['card-stack']);
   }
 
   static create(name: string, fornt: string, back: string, size: number = 2, identifier?: string): Card {
