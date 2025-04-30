@@ -5,9 +5,9 @@ import {
   Component,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit
 } from '@angular/core';
-import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { ImageFile, ImageState } from '@udonarium/core/file-storage/image-file';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { ModalService } from 'service/modal.service';
 import { PanelService } from 'service/panel.service';
@@ -17,6 +17,8 @@ import { ImageTagList } from '@udonarium/image-tag-list';
 import { trigger, transition, animate, keyframes, style } from '@angular/animations';
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
 import { ConfirmationComponent, ConfirmationType } from 'component/confirmation/confirmation.component';
+import { AppComponent } from 'src/app/app.component';
+import { ChatMessageService } from 'service/chat-message.service';
 
 @Component({
   selector: 'file-selector',
@@ -101,7 +103,8 @@ export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private changeDetector: ChangeDetectorRef,
     private panelService: PanelService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private chatMessageService: ChatMessageService
   ) {
     this.isAllowedEmpty = this.modalService.option && this.modalService.option.isAllowedEmpty ? true : false;
     if (this.modalService.option && this.modalService.option.currentImageIdentifires) {
@@ -113,7 +116,7 @@ export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {
     Promise.resolve().then(() => this.modalService.title = this.panelService.title = '파일 리스트');
     this.searchWords = this.allImagesOwnWords;
     //FileStorageComponent.sortOrder = [null].concat(this.searchWords);
-    // 非表示も含めた数
+    // 숨김도 포함한 수
     //FileStorageComponent.imageCount = ImageStorage.instance.images.length;
   }
 
@@ -206,12 +209,13 @@ export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '숨김 설정의 이미지를 표시', 
-        text: '숨김 설정의 이미지를 표시합니까?',
+        title: '숨김 설정인 이미지를 표시', 
+        text: '숨김 설정인 이미지를 표시합니까?',
         help: '스포일러 등에 주의해주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
+          this.chatMessageService.sendOperationLog('파일 리스트로부터 숨김 설정인 이미지를 표시했다');
           this.isShowHideImages = true;
           (<HTMLInputElement>$event.target).checked = true;
           this.changeDetector.markForCheck();
@@ -256,5 +260,14 @@ export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {
 
   identify(index, image){
     return image.identifier;
+  }
+
+  chanageImageView(imageFile: ImageFile) {
+    if (imageFile.state === ImageState.COMPLETE) {
+      if (AppComponent.imageUrl) URL.revokeObjectURL(AppComponent.imageUrl);
+      AppComponent.imageUrl = URL.createObjectURL(imageFile.blob);
+    } else {
+      AppComponent.imageUrl = imageFile.url;
+    }
   }
 }

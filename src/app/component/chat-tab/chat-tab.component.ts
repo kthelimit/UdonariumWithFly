@@ -12,16 +12,15 @@ import {
   OnDestroy,
   OnInit,
   Output,
-  ViewChild,
+  ViewChild
 } from '@angular/core';
-
+import { ChatMessageService } from 'service/chat-message.service';
 import { ChatMessage, ChatMessageContext } from '@udonarium/chat-message';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { ResettableTimeout } from '@udonarium/core/system/util/resettable-timeout';
 import { setZeroTimeout } from '@udonarium/core/system/util/zero-timeout';
-import { PeerCursor } from '@udonarium/peer-cursor';
 
 import { PanelService } from 'service/panel.service';
 
@@ -39,13 +38,44 @@ const isiOS = ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1 || ua.indexOf
 export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges, AfterViewChecked {
   @Input() compact: boolean = false;
   
-  sampleMessages: ChatMessageContext[] = [
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '서버를 사용하지 않는 TRPG 온라인세션 툴입니다. 참가자끼리 접속해 게임말이나 이미지 등을 동기화합니다.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '모든 데이터가 각 참가자의 브라우저 내에 있기 때문에 방의 상태를 다음에도 가져가고 싶은 경우에는 반드시 「저장」을 실행해 세이브 데이터(zip)를 생성해 주세요. 저장한 zip의 불러오기는 브라우저 화면에 파일을 드롭하는 것으로 실시합니다.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', toColor: '#444444', tag: 'mine direct', name: '튜토리얼', toName: '플레이어' ,text: '다이렉트 메세지(비밀대화)는 세이브 데이터에 기록되지 않습니다.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', toColor: '#444444', tag: 'mine direct', name: '튜토리얼', toName: '플레이어', text: '또, 과거의 다이렉트 메세지는 당신의 ID가 갱신되면 같은 방에 있어도 보이지 않게 됩니다. 주의해주세요.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '동작 권장 환경은 데스크탑 Chrome입니다. 현재는 스마트폰으로 잘 조작할 수 없습니다.' },
-    { from: 'System', timestamp: 0, imageIdentifier: '', color: '#444444', tag: 'mine', name: '튜토리얼', text: '튜토리얼은 이상입니다. 이 튜토리얼은 최초의 채팅을 입력하면 사라집니다.' },
+  sampleMessages: ChatMessage[] = [
+    this.makeSampleMessage('System', null, '튜토리얼 : 처음에', null, '유도나리움은 서버를 사용하지 않는 TRPG 온라인 세션 툴입니다. 참가자끼리 접속해, 게임말이나 이미지 파일 등을 동기화합니다.'),
+    this.makeSampleMessage('System', null, '테이블과 게임말의 기본 조작', null, `＜테이블 조작＞
+테이블을 왼쪽 드래그 : 시점 변경
+테이블을 오른쪽 드래그 : 시점 회전
+테이블을 우클릭 : 컨텍스트 메뉴 표시
+
+<오브젝트 조작>
+오브젝트를 드래그 조작: 오브젝트의 이동 및 회전
+오브젝트를 우클릭 : 개별 메뉴 표시
+오브젝트를 왼쪽 더블 클릭 : 오브젝트 고유의 동작`),
+    this.makeSampleMessage('System', null, '범위선택', null, `<용어>
+범위 선택 모드 : 선택 영역 안쪽에 보이는 오브젝트를 선택 상태로 만든다
+자석 모드 : 같은 종류의 오브젝트를 모으면서 이동시킨다
+
+<오브젝트 선택>
+테이블을 마우스 왼쪽 버튼 길게 누르기 + 드래그 조작 : 길게 누르기로 범위 선택 모드를 시작하고 드래그로 범위 영역을 지정
+오브젝트를 왼쪽 더블 클릭 길게 누르기 + 드래그 조작 : 길게 누르기로 자석 모드를 시작하고 드래그로 오브젝트를 이동
+Shift+마우스 왼쪽 버튼+드래그 조작 : 즉시 범위 선택 모드를 시작하고 드래그로 범위 영역을 지정
+Ctrl+마우스 왼쪽 버튼 : 클릭한 오브젝트의 선택 상태를 전환한다
+Ctrl+마우스 왼쪽 버튼+드래그 조작 : 마우스 커서가 닿은 대상을 선택 상태로 만든다
+
+<선택 오브젝트 조작>
+선택 오브젝트 이동 : 선택 상태의 모든 오브젝트가 함께 이동
+선택 오브젝트를 회전 : 선택 상태가 같은 종류의 오브젝트가 함께 회전
+
+<선택 해제>
+원하는 곳 클릭 : 모든 선택 상태를 해제`),
+    this.makeSampleMessage('System', null, '이미지와 음악', null, '파일을 브라우저 화면에 드래그&드롭하여 유도나리움에 넣을 수 있습니다. '),
+    this.makeSampleMessage('System', null, '데이터 저장', null, '모든 데이터가 각 참여자의 브라우저 내에만 존재하기 때문에 전원이 룸에서 이탈하면 데이터가 소실됩니다. 룸의 상태를 다음 세션으로 미루고 싶은 경우는, 반드시 「저장」을 실행해 세이브 데이터(zip)를 생성해 주세요. 저장한 zip 파일을 브라우저 화면에 드롭하면 불러올 수 있습니다.'),
+    this.makeSampleMessage('System', '???', '플레이어', '다이렉트 메시지', '다이렉트 메시지(비밀 대화)는 세이브 데이터에 기록되지 않습니다.'),
+    this.makeSampleMessage('System', '???', '플레이어', '다이렉트 메시지', '또, 과거의 다이렉트 메시지는 당신의 ID가 갱신되면 같은 룸 내에서도 보이지 않게 됩니다. 주의하세요.'),
+    this.makeSampleMessage('System', null, '동작환경', null, '동작권장환경은 데스크탑 버전 Google Chrome 입니다. 지금은 스마트 폰에서의 조작이 어렵습니다.'),
+    this.makeSampleMessage('System', null, '동작이 불안정할 때는', null, `이용환경 설정 변경으로 개선될 수 있습니다. 다음을 시도해 보세요.
+·하드웨어 가속을 켠다
+·브라우저 확장 기능(애드온/플러그인)을 모두 끈다
+·Chrome ⇔ Firefox 등 다른 브라우저를 사용한다`),
+    this.makeSampleMessage('System', null, '튜토리얼 : 끝으로', null, '튜토리얼은 이상입니다. 이 튜토리얼은 첫번째 채팅을 입력하면 숨겨집니다.'),
   ];
 
   private topTimestamp = 0;
@@ -71,7 +101,6 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
     return (chatMessage && chatMessage.isOperationLog) ? 26 : 61;
   }
 
-
   private preScrollTop = 0;
   private scrollSpeed = 0;
 
@@ -92,8 +121,8 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
 
   get minScrollHeight(): number {
     return this.chatTab.chatMessages.reduce((height, chatMessage) => { height += chatMessage.isDisplayable ? (this.compact || chatMessage.isOperationLog ? 26 : 61) : 0; return height }, 0);
-    let length = this.chatTab ? this.chatTab.chatMessages.length : this.sampleMessages.length;
-    return (length < 10000 ? length : 10000) * this.minMessageHeight;
+    //let length = this.chatTab ? this.chatTab.chatMessages.length : this.sampleMessages.length;
+    //return (length < 10000 ? length : 10000) * this.minMessageHeight;
   }
 
   get topSpace(): number { return this.minScrollHeight - this.bottomSpace; }
@@ -108,7 +137,7 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
 
   private scrollEventShortTimer: ResettableTimeout = null;
   private scrollEventLongTimer: ResettableTimeout = null;
-  private addMessageEventTimer: NodeJS.Timer = null;
+  private addMessageEventTimer: NodeJS.Timeout = null;
 
   private callbackOnScroll: any = () => this.onScroll();
   private callbackOnScrollToBottom: any = () => this.resetMessages();
@@ -117,29 +146,13 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
   @Output() onAddMessage: EventEmitter<null> = new EventEmitter();
 
   constructor(
+    private chatMessageService: ChatMessageService,
     private ngZone: NgZone,
     private changeDetector: ChangeDetectorRef,
     private panelService: PanelService
   ) { }
 
   ngOnInit() {
-    let messages: ChatMessage[] = [];
-    for (let context of this.sampleMessages) {
-      let message = new ChatMessage();
-      for (let key in context) {
-        if (key === 'identifier') continue;
-        if (key === 'tabIdentifier') continue;
-        if (key === 'text') {
-          message.value = context[key];
-          continue;
-        }
-        if (context[key] == null || context[key] === '') continue;
-        message.setAttribute(key, context[key]);
-      }
-      messages.push(message);
-    }
-    this.sampleMessages = messages;
-
     EventSystem.register(this)
       .on('MESSAGE_ADDED', event => {
         let message = ObjectStore.instance.get<ChatMessage>(event.data.messageIdentifier);
@@ -151,9 +164,9 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
           this.onMessageInit();
         }
       })
-      .on('UPDATE_GAME_OBJECT', event => {
-        let message = ObjectStore.instance.get(event.data.identifier);
-        if (message && message instanceof ChatMessage
+      .on(`UPDATE_GAME_OBJECT/aliasName/${ChatMessage.aliasName}`, event => {
+        let message = ObjectStore.instance.get<ChatMessage>(event.data.identifier);
+        if (message
           && this.topTimestamp <= message.timestamp && message.timestamp <= this.botomTimestamp
           && this.chatTab.contains(message)) {
           this.changeDetector.markForCheck();
@@ -216,6 +229,11 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
 
   trackByChatMessage(index: number, message: ChatMessage) {
     return message.identifier;
+  }
+
+  checkAnimated(message: ChatMessage): boolean {
+    //console.log(this.chatMessageService.getTime())
+    return !(message.timestamp + 1000 >= this.chatMessageService.getTime());
   }
 
   private adjustIndex() {
@@ -404,5 +422,18 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
       }
     }
     this.adjustIndex();
+  }
+
+  private makeSampleMessage(from: string, to: string, name: string, toName: string, text: string, tag='mine'): ChatMessage {
+    let message = new ChatMessage();
+    message.from = from;
+    message.to = to;
+    message.name = name;
+    message.toName = toName;
+    message.color = '#444444';
+    message.toColor = toName ? '#444444' : null;
+    message.tag = tag;
+    message.value = text;
+    return message;
   }
 }

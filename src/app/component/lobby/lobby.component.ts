@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
-import { PeerContext } from '@udonarium/core/system/network/peer-context';
 import { EventSystem, Network } from '@udonarium/core/system';
+import { IRoomInfo } from '@udonarium/core/system/network/room-info';
 import { PeerCursor } from '@udonarium/peer-cursor';
 
 import { PasswordCheckComponent } from 'component/password-check/password-check.component';
@@ -16,17 +16,16 @@ import { PanelService } from 'service/panel.service';
   styleUrls: ['./lobby.component.css'],
 })
 export class LobbyComponent implements OnInit, OnDestroy {
-  rooms: { alias: string, roomName: string, peerContexts: PeerContext[] }[] = [];
+  rooms: IRoomInfo[] = [];
 
   isReloading: boolean = false;
 
   help: string = '「리스트를 갱신」버튼을 누르면 접속 가능한 방 리스트를 표시합니다.';
 
-  get currentRoom(): string { return Network.peerContext.roomId };
+  get currentRoom(): string { return Network.peer.roomId };
   get peerId(): string { return Network.peerId; }
-  get isConnected(): boolean {
-    return Network.peerIds.length <= 1 ? false : true;
-  }
+  get isConnected(): boolean { return 0 < Network.peerIds.length; }
+
   constructor(
     private panelService: PanelService,
     private modalService: ModalService
@@ -46,8 +45,8 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   private changeTitle() {
     this.modalService.title = this.panelService.title = '로비';
-    if (Network.peerContext.roomName.length) {
-      this.modalService.title = this.panelService.title = '〈' + Network.peerContext.roomName + '/' + Network.peerContext.roomId + '〉'
+    if (Network.peer.roomName.length) {
+      this.modalService.title = this.panelService.title = '〈' + Network.peer.roomName + '/' + Network.peer.roomId + '〉'
     }
   }
 
@@ -58,87 +57,76 @@ export class LobbyComponent implements OnInit, OnDestroy {
   async reload() {
     this.isReloading = true;
     this.help = '검색중...';
-    this.rooms = [];
-    let peersOfroom: { [room: string]: PeerContext[] } = {};
-    let peerIds = await Network.listAllPeers();
-    for (let peerId of peerIds) {
-      let context = PeerContext.parse(peerId);
-      if (context.isRoom) {
-        let alias = context.roomId + context.roomName;
-        if (!(alias in peersOfroom)) {
-          peersOfroom[alias] = [];
-        }
-        peersOfroom[alias].push(context);
-      }
-    }
-    for (let alias in peersOfroom) {
-      this.rooms.push({ alias: alias, roomName: peersOfroom[alias][0].roomName, peerContexts: peersOfroom[alias] });
-    }
-    this.rooms.sort((a, b) => {
-      if (a.alias < b.alias) return -1;
-      if (a.alias > b.alias) return 1;
-      return 0;
-    });
+    this.rooms = await Network.listAllRooms();
     this.help = '접속 가능한 방을 발견하지 못했습니다. 「새로운 방을 작성」으로 새로운 방을 작성할 수 있습니다.';
     this.isReloading = false;
   }
 
-  async connect(peerContexts: PeerContext[]) {
-    let context = peerContexts[0];
+  async connect(room: IRoomInfo) {
     let password = '';
 
-    if (context.hasPassword) {
-      password = await this.modalService.open<string>(PasswordCheckComponent, { peerId: context.peerId, title: `${context.roomName}/${context.roomId}` });
+    if (room.hasPassword) {
+      password = await this.modalService.open<string>(PasswordCheckComponent, { peers: room.peers, title: `${room.name}/${room.id}` });
       if (password == null) password = '';
     }
 
-    if (!context.verifyPassword(password)) return;
+    let targetPeers = room.filterByPassword(password);
+    if (targetPeers.length < 1) return;
 
-    let userId = Network.peerContext ? Network.peerContext.userId : PeerContext.generateId();
-    Network.open(userId, context.roomId, context.roomName, password);
+    let userId = Network.peer.userId;
+    Network.open(userId, room.id, room.name, password);
     PeerCursor.myCursor.peerId = Network.peerId;
 
     let triedPeer: string[] = [];
+
+    let onTried = () => {
+      if (triedPeer.length < targetPeers.length) return false;
+      this.resetNetwork();
+      EventSystem.unregister(triedPeer);
+      this.closeIfConnected();
+      return true;
+    }
+    let onConnect = (peerId) => {
+      console.log('접속 성공！', peerId);
+      triedPeer.push(peerId);
+      console.log('접속 성공 ' + triedPeer.length + '/' + targetPeers.length);
+      return onTried();
+    }
+    let onDisconnect = (peerId) => {
+      console.warn('접속 실패', peerId);
+      triedPeer.push(peerId);
+      console.warn('접속 실패 ' + triedPeer.length + '/' + targetPeers.length);
+      return onTried();
+    }
+
     EventSystem.register(triedPeer)
       .on('OPEN_NETWORK', event => {
         console.log('LobbyComponent OPEN_PEER', event.data.peerId);
         EventSystem.unregister(triedPeer);
         ObjectStore.instance.clearDeleteHistory();
-        for (let context of peerContexts) {
-          Network.connect(context.peerId);
+        for (let peer of targetPeers) {
+          if (!Network.connect(peer) && onDisconnect(peer.peerId)) return;
         }
         EventSystem.register(triedPeer)
-          .on('CONNECT_PEER', event => {
-            console.log('접속 성공!', event.data.peerId);
-            triedPeer.push(event.data.peerId);
-            console.log('접속 성공 ' + triedPeer.length + '/' + peerContexts.length);
-            if (peerContexts.length <= triedPeer.length) {
-              this.resetNetwork();
-              EventSystem.unregister(triedPeer);
-            }
-          })
-          .on('DISCONNECT_PEER', event => {
-            console.warn('접속 실패', event.data.peerId);
-            triedPeer.push(event.data.peerId);
-            console.warn('접속 실패 ' + triedPeer.length + '/' + peerContexts.length);
-            if (peerContexts.length <= triedPeer.length) {
-              this.resetNetwork();
-              EventSystem.unregister(triedPeer);
-            }
-          });
+          .on('CONNECT_PEER', event => onConnect(event.data.peerId))
+          .on('DISCONNECT_PEER', event => onDisconnect(event.data.peerId));
       });
   }
 
   private resetNetwork() {
-    if (Network.peerContexts.length < 1) {
+    if (Network.peers.length < 1) {
       Network.open();
       PeerCursor.myCursor.peerId = Network.peerId;
     }
   }
 
+  private closeIfConnected() {
+    if (0 < Network.peers.length) this.modalService.resolve();
+  }
+
   async showRoomSetting() {
-    await this.modalService.open(RoomSettingComponent, { width: 700, height: 400, left: 0, top: 400 });
-    this.reload();
+    let isCreate = await this.modalService.open(RoomSettingComponent, { width: 700, height: 400, left: 0, top: 400 });
+    if (isCreate) this.modalService.resolve();
     this.help = '「리스트를 갱신」버튼을 누르면 접속 가능한 방 리스트를 표시합니다.';
   }
 }

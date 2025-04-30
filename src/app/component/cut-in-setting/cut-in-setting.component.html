@@ -1,15 +1,15 @@
 <div class="flex-container">
   <div class="flex-item no-grow">
     <div>
-      <button style="font-size: smaller; margin-bottom: 3px" (click)="add()">컷인의 추가</button>
+      <button style="margin: 0px 0px 2px 0px; font-size: smaller" (click)="add()">컷인 추가</button>
     </div>
-    <select #cutInSelecter style="width: 12em;" size="15" (change)="onChangeCutIn($event.target.value)">
-      <option *ngFor="let cutIn of cutIns" value="{{ cutIn.identifier }}" title="{{ cutIn.name }}" [style.color]="cutIn.isValidAudio ? cutIn.name == '' ? 'gray' : '' : 'red'">{{ (cutIn.isPlayingNow ? '▶ ' : '■ ') + (cutIn.isValidAudio ? '' : '⚠️') + (cutIn.name == '' ? '(이름없는 컷인)' : cutIn.name) }}</option>
+    <select #cutInSelecter style="width: 12em;" size="15" (change)="onChangeCutIn(cutInSelecter.value)">
+      <option *ngFor="let cutIn of cutIns" value="{{ cutIn.identifier }}" title="{{ cutIn.name }}" [style.color]="cutIn.isValidAudio ? cutIn.name == '' ? 'gray' : '' : 'red'">{{ (cutIn.isPlayingNow ? '▶ ' : '■ ') + (cutIn.isValidAudio ? '' : '⚠️') + (cutIn.name == '' ? '(이름 없는 컷인)' : cutIn.name) }}</option>
     </select>
   </div>
   <div class="flex-item">
     <div style="float: right; margin-top: 3px; margin-right: 3px">
-      <button (click)="helpCutIn()">?</button>
+      <button style="cursor: help" (click)="helpCutIn()">?</button>
     </div>
     <ng-container *ngIf="!isEmpty && selectedCutIn">
       <div style="display: flex">
@@ -22,7 +22,7 @@
               <button *ngIf="!cutInVideoId || cutInisSoundOnly" (click)="openModal()"><b>이미지 변경</b></button>
             </div>
             <div *ngIf="cutInVideoId && !cutInisSoundOnly" class="grow" style="opacity: 0.8; position: absolute; bottom: 1px; right: -1px; z-index: 5"><i style="font-size: 32px" class="material-icons">{{ cutInPlayListId ? 'featured_play_list' : 'movie' }}</i></div>
-            <img style="width: 160px; height: 160px; object-fit: contain" [ngClass]="{ blackout: (!cutInVideoId || cutInisSoundOnly) && !isShowHideImages && getHidden(cutInImage) }" [src]="cutInImageUrl | safe: 'resourceUrl'">
+            <img style="width: 160px; height: 160px; object-fit: contain" [ngClass]="{ blackout: (!cutInVideoId || cutInisSoundOnly) && !isShowHideImages && getHidden(cutInImage) }" [src]="cutInImageUrl | safe: 'resourceUrl'" draggable="false">
           </div>
         </div>
         <div style="display: flex; flex-direction: column; width: 100%">
@@ -50,17 +50,17 @@
               <option [value]="2" [selected]="cutInType == 2">열린다(좌우)</option>
               <option [value]="3" [selected]="cutInType == 3">열린다(상하)</option>
             </select>
-            <label style="margin-left: 1em; font-size: smaller"><input name="borderStyle" type="checkbox" (click)="borderStyle = borderStyle == 0 ? 1 : 0" [checked]="borderStyle == 1" [attr.disabled]="!isEditable ? '' : null"><b>테두리 있음</b></label>
+            <label style="margin-left: 1em; font-size: smaller" [style.cursor]="isEditable ? 'pointer' : 'default'"><input name="borderStyle" type="checkbox" (click)="borderStyle = borderStyle == 0 ? 1 : 0" [checked]="borderStyle == 1" [attr.disabled]="!isEditable ? '' : null"><b>枠あり</b></label>
           </div>
           <div style="padding-left: 2px">
             <b style="font-size: smaller">채팅 말미(끝): </b><br>
-            <textarea style="width: 100%; height: 3em" placeholder="1행에 하나씩, 글의 첫머리@에서 매칭되었을 때 텍스트로부터 잘라낸다&#13;&#10;@거리풍경" [(ngModel)]="cutInCond" [attr.disabled]="!isEditable ? '' : null"></textarea>
+            <textarea style="width: 100%; height: 3em" placeholder="1행에 하나씩, 글의 첫머리 @에서 매칭되었을 때 텍스트로부터 잘라낸다&#13;&#10;@거리풍경" [(ngModel)]="cutInCond" [attr.disabled]="!isEditable ? '' : null"></textarea>
           </div>
         </div>
       </div>
       <div style="font-size: smaller; display: flex; flex-direction: column; width: 100%">
         <div>
-          <button [attr.disabled]="!isEditable ? '' : null" (click)="testCutIn()"><b>테스트(자신만 본다)<sup class="self-only">*</sup></b></button>
+          <button [attr.disabled]="!isEditable ? '' : null" (click)="testCutIn()"><b>테스트(혼자만 보기)<sup class="self-only">*</sup></b></button>
           <span style="margin-left: 2em">
             <button style="margin-right: 0px" [attr.disabled]="!isEditable ? '' : null" (click)="playCutIn()"><b><i class="material-icons" style="font-size: smaller">play_arrow</i>재생</b></button>
             <button style="margin-left: 0px" [attr.disabled]="!isEditable ? '' : null" (click)="stopCutIn()"><b><i class="material-icons" style="font-size: smaller">stop</i>정지</b></button>
@@ -77,34 +77,66 @@
         <div class="section">
           <div>
             <b class="header">위치</b>
-            <label style="margin-left: 0.6em"><input name="cutInIsPreventOutBounds" type="checkbox" [(ngModel)]="cutInIsPreventOutBounds" [checked]="cutInIsPreventOutBounds" [value]="true" [attr.disabled]="!isEditable || cutInVideoId ? '' : null"><b>가려짐 방지</b></label>
+            <label style="margin-left: 0.6em" [style.cursor]="isEditable ? 'pointer' : 'default'"><input name="cutInIsPreventOutBounds" type="checkbox" [(ngModel)]="cutInIsPreventOutBounds" [checked]="cutInIsPreventOutBounds" [value]="true" [attr.disabled]="!isEditable || cutInVideoId ? '' : null"><b>가려짐 방지</b></label>
           </div>
-          <div style="padding-left: 1em">
-            <b>PosX: </b><input [(ngModel)]="cutInPosX" type="range" title="{{cutInPosX}}" min="{{minSize}}" max="{{maxSize}}" style="width: 180px" name="cutInPosX" [attr.disabled]="!isEditable ? '' : null" />
-            <input [(ngModel)]="cutInPosX" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
+          <div style="margin-left: 1em; display: table; width: 65%">
+            <div style="display: table-row">
+              <div style="display: table-cell; width: 3.5em">
+                <b>PosX: </b>
+              </div>
+              <div style="display: table-cell; width: calc(100% - 9.5em)">
+                <input [(ngModel)]="cutInPosX" type="range" style="width: 100%" [title]="cutInPosX + '%'" min="{{minSize}}" max="{{maxSize}}" name="cutInPosX" [attr.disabled]="!isEditable ? '' : null" />
+              </div>
+              <div style="display: table-cell; width: 6em; text-align: right">
+                <input [(ngModel)]="cutInPosX" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
+              </div>
+            </div>
+            <div style="display: table-row">
+              <div style="display: table-cell; width: 3.5em">
+                <b>PosY: </b>
+              </div>
+              <div style="display: table-cell; width: calc(100% - 9.5em)">
+                <input [(ngModel)]="cutInPosY" type="range" style="width: 100%" [title]="cutInPosY + '%'" min="{{minSize}}" max="{{maxSize}}" name="cutInPosY" [attr.disabled]="!isEditable ? '' : null" />
+              </div>
+              <div style="display: table-cell; width: 6em; text-align: right">
+                <input [(ngModel)]="cutInPosY" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
+              </div>
+            </div>
           </div>
-          <div style="padding-left: 1em">
-            <b>PosY: </b><input [(ngModel)]="cutInPosY" type="range" title="{{cutInPosY}}" min="{{minSize}}" max="{{maxSize}}" style="width: 180px" name="cutInPosY" [attr.disabled]="!isEditable ? '' : null" />
-            <input [(ngModel)]="cutInPosY" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
-          </div>
-          <div style="padding-left: 1em">
+          <div style="margin-left: 1em">
             <b>Z-Index (큰 쪽이 앞): </b><input [(ngModel)]="cutInZIndex" type="number" min="{{-maxSize}}" max="{{maxSize}}" style="width: 3.5em" [attr.disabled]="!isEditable  || cutInVideoId ? '' : null">
-            <label style="margin-left: 0.6em"><input name="cutInIsFrontOfStand" type="checkbox" [(ngModel)]="cutInIsFrontOfStand" [checked]="cutInIsFrontOfStand" [value]="true" [attr.disabled]="!isEditable || cutInVideoId ? '' : null"><b>스탠딩의 앞에 표시</b></label>
+            <label style="margin-left: 0.6em"><input name="cutInIsFrontOfStand" type="checkbox" [(ngModel)]="cutInIsFrontOfStand" [checked]="cutInIsFrontOfStand" [value]="true" [attr.disabled]="!isEditable || cutInVideoId ? '' : null"><b>스탠드의 앞에 표시</b></label>
           </div>
         </div>
         <div class="section">
           <div>
             <b class="header">사이즈(너비와 높이 전부 0이면 원본 사이즈대로)</b>
           </div>
-          <div style="padding-left: 1em">
-            <b>Width (0=지정없음): </b><input [(ngModel)]="cutInWidth" type="range" title="{{cutInWidth}}" min="{{minSize}}" max="{{maxSize}}" style="width: 180px" name="cutInWidth" [attr.disabled]="!isEditable ? '' : null" />
-            <input [(ngModel)]="cutInWidth" type="number" min="{{minSize}}" max="{{maxSize * 2}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
+          <div style="margin-left: 1em; display: table; width: 90%">
+            <div style="display: table-row">
+              <div style="display: table-cell; width: 11.5em">
+                <b>Width (0=지정 없음): </b>
+              </div>
+              <div style="display: table-cell; width: calc(100% - 15.5em)">
+                <input [(ngModel)]="cutInWidth" type="range" [title]="cutInWidth ? cutInWidth + '%' : '지정 없음'" min="{{minSize}}" max="{{maxSize}}" style="width: 100%" name="cutInWidth" [attr.disabled]="!isEditable ? '' : null" />
+              </div>
+              <div style="display: table-cell; width: 6em; text-align: right">
+                <input [(ngModel)]="cutInWidth" type="number" min="{{minSize}}" max="{{maxSize * 2}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
+              </div>
+            </div>
+            <div style="display: table-row">
+              <div style="display: table-cell; width: 11.5em">
+                <b>Height (0=지정 없음): </b>
+              </div>
+              <div style="display: table-cell; width: calc(100% - 15.5em)">
+                <input [(ngModel)]="cutInHeight" type="range" [title]="cutInHeight ? cutInHeight + '%' : '지정 없음'" min="{{minSize}}" max="{{maxSize}}" style="width: 100%" name="cutIHeight" [attr.disabled]="!isEditable ? '' : null" />
+              </div>
+              <div style="display: table-cell; width: 6em; text-align: right">
+                <input [(ngModel)]="cutInHeight" type="number" min="{{minSize}}" max="{{maxSize * 2}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
+              </div>
+            </div>
           </div>
-          <div style="padding-left: 1em">
-            <b>Height (0=지정없음): </b><input [(ngModel)]="cutInHeight" type="range" title="{{cutInHeight}}" min="{{minSize}}" max="{{maxSize}}" style="width: 180px" name="cutIHeight" [attr.disabled]="!isEditable ? '' : null" />
-            <input [(ngModel)]="cutInHeight" type="number" min="{{minSize}}" max="{{maxSize * 2}}" style="width: 3.5em" [attr.disabled]="!isEditable ? '' : null"><b style="padding-left: 2px">%</b>
-          </div>
-          <div style="padding-left: 1em">
+          <div style="margin-left: 1em">
             <b>원래 이미지와 가로세로 비율이 맞지않는 경우: </b>
             <select [(ngModel)]="objectFitType" [attr.disabled]="(cutInVideoId && !cutInisSoundOnly) || !isEditable ? '' : null">
               <option [value]="0" [selected]="objectFitType == 0">늘린다</option>
@@ -116,18 +148,18 @@
         <div class="section">
           <div>
             <b class="header">효과음・동영상</b>
-            <label style="margin-left: 0.6em"><input name="cutInSEIsLoop" type="checkbox" [(ngModel)]="cutInSEIsLoop" [checked]="cutInSEIsLoop" [value]="true" [attr.disabled]="!isEditable || isPlaying ? '' : null"><b>반복</b></label>
+            <label style="margin-left: 0.6em" [style.cursor]="isEditable ? 'pointer' : 'default'"><input name="cutInSEIsLoop" type="checkbox" [(ngModel)]="cutInSEIsLoop" [checked]="cutInSEIsLoop" [value]="true" [attr.disabled]="!isEditable || isPlaying ? '' : null"><b>반복</b></label>
           </div>
           <div style="padding-left: 1em">
             <input type="radio" name="{{panelId}}-media" id="{{panelId}}-media-sound" [(ngModel)]="cutInIsVideo" [checked]="!cutInIsVideo" [value]="false" [attr.disabled]="!isEditable || isPlaying ? '' : null">
-            <label for="{{panelId}}-media-sound"><b>음악 파일: </b></label>
-            <select 
+            <label for="{{panelId}}-media-sound" [style.cursor]="isEditable ? 'pointer' : 'default'"><b>음악 파일: </b></label>
+            <select #audioSelect 
               [style.min-width.em]="isValidAudio ? 10 : 5"
               [style.max-width.em]="isValidAudio ? 20 : 5"
               [(ngModel)]="cutInAudioIdentifier" 
               [ngClass]="{'not-specified': cutInAudioIdentifier == ''}" 
               [attr.disabled]="cutInIsVideo || !isEditable || isPlaying ? '' : null"
-              (change)="onAudioFileChange($event.target.value)">
+              (change)="onAudioFileChange(audioSelect.value)">
               <option value="" class="not-specified">효과음 없음</option>
               <option style="color: black" *ngFor="let audio of audios" value="{{audio.identifier}}">{{ audio.name }}</option>
             </select>
@@ -137,8 +169,8 @@
             </ng-container>
           </div>
           <div style="padding-left: 1em">
-            <input type="radio" name="{{panelId}}-media" id="{{panelId}}-media-video" [(ngModel)]="cutInIsVideo" [checked]="cutInIsVideo" [value]="true" [attr.disabled]="!isEditable || isPlaying ? '' : null">
-            <label for="{{panelId}}-media-video"><b>동영상: </b></label><input type="text" style="width: 24em" [(ngModel)]="cutInVideoURL" [attr.disabled]="!cutInIsVideo || !isEditable || isPlaying ? '' : null">
+            <input type="radio" name="{{panelId}}-media" id="{{panelId}}-media-video" [(ngModel)]="cutInIsVideo" [checked]="cutInIsVideo" [value]="true" [disabled]="!isEditable || isPlaying ? '' : null">
+            <label for="{{panelId}}-media-video" [style.cursor]="isEditable ? 'pointer' : 'default'"><b>동영상 URL: </b></label><input type="text" style="width: 24em" [(ngModel)]="cutInVideoURL" [disabled]="!cutInIsVideo || !isEditable || isPlaying ? '' : null">
           </div>
           <div style="padding-left: 2.5em">
             <a href="https://www.youtube.com/terms" target="_blank" class="outer-link" (click)="openYouTubeTerms()">YouTube 이용규약</a>

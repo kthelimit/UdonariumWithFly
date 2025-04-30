@@ -1,9 +1,9 @@
 <div class="flex-container">
   <div class="flex-item no-grow">
     <div>
-      <button style="margin-bottom: 2px; font-size: smaller" (click)="createGameTable()">새로운 테이블을 작성</button>
+      <button style="margin: 0px 0px 2px 0px; font-size: smaller" (click)="createGameTable()">새로운 테이블 작성</button>
     </div>
-    <select style="width: 100%; max-width: 155px" size="10" (change)="selectGameTable($event.target.value)" [ngModel]="selectedTable?.identifier">
+    <select #select style="width: 100%; max-width: 155px" size="19" (change)="selectGameTable(select.value)" [ngModel]="selectedTable?.identifier">
       <option *ngFor="let gameTable of getGameTables()" value="{{gameTable.identifier}}" title="{{gameTable.name}}" [style.color]="gameTable.name == '' ? 'gray' : ''">{{gameTable.name == '' ? '(이름 없는 테이블)' : gameTable.name}}</option>
     </select>
   </div>
@@ -18,67 +18,103 @@
       <div class="images-select">
         <div>
           <b>이미지</b>
-          <div (click)="openBgImageModal()" style="position: relative; overflow: hidden; cursor: pointer">
-            <div *ngIf="getHidden(tableBackgroundImage)" style="position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
+          <span (click)="openBgImageModal()" style="display: block; position: relative; overflow: hidden" [style.cursor]="(!isEditable || tableGridType == -1) ? 'default' : 'pointer'">
+            <span *ngIf="getHidden(tableBackgroundImage)" style="display: block; position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
               <i class="material-icons" [class]="isShowHideImages ? 'red-eye': 'grow'" style="margin-right: 2px; font-size: 16px; display: block">{{ isShowHideImages ? 'visibility' : 'visibility_off' }}</i>
-            </div>
-            <img height="120" [ngClass]="{ blackout: !isShowHideImages && getHidden(tableBackgroundImage) }" [src]="tableBackgroundImage.url | safe: 'resourceUrl'">
+            </span>
+            <img height="120" [ngClass]="{ blackout: !isShowHideImages && getHidden(tableBackgroundImage) }" [src]="tableBackgroundImage.url | safe: 'resourceUrl'" draggable="false">
+          </span>
+        </div>
+      </div>
+      <div class="images-select">
+        <div>
+          <b>배경1(전면)</b>
+          <div *ngIf="!tableDistanceviewImage.url">
+            <button (click)="openDistanceViewImageModal()" style="height: 120px; margin: 0px 1px 2px 0px" [disabled]="!isEditable">배경 이미지 1을 추가</button>
           </div>
+          <span *ngIf="tableDistanceviewImage.url" style="display: block; position: relative; overflow: hidden" [style.cursor]="(!isEditable || tableGridType == -1) ? 'default' : 'pointer'" (click)="openDistanceViewImageModal()">
+            <span *ngIf="getHidden(tableDistanceviewImage)" style="display: block; position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
+              <i class="material-icons" [class]="isShowHideImages ? 'red-eye': 'grow'" style="margin-right: 2px; font-size: 16px; display: block">{{ isShowHideImages ? 'visibility' : 'visibility_off' }}</i>
+            </span>
+            <img height="120" [ngClass]="{ blackout: !isShowHideImages && getHidden(tableDistanceviewImage) }" [src]="tableDistanceviewImage.url | safe: 'resourceUrl'" draggable="false">
+          </span>
         </div>
         <div>
-          <b>배경</b>
-          <div *ngIf="!tableDistanceviewImage.url">
-            <button (click)="openDistanceViewImageModal()" style="height: 120px;" [disabled]="!isEditable">배경 이미지를 추가</button>
+          <b>배경2(후면)</b>
+          <div *ngIf="!tableDistanceviewImage2.url">
+            <button (click)="openDistanceViewImageModal2()" style="height: 120px; margin: 0px 0px 2px 0px" [disabled]="!isEditable">배경 이미지 2를 추가</button>
           </div>
-          <div *ngIf="tableDistanceviewImage.url" style="position: relative; overflow: hidden; cursor: pointer" (click)="openDistanceViewImageModal()">
-            <div *ngIf="getHidden(tableDistanceviewImage)" style="position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
+          <span *ngIf="tableDistanceviewImage2.url" style="display: block; position: relative; overflow: hidden" [style.cursor]="(!isEditable || tableGridType == -1) ? 'default' : 'pointer'" (click)="openDistanceViewImageModal2()">
+            <span *ngIf="getHidden(tableDistanceviewImage2)" style="display: block; position: absolute; text-align: right; top: 0px; right: 0px; pointer-events: none; z-index: 5">
               <i class="material-icons" [class]="isShowHideImages ? 'red-eye': 'grow'" style="margin-right: 2px; font-size: 16px; display: block">{{ isShowHideImages ? 'visibility' : 'visibility_off' }}</i>
-            </div>
-            <img height="120" [ngClass]="{ blackout: !isShowHideImages && getHidden(tableDistanceviewImage) }" [src]="tableDistanceviewImage.url | safe: 'resourceUrl'">
+            </span>
+            <img height="120" [ngClass]="{ blackout: !isShowHideImages && getHidden(tableDistanceviewImage2) }" [src]="tableDistanceviewImage2.url | safe: 'resourceUrl'" draggable="false">
+          </span>
+        </div>
+      </div>
+      <div>
+        <div style="display: inline" class="self-setting">Name：<input [(ngModel)]="tableName" placeholder="Name" [disabled]="!isEditable" /></div>
+      </div>
+      <div style="display: table; width: 90%">
+        <div style="display: table-row">
+          <div style="display: table-cell; width: 4em">
+            <div style="display: inline" class="self-setting">Width：</div>
+          </div>
+          <div style="display: table-cell">
+            <input [(ngModel)]="tableWidth" type="range" style="width: calc(100% - 4px)" title="{{tableWidth}}" min="{{minSize}}" max="{{maxSize}}" name="tableWidth" [disabled]="!isEditable" />
+          </div>
+          <div style="display: table-cell; width: 5em">
+            <input [(ngModel)]="tableWidth" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 5em;" [disabled]="!isEditable">
+          </div>
+        </div>
+        <div style="display: table-row">
+          <div style="display: table-cell; width: 4em">
+            <div style="display: inline" class="self-setting">Height：</div>
+          </div>
+          <div style="display: table-cell">
+            <input [(ngModel)]="tableHeight" type="range" style="width: calc(100% - 4px)" title="{{tableHeight}}" min="{{minSize}}" max="{{maxSize}}" name="tableHeight" [disabled]="!isEditable"/>
+          </div>
+          <div style="display: table-cell; width: 5em">
+            <input [(ngModel)]="tableHeight" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 5em;" [disabled]="!isEditable">
           </div>
         </div>
       </div>
       <div>
-        <label class="self-setting">Name：<input [(ngModel)]="tableName" placeholder="Name" [disabled]="!isEditable" /></label>
-      </div>
-      <div>
-        <label class="self-setting">Width：<input [(ngModel)]="tableWidth" type="range" title="{{tableWidth}}" min="{{minSize}}" max="{{maxSize}}" name="tableWidth" [disabled]="!isEditable" /></label>
-        <input [(ngModel)]="tableWidth" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 5em;" [disabled]="!isEditable">
-      </div>
-      <div>
-        <label class="self-setting">Height：<input [(ngModel)]="tableHeight" title="{{tableHeight}}" type="range" min="{{minSize}}" max="{{maxSize}}" name="tableHeight" [disabled]="!isEditable"/></label>
-        <input [(ngModel)]="tableHeight" type="number" min="{{minSize}}" max="{{maxSize}}" style="width: 5em;" [disabled]="!isEditable">
-      </div>
-      <div>
-        <label class="self-setting">그리드：
+        <div style="display: inline" class="self-setting">그리드：
           <select [(ngModel)]="tableGridType" name="tableGridType" [disabled]="!isEditable">
             <option value="-1">없음</option>
             <option value="0">스퀘어</option>
             <option value="1">헥스(세로정렬)</option>
             <option value="2">헥스(가로정렬)</option>
           </select>
-        </label>
-        <label class="self-setting" style="margin-left: 3px">색：
+        </div>
+        <div style="display: inline; margin-left: 1.2em" class="self-setting">색：
           <select [(ngModel)]="tableGridColor" name="tableGridColor" [disabled]="!isEditable || tableGridType == -1">
             <option value="#000000e6">검정</option>
+            <option value="#0000dde6">파랑</option>
+            <option value="#00dd00e6">녹색</option>
+            <option value="#00dddde6">하늘</option>
+            <option value="#dd0000e6">빨강</option>
+            <option value="#dd00dde6">보라</option>
+            <option value="#dddd00e6">노랑</option>
             <option value="#dddddde6">하양</option>
           </select>
-        </label>
+        </div>
       </div>
       <div>
         <label class="self-setting">
           <input type="checkbox" [(ngModel)]="tableGridNumberShow" name="tableGridNumberShow" [disabled]="!isEditable || tableGridType == -1" />
-          <span [ngClass]="{disabled: !isEditable || tableGridType == -1}">그리드의 좌표 숫자 표시</span>
+          <span [ngClass]="{disabled: !isEditable || tableGridType == -1}" [style.cursor]="(!isEditable || tableGridType == -1) ? 'default' : 'pointer'">그리드의 좌표 숫자 표시/span>
         </label>
       </div>
       <div>
-        <label class="self-setting">배경 필터：
+        <div style="display: inline" class="self-setting">배경 필터：
           <select [(ngModel)]="tableDistanceviewFilter" name="tableDistanceviewFilter" [disabled]="!isEditable">
             <option value="">없음</option>
             <option value="white">화이트</option>
             <option value="black">블랙</option>
           </select>
-        </label>
+        </div>
       </div>
       <hr/>
       <div>
@@ -107,5 +143,5 @@
   </div>
 </div>
 <ng-container *ngIf="isEmpty">
-  <div style="font-size: 12px;">※기존의 테이블이 존재하지 않습니다.「새로운 테이블을 작성」을 눌러 새 테이블을 작성할 수 있습니다.</div>
+  <div style="font-size: 12px;">※테이블이 존재하지 않습니다.「새로운 테이블을 작성」을 눌러 새 테이블을 작성할 수 있습니다.</div>
 </ng-container>

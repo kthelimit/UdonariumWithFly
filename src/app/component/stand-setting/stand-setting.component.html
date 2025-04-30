@@ -1,25 +1,29 @@
 <div style="margin-bottom: 4px;">
-  <button style="float: right;" (click)="helpStandSeteing()">?</button>
+  <button style="float: right; cursor: help" (click)="helpStandSeteing()">?</button>
   <div class="position-indicate">
     <b>Pos: </b>
-    <input style="width: 350px" type="range" min="0" max="100" [(ngModel)]="position">
+    <input style="width: 350px" type="range" [title]="position + '%'" min="0" max="100" [(ngModel)]="position">
     <input style="width: 3em; text-align: right; margin-right: 3px;" type="number" min="0" max="100" [(ngModel)]="position"><b sytle="margin-left: 3px; margin-right: 1em ">％　</b>
+    <label style="margin-left: 1em; white-space: nowrap">
+      <input type="checkbox" [(ngModel)]="isSortNameList" checked="{{isSortNameList ? 'checked' : ''}}" (change)="isSortNameList = (isSortNameList ? true : false)" />
+      <b style="font-size: smaller">채팅 입력으로 이름 정렬</b>
+    </label>
   </div>
   <div class="position-indicate">
     <b>Height (0=원본 이미지 그대로): </b> 
-    <input style="width: 350px" type="range" min="0" max="100" [(ngModel)]="height">
+    <input style="width: 350px" type="range" [title]="height ? height + '%' : '원본 이미지 그대로'" min="0" max="100" [(ngModel)]="height">
     <input style="width: 3em; text-align: right; margin-right: 3px;" type="number" min="0" max="200" [(ngModel)]="height"><b sytle="margin-left: 3px; margin-right: 1em ">％</b>
   </div>
 </div>
 <div class="overview-selecter" [style.border-color]="overviewIndex == -1 ? 'red' : 'transparent'" style="padding: 0px; width: 695px;">
-  <label style="font-size: smaller; font-weight: bolder;"><input type="radio" name="{{panelId}}_overviewIndex" value="-1" [checked]="overviewIndex == -1" (click)="overviewIndex = -1"> 스탠딩 이미지를 오버뷰에 사용하지 않는다</label>
+  <label style="font-size: smaller; font-weight: bolder;"><input type="radio" style="cursor: pointer" name="{{panelId}}_overviewIndex" value="-1" [checked]="overviewIndex == -1" (click)="overviewIndex = -1"> 스탠드 이미지를 오버뷰에 사용하지 않는다</label>
 </div>
 <hr>
 <div style="display: flex; flex-direction: row; flex-wrap: wrap">
   <div *ngFor="let standElement of standElements; let i = index" style="width: 700px">
     <div style="display: flex; flex-direction: row; justify-content: space-between;" [style.border-color]="overviewIndex == i ? 'red' : 'transparent'" class="overview-selecter">
       <div style="display: flex; align-items: center; justify-content: center;">
-        <input style="z-index: 10;" type="radio" name="{{panelId}}_overviewIndex" value="{{ i }}" [checked]="overviewIndex == i" (click)="overviewIndex = i">
+        <input style="z-index: 10;" type="radio" style="cursor: pointer" name="{{panelId}}_overviewIndex" value="{{ i }}" [checked]="overviewIndex == i" (click)="overviewIndex = i">
       </div>
       <div style="margin-left: -1em; margin-right: -1em;">
         <stand-element #standElementComponent [standElement]="standElement" [imageList]="imageList" [gameCharacter]="character"></stand-element>
@@ -33,5 +37,5 @@
     <hr>
   </div>
 </div>
-<button (click)="add()">스탠딩 설정의 추가</button>
-<button *ngIf="standSettingXML" (click)="restore()">직전에 삭제한 스탠딩의 설정을 되돌린다</button>
+<button (click)="add()">스탠드 설정의 추가</button>
+<button *ngIf="standSettingXML" (click)="restore()">직전에 삭제한 스탠드의 설정을 되돌린다</button>

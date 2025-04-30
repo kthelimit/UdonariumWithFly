@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, 
 
 import { Card } from '@udonarium/card';
 import { CardStack } from '@udonarium/card-stack';
-import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { ImageFile, ImageState } from '@udonarium/core/file-storage/image-file';
 import { GameObject } from '@udonarium/core/synchronize-object/game-object';
 import { EventSystem } from '@udonarium/core/system';
 import { DiceSymbol } from '@udonarium/dice-symbol';
@@ -10,6 +10,8 @@ import { GameCharacter } from '@udonarium/game-character';
 import { FilterType, GameTable, GridType } from '@udonarium/game-table';
 import { GameTableMask } from '@udonarium/game-table-mask';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { RangeArea } from '@udonarium/range';
+import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 import { Terrain } from '@udonarium/terrain';
 import { TextNote } from '@udonarium/text-note';
@@ -21,10 +23,12 @@ import { ImageService } from 'service/image.service';
 import { ModalService } from 'service/modal.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { TabletopActionService } from 'service/tabletop-action.service';
+import { TabletopSelectionService } from 'service/tabletop-selection.service';
 import { TabletopService } from 'service/tabletop.service';
 
 import { GridLineRender } from './grid-line-render';
 import { TableMouseGesture } from './table-mouse-gesture';
+import { TablePickGesture } from './table-pick-gesture';
 import { TableTouchGesture } from './table-touch-gesture';
 
 @Component({
@@ -37,24 +41,20 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('gameTable', { static: true }) gameTable: ElementRef<HTMLElement>;
   @ViewChild('gameObjects', { static: true }) gameObjects: ElementRef<HTMLElement>;
   @ViewChild('gridCanvas', { static: true }) gridCanvas: ElementRef<HTMLCanvasElement>;
+  @ViewChild('pickArea', { static: true }) pickArea: ElementRef<HTMLElement>;
+  @ViewChild('pickCursor', { static: true }) pickCursor: ElementRef<HTMLElement>;
 
   get tableSelecter(): TableSelecter { return this.tabletopService.tableSelecter; }
   get currentTable(): GameTable { return this.tabletopService.currentTable; }
   get gridHeight(): number { return this.tabletopService.currentTable.gridHeight; }
 
-  get tableImage(): ImageFile {
-    return this.imageService.getSkeletonOr(this.currentTable.imageIdentifier);
-  }
+  get tableImage(): ImageFile { return this.imageService.getSkeletonOr(this.currentTable.imageIdentifier); }
+  get backgroundImage(): ImageFile { return this.imageService.getEmptyOr(this.currentTable.backgroundImageIdentifier); }
+  get backgroundImage2(): ImageFile { return this.imageService.getEmptyOr(this.currentTable.backgroundImageIdentifier2); }
+  get backgroundFilterType(): FilterType { return this.currentTable.backgroundFilterType; }
 
-  get backgroundImage(): ImageFile {
-    return this.imageService.getEmptyOr(this.currentTable.backgroundImageIdentifier);
-  }
-
-  get backgroundFilterType(): FilterType {
-    return this.currentTable.backgroundFilterType;
-  }
-
-  private isTransformMode: boolean = false;
+  private isTableTransformMode: boolean = false;
+  private isTableTransformed: boolean = false;
 
   get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging; }
 
@@ -68,11 +68,13 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private mouseGesture: TableMouseGesture = null;
   private touchGesture: TableTouchGesture = null;
+  private pickGesture: TablePickGesture = null;
 
   get characters(): GameCharacter[] { return this.tabletopService.characters; }
   get tableMasks(): GameTableMask[] { return this.tabletopService.tableMasks; }
   get cards(): Card[] { return this.tabletopService.cards; }
   get cardStacks(): CardStack[] { return this.tabletopService.cardStacks; }
+  get ranges(): RangeArea[] { return this.tabletopService.ranges; }
   get terrains(): Terrain[] { return this.tabletopService.terrains; }
   get textNotes(): TextNote[] { return this.tabletopService.textNotes; }
   get diceSymbols(): DiceSymbol[] { return this.tabletopService.diceSymbols; }
@@ -80,6 +82,85 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
 
   get isStealthMode(): boolean { return GameCharacter.isStealthMode; }
   get isGMMode(): boolean { return PeerCursor.myCursor && PeerCursor.myCursor.isGMMode; }
+
+  get clipCss(): string {
+    const rect = this.currentTable.gridClipRect;
+    return rect ? `rect(${rect.top}px, ${rect.right}px, ${rect.bottom}px, ${rect.left}px)` : 'auto';
+  }
+
+  private _currentTable: GameTable;
+  private _currentTableImage: ImageFile;
+  private _currentTableImageUrl: string = '';
+  private _currentTableImageState = 0;
+  private _currentBackgroundImage :ImageFile;
+  private _currentBackgroundImageUrl: string = '';
+  private _currentBackgroundImageState = 0;
+  private _currentBackgroundImage2 :ImageFile;
+  private _currentBackgroundImageUrl2: string = '';
+  private _currentBackgroundImageState2 = 0;
+  isBackgroundImageLoaded = false;
+  isBackgroundImageLoaded2 = false;
+  get tableImageUrls(): string[] {
+    let revokeTableImageUrl = '';
+    let revokeBackgroundImageUrl = '';
+    let revokeBackgroundImageUrl2 = '';
+    const isFlash = (this.currentTable?.identifier != this._currentTable?.identifier);
+    this._currentTable = this.currentTable;
+    if (isFlash || this._currentTableImage?.identifier != this.tableImage.identifier || this._currentTableImageState != this.tableImage.state) {
+      this._currentTableImage = this.tableImage;
+      if (this.tableImage.state === ImageState.THUMBNAIL || this.tableImage.state === ImageState.COMPLETE) {
+        this._currentTableImageState = this.tableImage.state;
+        if (this._currentTableImageUrl) revokeTableImageUrl = this._currentTableImageUrl;
+        this._currentTableImageUrl = URL.createObjectURL(this.tableImage.blob);
+      } else {
+        this._currentTableImageUrl = this.tableImage.url;
+      }
+    }
+    if (isFlash || this._currentBackgroundImage?.identifier != this.backgroundImage.identifier || this._currentBackgroundImageState != this.backgroundImage.state) {
+      this._currentBackgroundImage = this.backgroundImage;
+      if (this.backgroundImage.state === ImageState.THUMBNAIL || this.backgroundImage.state === ImageState.COMPLETE) {
+        this._currentBackgroundImageState = this.backgroundImage.state;
+        if (this._currentBackgroundImageUrl) revokeBackgroundImageUrl = this._currentBackgroundImageUrl;
+        this.isBackgroundImageLoaded = false;
+        this._currentBackgroundImageUrl = URL.createObjectURL(this.backgroundImage.blob);
+      } else {
+        this._currentBackgroundImageUrl = this.backgroundImage.url;
+      }
+    }
+    if (isFlash || this._currentBackgroundImage2?.identifier != this.backgroundImage2.identifier || this._currentBackgroundImageState2 != this.backgroundImage2.state) {
+      this._currentBackgroundImage2 = this.backgroundImage2;
+      if (this.backgroundImage2.state === ImageState.THUMBNAIL || this.backgroundImage2.state === ImageState.COMPLETE) {
+        this._currentBackgroundImageState2 = this.backgroundImage2.state;
+        if (this._currentBackgroundImageUrl2) revokeBackgroundImageUrl2 = this._currentBackgroundImageUrl2;
+        this.isBackgroundImageLoaded2 = false;
+        this._currentBackgroundImageUrl2 = URL.createObjectURL(this.backgroundImage2.blob);
+      } else {
+        this._currentBackgroundImageUrl2 = this.backgroundImage2.url;
+      }
+    }
+    if (revokeTableImageUrl || revokeBackgroundImageUrl || revokeBackgroundImageUrl2) {
+      queueMicrotask(() => { 
+        if (revokeTableImageUrl) URL.revokeObjectURL(revokeTableImageUrl);
+        if (revokeBackgroundImageUrl) URL.revokeObjectURL(revokeBackgroundImageUrl);
+        if (revokeBackgroundImageUrl2) URL.revokeObjectURL(revokeBackgroundImageUrl2);
+      });
+    }
+    return [this._currentTableImageUrl, this._currentBackgroundImageUrl, this._currentBackgroundImageUrl2];
+  }
+  
+  get tableImageUrl(): string { return this.tableImageUrls[0]; }
+  get backgroundImageUrl(): string { return this.tableImageUrls[1]; }
+  get backgroundImageUrl2(): string { return this.tableImageUrls[2]; }
+  
+  private _currentBackgroundImageCss = '';
+  get backgroundImageCss(): string {
+    if (this._currentBackgroundImageCss && ((this.backgroundImageUrl && !this.isBackgroundImageLoaded) || (this.backgroundImageUrl2 && !this.isBackgroundImageLoaded2))) return this._currentBackgroundImageCss;
+    let ret: string[] = [];
+    if (this.backgroundImageUrl) ret.push(`url(${this.backgroundImageUrl})`);
+    if (this.backgroundImageUrl2 && (!this.backgroundImageUrl || (this.backgroundImageUrl && this.isBackgroundImageLoaded))) ret.push(`url(${this.backgroundImageUrl2})`);
+    this._currentBackgroundImageCss = ret.join(',');
+    return this._currentBackgroundImageCss;
+  }
 
   constructor(
     private ngZone: NgZone,
@@ -89,27 +170,26 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     private imageService: ImageService,
     private tabletopService: TabletopService,
     private tabletopActionService: TabletopActionService,
+    private selectionService: TabletopSelectionService,
     private modalService: ModalService,
   ) { }
 
   ngOnInit() {
     EventSystem.register(this)
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
-        this.gameTable.nativeElement.style.transition = null;
+      .on('UPDATE_GAME_OBJECT', event => {
         if (event.data.identifier !== this.currentTable.identifier && event.data.identifier !== this.tableSelecter.identifier) return;
         console.log('UPDATE_GAME_OBJECT GameTableComponent ' + this.currentTable.identifier);
 
         this.setGameTableGrid(this.currentTable.width, this.currentTable.height, this.currentTable.gridSize, this.currentTable.gridType, this.currentTable.gridColor, this.currentTable.isShowNumber);
       })
       .on('DRAG_LOCKED_OBJECT', event => {
-        this.gameTable.nativeElement.style.transition = null;
-        this.isTransformMode = true;
+        this.isTableTransformMode = true;
         this.pointerDeviceService.isDragging = false;
         let opacity: number = this.tableSelecter.gridShow ? 1.0 : 0.0;
         this.gridCanvas.nativeElement.style.opacity = opacity + '';
       })
       .on('RESET_POINT_OF_VIEW', event => {
-        this.isTransformMode = false;
+        this.isTableTransformMode = false;
         this.pointerDeviceService.isDragging = false;
 
         this.setTransform(this.viewPotisonX, this.viewPotisonY, this.viewPotisonZ, this._rightRotate(this.viewRotateX), this._rightRotate(this.viewRotateY, true), this._rightRotate(this.viewRotateZ), true);
@@ -129,11 +209,18 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
       })
       .on('FOCUS_TABLETOP_OBJECT', event => {
         setTimeout(() => {
-          console.log(`move table to focus (${event.data.x}, ${event.data.y})`);
+          //console.log(`move table to focus (${event.data.x}, ${event.data.y})`);
           this.gameTable.nativeElement.style.transition = '0.1s ease-out';
           setTimeout(() => {
             this.gameTable.nativeElement.style.transition = null;
           }, 100);
+          /* 
+          Porting from Udonarium Lily
+          Copyright (c) 2020 entyu
+
+          MIT License
+          https://opensource.org/licenses/mit-license.php
+          */
           // 座標変換
           let centerX = this.gridCanvas.nativeElement.clientWidth / 2;
           let centerY = this.gridCanvas.nativeElement.clientHeight / 2;
@@ -174,6 +261,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     this.ngZone.runOutsideAngular(() => {
       this.initializeTableTouchGesture();
       this.initializeTableMouseGesture();
+      this.initializeTablePickGesture();
     });
     this.cancelInput();
 
@@ -186,6 +274,10 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     EventSystem.unregister(this);
     this.mouseGesture.destroy();
     this.touchGesture.destroy();
+    this.pickGesture.destroy();
+    if (this._currentTableImageUrl) URL.revokeObjectURL(this._currentTableImageUrl);
+    if (this._currentBackgroundImageUrl) URL.revokeObjectURL(this._currentBackgroundImageUrl);
+    if (this._currentBackgroundImageUrl2) URL.revokeObjectURL(this._currentBackgroundImageUrl2);
   }
 
   initializeTableTouchGesture() {
@@ -203,6 +295,22 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     this.mouseGesture.ontransform = this.onTableMouseTransform.bind(this);
   }
 
+  initializeTablePickGesture() {
+    this.pickGesture = new TablePickGesture(
+      this.rootElementRef.nativeElement,
+      this.gameObjects.nativeElement,
+      this.pickCursor.nativeElement,
+      this.pickArea.nativeElement,
+      this.pointerDeviceService,
+      this.selectionService,
+    );
+
+    this.pickGesture.onstart = this.onTablePickStart.bind(this);
+    this.pickGesture.onend = this.onTablePickEnd.bind(this);
+    this.pickGesture.oncancelifneeded = this.onTablePickCancelIfNeeded.bind(this);
+    this.pickGesture.onpick = this.onTablePick.bind(this);
+  }
+
   onTableTouchStart() {
     this.mouseGesture.cancel();
   }
@@ -216,7 +324,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onTableTouchTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number, event: string, srcEvent: TouchEvent | MouseEvent | PointerEvent) {
-    if (!this.isTransformMode || document.body !== document.activeElement) return;
+    if (!this.isTableTransformMode || document.body !== document.activeElement) return;
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu && this.contextMenuService.isShow) {
       this.ngZone.run(() => this.contextMenuService.close());
@@ -233,13 +341,14 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     if (750 < transformZ + this.viewPotisonZ) transformZ += 750 - (transformZ + this.viewPotisonZ);
 
     this.setTransform(transformX, transformY, transformZ, rotateX, rotateY, rotateZ);
+    this.isTableTransformed = true;
   }
 
   onTableMouseStart(e: any) {
     if (e.target.contains(this.gameObjects.nativeElement) || e.button === 1 || e.button === 2) {
-      this.isTransformMode = true;
+      this.isTableTransformMode = true;
     } else {
-      this.isTransformMode = false;
+      this.isTableTransformMode = false;
       this.pointerDeviceService.isDragging = true;
       this.gridCanvas.nativeElement.style.opacity = 1.0 + '';
     }
@@ -255,7 +364,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onTableMouseTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number, event: string, srcEvent: TouchEvent | MouseEvent | PointerEvent) {
-    if (!this.isTransformMode || document.body !== document.activeElement) return;
+    if (!this.isTableTransformMode || document.body !== document.activeElement) return;
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu && this.contextMenuService.isShow) {
       this.ngZone.run(() => this.contextMenuService.close());
@@ -269,11 +378,41 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     transformY *= scale;
 
     this.setTransform(transformX, transformY, transformZ, rotateX, rotateY, rotateZ);
+    this.isTableTransformed = true;
+  }
+
+  onTablePickStart() {
+    this.isTableTransformMode = false;
+    SoundEffect.playLocal(PresetSound.selectionStart);
+
+    if (!this.pickGesture.isMagneticMode) {
+      let opacity: number = this.tableSelecter.gridShow ? 1.0 : 0.0;
+      this.gridCanvas.nativeElement.style.opacity = opacity + '';
+    }
+  }
+
+  onTablePickEnd() {
+    if (this.pickGesture.isKeepSelection) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!this.contextMenuService.isShow) this.selectionService.clear();
+      });
+    });
+  }
+
+  onTablePickCancelIfNeeded(): boolean {
+    return this.isTableTransformMode;
+  }
+
+  onTablePick() {
+    if (!this.pointerDeviceService.isAllowedToOpenContextMenu && this.contextMenuService.isShow) {
+      this.ngZone.run(() => this.contextMenuService.close());
+    }
   }
 
   cancelInput() {
     this.mouseGesture.cancel();
-    this.isTransformMode = true;
+    this.isTableTransformMode = true;
     this.pointerDeviceService.isDragging = false;
     let opacity: number = this.tableSelecter.gridShow ? 1.0 : 0.0;
     this.gridCanvas.nativeElement.style.opacity = opacity + '';
@@ -290,14 +429,39 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     let objectPosition = this.coordinateService.calcTabletopLocalCoordinate();
     let menuActions: ContextMenuAction[] = [];
 
+    if (0 < this.selectionService.size) {
+      menuActions.push({
+        name: '여기에 모은다', action: () => {
+          this.selectionService.congregate(objectPosition);
+        },
+        //enabled: 0 < this.selectionService.size
+        disabled: 0 < this.selectionService.size
+      });
+      menuActions.push(ContextMenuSeparator);
+    }
     Array.prototype.push.apply(menuActions, this.tabletopActionService.makeDefaultContextMenuActions(objectPosition));
     menuActions.push(ContextMenuSeparator);
     menuActions.push({
-      name: '테이블 설정', action: () => {
+      name: '테이블 설정...', action: () => {
         this.modalService.open(GameTableSettingComponent);
       }
     });
     this.contextMenuService.open(menuPosition, menuActions, this.currentTable.name);
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentMouseDown(e: MouseEvent) {
+    this.isTableTransformed = false;
+  }
+
+  @HostListener('document:touchstart', ['$event'])
+  onDocumentTouchStart(e: TouchEvent) {
+    this.isTableTransformed = false;
+  }
+
+  @HostListener('document:contextmenu', ['$event'])
+  onDocumentContextMenu(e: MouseEvent) {
+    if (this.isTableTransformed && !this.pointerDeviceService.isAllowedToOpenContextMenu) e.preventDefault();
   }
 
   private setTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number, isAbsolute: boolean=false) {
@@ -305,7 +469,6 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
       this.viewRotateX = rotateX;
       this.viewRotateY = rotateY;
       this.viewRotateZ = rotateZ;
-
       this.viewPotisonX = transformX;
       this.viewPotisonY = transformY;
       this.viewPotisonZ = transformZ;
@@ -313,7 +476,6 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
       this.viewRotateX += rotateX;
       this.viewRotateY += rotateY;
       this.viewRotateZ += rotateZ;
-
       this.viewPotisonX += transformX;
       this.viewPotisonY += transformY;
       this.viewPotisonZ += transformZ;
@@ -321,7 +483,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (isAbsolute || rotateX != 0 || rotateY != 0 || rotateX != 0) {
       this.ngZone.run(() => {
-        EventSystem.trigger<object>('TABLE_VIEW_ROTATE', {
+        EventSystem.trigger('TABLE_VIEW_ROTATE', {
           x: this.viewRotateX,
           y: this.viewRotateY,
           z: this.viewRotateZ

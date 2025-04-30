@@ -21,6 +21,7 @@ import { UUID } from '@udonarium/core/system/util/uuid';
 import { OpenUrlComponent } from 'component/open-url/open-url.component';
 import { CutInComponent } from 'component/cut-in/cut-in.component';
 import { ConfirmationComponent, ConfirmationType } from 'component/confirmation/confirmation.component';
+import { ChatMessageService } from 'service/chat-message.service';
 
 
 @Component({
@@ -167,7 +168,8 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     private pointerDeviceService: PointerDeviceService,
     private modalService: ModalService,
     private panelService: PanelService,
-    private saveDataService: SaveDataService
+    private saveDataService: SaveDataService,
+    private chatMessageService: ChatMessageService
   ) { }
 
   ngOnInit(): void {
@@ -180,12 +182,12 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    if (this.cutIns.length > 0) {
-      queueMicrotask(() => {
+    queueMicrotask(() => {
+      if (this.cutIns.length > 0) {
         this.onChangeCutIn(this.cutIns[0].identifier);
         this.cutInSelecter.nativeElement.selectedIndex = 0;
-      });
-    }
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -292,12 +294,13 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '숨김 설정의 이미지를 표시', 
-        text: '숨김 설정의 이미지를 표시합니까?',
-        help: '스포일러 등에 주의해주세요.',
+        title: '숨김 설정인 이미지 표시', 
+        text: '숨김 설정인 이미지를 표시하시겠습니까?',
+        help: '스포일러 등에 주의해주세요',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
+          this.chatMessageService.sendOperationLog('컷인 설정에서 숨김 설정인 이미지를 표시했습니다');
           this.isShowHideImages = true;
           (<HTMLInputElement>$event.target).checked = true;
           this.changeDetector.markForCheck();
@@ -307,9 +310,10 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   playCutIn() {
-    if (!this.selectedCutIn) return;
+    const cutIn = this.selectedCutIn;
+    if (!cutIn) return;
     const sendObj = {
-      identifier: this.selectedCutIn.identifier,
+      identifier: cutIn.identifier,
       secret: this.sendTo ? true : false,
       sender: PeerCursor.myCursor.peerId
     };
@@ -321,6 +325,7 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     } else {
       EventSystem.call('PLAY_CUT_IN', sendObj);
+      this.chatMessageService.sendOperationLog((cutIn.name == '' ? '(이름 없는 컷인)' : cutIn.name) + ' 재생');
     }
   }
 
@@ -369,7 +374,7 @@ export class CutInSettingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   helpCutIn() {
     let coordinate = this.pointerDeviceService.pointers[0];
-    let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 620 };
+    let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 680 };
     let textView = this.panelService.open(TextViewComponent, option);
     textView.title = '컷인 도움말';
     textView.text = 

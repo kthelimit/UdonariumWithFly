@@ -85,6 +85,16 @@ export class StandSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.character.standList.overviewIndex = overviewIndex;
   }
 
+  set isSortNameList(isSortNameList: boolean) {
+    if (!this.character || !this.character.standList) return;
+    this.character.standList.isSortNameList = isSortNameList;
+  }
+
+  get isSortNameList(): boolean {
+    if (!this.character || !this.character.standList) return true;
+    return this.character.standList.isSortNameList;
+  }
+
   ngOnInit() {
     Promise.resolve().then(() => this.updatePanelTitle());
     EventSystem.register(this)
@@ -111,7 +121,7 @@ export class StandSettingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   updatePanelTitle() {
-    this.panelService.title = this.character.name + ' 의 스탠딩 설정';
+    this.panelService.title = this.character.name + ' 의 스탠드 설정';
   }
 
   add() {
@@ -126,8 +136,8 @@ export class StandSettingComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     if (!this.character || !this.character.standList) return;
     this.modalService.open(ConfirmationComponent, {
-      title: '스탠딩 설정의 삭제', 
-      text: '스탠딩 설정을 삭제합니까?',
+      title: '스탠드 설정 삭제', 
+      text: '스탠드 설정을 삭제합니까?',
       type: ConfirmationType.OK_CANCEL,
       materialIcon: 'person_off',
       action: () => {
@@ -183,17 +193,17 @@ export class StandSettingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   helpStandSeteing() {
     let coordinate = this.pointerDeviceService.pointers[0];
-    let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 590 };
+    let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 620 };
     let textView = this.panelService.open(TextViewComponent, option);
-    textView.title = '스탠딩 설정 도움말';
+    textView.title = '스탠드 설정 도움말';
     textView.text = 
-`　캐릭터의 스탠딩 이름, 위치와 이미지 높이(각각 화면 크기에 대한 상대 지정), 채팅 발송 시 스탠딩이 표시되는 조건을 설정할 수 있습니다.
+`　캐릭터의 스탠드 이름, 위치와 이미지 높이(각각 화면 크기에 대한 상대 지정), 채팅 발송 시 스탠드가 표시되는 조건을 설정할 수 있습니다.
 
-스탠딩에 이름을 설정한 경우, 채팅 윈도우, 채팅 패널의 리스트에 표시되며 선택할 수 있게 됩니다. 또, 태그를 설정한 경우, 다른 태그에서는 같은 캐릭터라고 하더라도 등장, 퇴장의 애니메이션이 진행됩니다.
+　스탠드에 이름을 설정한 경우, 채팅 윈도우, 채팅 패널의 리스트에 표시되며 선택할 수 있게 됩니다. 또, 태그를 설정한 경우, 다른 태그에서는 같은 캐릭터라고 하더라도 등장, 퇴장의 애니메이션이 진행됩니다.
 
-　화상의 위치와 높이는 개별 지정도 가능합니다. 위치의 개별 지정은 체크 없음, 높이는 0으로 한 경우에 전체의 설정이 사용됩니다. 세로 위치 조정(AdjY)은 스탠딩 화상의 높이에 대한 상대지정이 됩니다. (예를 들어 -50%로 하면 화상의 하반신이 화면단보다 아래에 가려집니다.)
+　화상의 위치와 높이는 개별 지정도 가능합니다. 위치의 개별 지정은 체크 없음, 높이는 0으로 한 경우에 전체의 설정이 사용됩니다. 세로 위치 조정(AdjY)은 스탠드 화상의 높이에 대한 상대지정이 됩니다. (예를 들어 -50%로 하면 화상의 하반신이 화면단보다 아래에 가려집니다.)
 
-　조건의 「지정화상」은 채팅 송신 시의 캐릭터 화상 또는 얼굴 IC입니다. 또 특별한 조건으로서 항상 채팅 텍스트의 끝이 "@퇴장" 또는 "@farewell"인 경우, 그 캐릭터의 스탠딩이 사라집니다.
+　조건의 「지정 이미지」는 채팅 송신 시의 캐릭터 이미지 또는 얼굴 아이콘입니다. 또 특별한 조건으로서 항상 채팅 텍스트의 끝이 "@퇴장" 또는 "@farewell"인 경우, 그 캐릭터의 스탠드가 사라집니다.
 
 　우선순위가 높은 것부터
 
@@ -202,12 +212,12 @@ export class StandSettingComponent implements OnInit, OnDestroy, AfterViewInit {
 　　３. 「지정 이미지 동시에 채팅의 말미(끝)」
 　　４. 「지정 이미지 또는 채팅의 말미(끝)」
 　　５. 「채팅의 말미(끝)」
-　　６. 「지정화상」
+　　６. 「지정 이미지」
 
-　어떤 조건도 만족하지 못한 경우 「디폴트」의 것이 사용되며 동일한 우선순위의 조건이 여러개인 경우 무작위로 하나가 선택됩니다.
+　어떤 조건도 만족하지 못한 경우 「디폴트」가 사용되며 동일한 우선순위의 조건이 여러개인 경우 무작위로 하나가 선택됩니다.
 
-　채팅 끝 일치 판정 시, 전각반각, 알파벳 대소문자는 구분되지 않습니다.
-또  "@퇴장" 또는 "@farewell"에 의한 퇴장시 혹은 "@웃음"과 같이 선두가 "@"로 시작하는 조건을 설정한 경우, (스탠드의 유효무효, 조건을 만족시키는가에 관계없이) 그 캐릭터로 송신할 때 조건에 일치하는 채팅 끝의 @이하는 잘립니다.`;
+　채팅 말미(끝) 일치 판정 시, 전각 반각, 알파벳 대소문자는 구분되지 않습니다.
+또  "@퇴장" 또는 "@farewell"에 의한 퇴장시 혹은 "@웃음"과 같이 선두가 "@"로 시작하는 조건을 설정한 경우, (스탠드의 유효 무효, 조건을 만족시키는가에 관계없이) 그 캐릭터로 송신할 때 조건에 일치하는 채팅 끝의 @이하는 잘립니다.`;
   }
 
   private imageElementToFile(dataElm: DataElement): ImageFile {

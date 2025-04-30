@@ -6,6 +6,7 @@ import { DataElement } from '@udonarium/data-element';
 import { DiceSymbol } from '@udonarium/dice-symbol';
 import { GameCharacter } from '@udonarium/game-character';
 import { GameTableMask } from '@udonarium/game-table-mask';
+import { RangeArea } from '@udonarium/range';
 import { Terrain } from '@udonarium/terrain';
 import { TextNote } from '@udonarium/text-note';
 import { ChatMessageService } from 'service/chat-message.service';
@@ -45,20 +46,23 @@ export class LoggingInputDirective implements AfterViewInit, OnDestroy {
         this.type = '캐릭터';
       }
       if (elm instanceof GameTableMask) {
-        this.type = '맵마스크';
+        this.type = '맵 마스크';
       }
       if (elm instanceof Terrain) {
         this.type = '지형';
       }
       if (elm instanceof TextNote) {
-        this.type = '공유메모';
+        this.type = '공유 메모';
+      }
+      if (elm instanceof RangeArea) {
+        this.type = '사정・범위';
       }
       if (!elm.parentIsAssigned || elm.parentIsUnknown) break;
     }
     const LoggingValueMap = LoggingInputDirective.LoggingValueMap;
     const identifier = this.dataElement.identifier;
     const loggingNativeElement = this.elementRef.nativeElement;
-    LoggingValueMap.set(identifier, { oldValue: this.loggingValue });
+    LoggingValueMap.set(identifier, { oldValue: this.dataElement.loggingValue });
     // input 試してダメだったらイベントで制御考える
     /*
     LoggingValueMap.set(identifier, { oldValue: this.loggingValue, isEditing: false });
@@ -78,6 +82,14 @@ export class LoggingInputDirective implements AfterViewInit, OnDestroy {
         this.doLogging();
       }, this.timeout);
     });
+
+    // 汚い、本来初期化要るだろうけどとりあえずコマンドへの対処なのでこのまま
+    this.dataElement.changeObserver = () => {
+      if (LoggingValueMap.get(identifier).timerId) clearTimeout(LoggingValueMap.get(identifier).timerId);
+      LoggingValueMap.get(identifier).timerId = setTimeout(() => {
+        if (this.doLogging) this.doLogging(false);
+      }, 0);
+    }
     /*
     loggingNativeElement.addEventListener('change', () => {
       if (!LoggingValueMap.get(identifier).isEditing) return;
@@ -97,7 +109,7 @@ export class LoggingInputDirective implements AfterViewInit, OnDestroy {
     }
   }
 
-  doLogging() {
+  doLogging(sendMsssage = true) {
     const LoggingValueMap = LoggingInputDirective.LoggingValueMap;
     const identifier = this.dataElement.identifier;
     //LoggingValueMap.get(identifier).isEditing = false;
@@ -106,10 +118,10 @@ export class LoggingInputDirective implements AfterViewInit, OnDestroy {
       LoggingValueMap.get(identifier).timerId = null;
     }
     const oldValue = LoggingValueMap.get(identifier).oldValue;
-    const value = this.loggingValue;
+    const value = this.dataElement.loggingValue;
     const dataElement = this.dataElement;
-    if (!this.isDisable && value != oldValue) {
-      let text = `${this.name == '' ? `(이름없는 ${this.type})` : this.name} 의 ${dataElement.name == '' ? '(이름없는 변수)' : dataElement.name} 을/를 변경`;
+    if (sendMsssage && !this.isDisable && value != oldValue) {
+      let text = `${this.name == '' ? `(이름 없는 ${this.type})` : this.name}의 ${dataElement.name == '' ? '(이름 없는 변수)' : dataElement.name} 변경`;
       if (this.showValue && (dataElement.isSimpleNumber || dataElement.isNumberResource || dataElement.isAbilityScore)) {
         text += ` ${oldValue} → ${value}`;
       } else if (dataElement.isCheckProperty) {
@@ -118,26 +130,6 @@ export class LoggingInputDirective implements AfterViewInit, OnDestroy {
       this.chatMessageService.sendOperationLog(text);
     }
     LoggingValueMap.get(identifier).oldValue = value;
-  }
-
-  get loggingValue(): string {
-    const dataElement = this.dataElement;
-    if (!dataElement) return;
-    let ret: string;
-    if (dataElement.isSimpleNumber) {
-      ret = `${dataElement.value}`;
-    } else if (dataElement.isNumberResource) {
-      ret = `${dataElement.currentValue}/${dataElement.value && dataElement.value != 0 ? dataElement.value : '???'}`;
-    } else if (dataElement.isCheckProperty) {
-      ret = `${dataElement.value ? ' → ✔ON' : ' → OFF'}`;
-    } else if (dataElement.isAbilityScore) {
-      const modifire = dataElement.calcAbilityScore();
-      ret = `${dataElement.value}`;
-      if (dataElement.currentValue) ret += `(${modifire >= 0 ? '+' : ''}${modifire})`;
-    } else {
-      ret = dataElement.value ? dataElement.value.toString() : '';
-    }
-    return ret;
   }
 
   constructor(

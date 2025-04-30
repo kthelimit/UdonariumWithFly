@@ -1,10 +1,11 @@
 <div class="component" (input)="onInput()">
   <ng-container *ngTemplateOutlet="inventoryTab"></ng-container>
   <ng-container *ngTemplateOutlet="inventoryViewSetting"></ng-container>
-  <div *ngIf="getGameObjects(selectTab).length < 1">{{getTabTitle(selectTab)}}인벤토리가 비어있습니다</div>
-  <div (contextmenu)="onContextMenu($event, gameObject)" *ngFor="let gameObject of getGameObjects(selectTab); trackBy: trackByGameObject" class="object-container"
-    (click)="selectGameObject(gameObject)" (dblclick)="focusGameObject(gameObject, $event)" [ngClass]="{'box': true, 'selected': (selectedIdentifier === gameObject.identifier), 'is-hide-in': gameObject.isHideIn, 'is-inventory-no-indicate': !gameObject.isInventoryIndicate}">
-    <div *ngIf="gameObject.isHideIn && gameObject.ownerName != null" class="owner-tag" [style.background-color]="gameObject.ownerColor">{{gameObject.ownerName ? gameObject.ownerName : '（이름없는 플레이어）'}}</div>
+  <div *ngIf="getGameObjects(selectTab).length < 1"><small><b>{{getTabTitle(selectTab)}}</b>인벤토리가 비어있습니다</small></div>
+  <div (contextmenu)="onContextMenu($event, $any(gameObject))" *ngFor="let gameObject of getGameObjects(selectTab); let i = index; trackBy: trackByGameObject" class="object-container"
+    (click)="selectGameObject(gameObject, $event)" (dblclick)="focusGameObject($any(gameObject), $event)"
+    [ngClass]="{'box': true, 'selected': (selectedIdentifier === gameObject.identifier), 'muluti-selected': checkSelected(gameObject), 'is-hide-in': $any(gameObject).isHideIn, 'is-inventory-no-indicate': !gameObject.isInventoryIndicate}" [@SlideInOut]="i">
+    <div *ngIf="$any(gameObject).isHideIn && $any(gameObject).ownerName != null" class="owner-tag" [style.background-color]="$any(gameObject).ownerColor">{{$any(gameObject).ownerName ? $any(gameObject).ownerName : '（이름 없는 플레이어）'}}</div>
     <ng-container *ngTemplateOutlet="gameObjectTags; context:{ gameObject: gameObject}"></ng-container>
   </div>
   <div *ngIf="selectTab === 'graveyard'" style="padding-top: 6px;">
@@ -32,7 +33,7 @@
       </select>
     </div>
     <div style="font-size: 12px; padding-top: 6px;"><b>표시항목: </b></div>
-    <input style="width: 100%; box-sizing: border-box;" [(ngModel)]="dataTag" placeholder="스페이스바로 구분하여 태그 이름, 슬래시로 줄바꿈 ex.「HP MP / メモ」" />
+    <input style="width: 100%; box-sizing: border-box;" [(ngModel)]="dataTag" placeholder="스페이스바로 구분하여 태그 이름, 슬래시로 줄바꿈 ex.「HP MP / 메모」" />
     <div style="padding-top: 6px;">
       <button class="tab-setting small-font" (click)="toggleEdit()"><i class="material-icons small-font">settings</i>완료</button>
     </div>
@@ -40,14 +41,15 @@
   <ng-container *ngIf="!isEdit">
     <table style="font-size: 0.8em;">
       <tr>
-        <th style=" vertical-align:middle;" nowrap>정렬순:</th>
-        <td style=" vertical-align:middle;" nowrap>
+        <th style="vertical-align:middle" nowrap>정렬순:</th>
+        <td style="vertical-align:middle" nowrap>
           <ng-container *ngIf="0 < sortTag.length"><span>{{sortTag}} ({{sortOrderName}})</span></ng-container>
           <ng-container *ngIf="sortTag.length < 1">-</ng-container>
         </td>
-        <td width="100%" nowrap>
+        <td style="vertical-align:middle" width="100%" nowrap>
           <button class="tab-setting small-font" (click)="toggleEdit()"><i class="material-icons small-font">settings</i>설정</button>
           <label *ngIf="selectTab === 'table'" style="float: right; font-size: smaller"><input type="checkbox" [(ngModel)]="indicateAll" /><b>전부 표시<sup class="self_only">*</sup></b></label>
+          <span style="float: right; margin: 2px"><small><kbd style="border-radius: 3px; border: 1px outset #ccc; padding: 1px; background-color: #eee">Ctrl</kbd>+클릭으로 복수 선택</small></span>
         </td>
       </tr>
     </table>
@@ -66,7 +68,7 @@
       <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="💭의 표시" [ngClass]="{'is-active': gameObject.isShowChatBubble}" (click)="gameObject.isShowChatBubble = !gameObject.isShowChatBubble">
         <i class="material-icons" style="font-size: 1em;">{{ gameObject.isShowChatBubble ? 'textsms' : 'speaker_notes_off'}}</i>
       </button>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 1px; width: 24px; height: 16px; margin-bottom: 1px" title="그림자의 표시" [ngClass]="{'is-active': gameObject.isDropShadow}" (click)="gameObject.isDropShadow = !gameObject.isDropShadow">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 1px; width: 24px; height: 16px; margin-bottom: 1px" title="그림자 표시" [ngClass]="{'is-active': gameObject.isDropShadow}" (click)="gameObject.isDropShadow = !gameObject.isDropShadow">
         <i *ngIf="gameObject.shadowImageFile && 0 < gameObject.shadowImageFile.url.length; else altShadow" class="face-icon"><img style="filter: brightness(0);" [ngStyle]="{'opacity': gameObject.isDropShadow ? 0.7 : 0.3}" [src]="gameObject.shadowImageFile.url | safe: 'resourceUrl'" alt=""></i>
         <ng-template #altShadow>
           <i class="material-icons" style="font-size: 1em;">{{ gameObject.isDropShadow ? 'star_half' : 'star_border'}}</i>
@@ -75,14 +77,14 @@
       <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="다른 캐릭터에 올린다" [ngClass]="{'is-active': !gameObject.isNotRide}" (click)="gameObject.isNotRide = !gameObject.isNotRide">
         <i class="material-icons" style="font-size: 1em;">{{ !gameObject.isNotRide ? 'directions_bike' : 'directions_run'}}</i>
       </button>
-      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="고도의 표시" [ngClass]="{'is-active': gameObject.isAltitudeIndicate}" (click)="gameObject.isAltitudeIndicate = !gameObject.isAltitudeIndicate">
+      <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="고도 표시" [ngClass]="{'is-active': gameObject.isAltitudeIndicate}" (click)="gameObject.isAltitudeIndicate = !gameObject.isAltitudeIndicate">
         <i class="material-icons rotate" style="font-size: 1em;">straighten</i><span style="display: inline-block; text-align: center; font-size: xx-small; color: gray; min-width: 2em;">{{ gameObject.altitude }}</span>
       </button>
       <button class="indicate" [disabled]="selectedIdentifier !== gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="테이블 인벤토리에 표시" [ngClass]="{'is-active': gameObject.isInventoryIndicate}" (click)="gameObject.isInventoryIndicate = !gameObject.isInventoryIndicate">
         <i class="material-icons" style="font-size: 1em;">all_inbox</i>
       </button>
       <button *ngIf="selectedIdentifier === gameObject.identifier" style="font-size: 0.8em; padding: 2px 5px;" title="메뉴" (click)="onContextMenu($event, gameObject)">
-        <i class="material-icons" style="font-size: 1em;">settings</i>
+        <i class="material-icons" style="font-size: 1em; pointer-events: none">settings</i>
       </button>
     </div>
     <div class="object-tags-box" [ngClass]="{'is-hide-in': gameObject.isHideIn}">
@@ -102,8 +104,8 @@
   </div>
 </ng-template>
 <ng-template #dataElmTag let-dataElm="dataElm" let-name="name">
-  <ng-container *ngIf="dataElm?.name === newLineString"><br></ng-container>
-  <div *ngIf="dataElm && dataElm.name !== newLineString" class="object-tag">
+  <ng-container *ngIf="dataElm === newLineDataElement"><br></ng-container>
+  <div *ngIf="dataElm && dataElm !== newLineDataElement" class="object-tag">
     <ng-container [ngSwitch]="dataElm.attributes['type']">
       <ng-container *ngSwitchCase="'simpleNumber'">
         <div class="tag-name"><span>{{dataElm.name}}</span></div>
@@ -149,7 +151,7 @@
         </div>
       </ng-container>
       <ng-container *ngSwitchCase="'url'">
-        <div class="tag-name"><a [attr.title]="dataElm.value" [ngClass]="{'outer-link': !stringUtil.sameOrigin(dataElm.value)}" target="_blank" [attr.href]="(stringUtil.validUrl(dataElm.value) ? dataElm.value : '') | safe: 'url'" [attr.disabled]="!stringUtil.validUrl(dataElm.value) ? '' : null"
+        <div class="tag-name"><span *ngIf="!stringUtil.validUrl(dataElm.value)" title="URL이 올바르지 않습니다">⚠️</span><a draggable="false" [attr.title]="dataElm.value" [ngClass]="{'outer-link': !stringUtil.sameOrigin(dataElm.value) && stringUtil.validUrl(dataElm.value), 'invalid': !stringUtil.validUrl(dataElm.value)}" target="_blank" [attr.href]="(stringUtil.validUrl(dataElm.value) ? dataElm.value : '') | safe: 'url'" [attr.disabled]="!stringUtil.validUrl(dataElm.value) ? '' : null"
           (click)="stringUtil.validUrl(dataElm.value) ? openUrl(dataElm.value, name, dataElm.name) : false"><span class="url-link">{{dataElm.name}}</span></a></div>
       </ng-container>
       <ng-container *ngSwitchCase="'colors'"></ng-container>

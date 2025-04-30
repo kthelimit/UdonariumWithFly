@@ -1,19 +1,4 @@
-<div class="header" style="position: sticky; top: 0px">
-  <div>
-    <b>미리듣기 음량<sup class="self-only">*</sup>：</b>
-    <i class="material-icons" style="font-size: 22px">{{ auditionVolume == 0 ? 'volume_off' : auditionVolume <= 0.5 ? 'volume_down' : 'volume_up' }}</i> 
-    <input [(ngModel)]="auditionVolume" type="range" title="{{percentAuditionVolume + '%'}}" min="0" max="1" step="0.01" style="width:53%" /> 
-    <span style="white-space: nowrap;"><input type="number" min="0" max="100" step="1" style="width: 3em" [(ngModel)]="percentAuditionVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span>
-  </div>
-  <div>
-    <b>재생음량<sup class="self-only">*</sup>：</b>
-    <i class="material-icons" style="font-size: 22px">{{ volume == 0 ? 'volume_off' : volume <= 0.5 ? 'volume_down' : 'volume_up' }}</i> 
-    <input [(ngModel)]="volume" type="range" min="0" title="{{percentVolume + '%'}}" max="1" step="0.01" style="width:53%" /> 
-    <span style="white-space: nowrap;"><input type="number" min="0" max="100" step="1" style="width: 3em" [(ngModel)]="percentVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span>
-  </div>
-</div>
-
-<div style="margin-bottom: 3px">
+<div style="margin-bottom: 2px; min-height: 4em">
   <div *ngFor="let audio of audios; last as last" class="box" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden" [ngClass]="{last: last}">
     <button *ngIf="audio !== auditionPlayer?.audio || auditionPlayer?.paused" (click)="play(audio)" [disabled]="!audio.isReady"><i class="material-icons">play_arrow</i>미리듣기<sup style="font-size: larger" class="self-only">*</sup></button>
     <button *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" (click)="stop()" [disabled]="!audio.isReady"><i class="material-icons">stop</i>미리듣기<sup style="font-size: larger" class="self-only">*</sup></button>
@@ -21,8 +6,8 @@
     <button *ngIf="audio === jukebox?.audio" (click)="stopBGM(audio)" [disabled]="!audio.isReady"><i class="material-icons">stop</i>ＢＧＭ</button>
     <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused && audio != jukebox?.audio" style="padding-left: 2px"><b>【미리듣기 중】</b></span>
     <ng-container *ngIf="audio === jukebox?.audio">
-      <span *ngIf="audio != auditionPlayer?.audio || (audio == auditionPlayer?.audio && auditionPlayer?.paused)" style="padding-left: 2px"><b>【ＢＧＭ】</b></span>
-      <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" style="padding-left: 2px"><b>【미리듣기/BGM】</b></span>
+      <span *ngIf="audio != auditionPlayer?.audio || (audio == auditionPlayer?.audio && auditionPlayer?.paused)" style="padding-left: 2px"><i class="material-icons" style="font-size: 16px; vertical-align: middle">volume_up</i></span>
+      <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused" style="padding-left: 2px"><i class="material-icons" style="font-size: 16px; vertical-align: middle">volume_up</i><b>【미리듣기 중】</b></span>
     </ng-container>
     <span style="font-size: smaller" style="padding-left: 2px" [style.font-weight]="audio === jukebox?.audio ? 'bolder': 'normal'">{{audio.name}}</span>
   </div>
@@ -30,17 +15,49 @@
 </div>
 
 <label>
-  <div class="drop-zone">
-    <div>
+  <span class="drop-zone">
+    <span>
       <i class="material-icons large-font">playlist_add</i>
-    </div>
-    <div>이곳에 음악을 끌어놓기</div>
-    <div class="small-font">또는 여기를 클릭해 선택</div>
+    </span>
+    <span>이곳에 음악을 끌어놓기/span>
+    <span class="small-font">또는 여기를 클릭해 선택</span>
     <input type="file" style="display: none;" (change)="handleFileSelect($event)" multiple accept="audio/*"/>
-    <div class="small-font">
-      <br>1파일당 10MB까지</div>
-  </div>
+    <span class="small-font">
+      <br>1파일당 10MB까지</span>
+  </span>
 </label>
-<div style="font-size: 12px; margin-top: 3px">※「미리듣기<sup class="self-only">*</sup>」는 자신의 스피커에서만 음악을 1회 재생합니다.</div>
-<div style="font-size: 12px;">※「BGM」은 방 내의 전원에게 하나의 음악을 반복재생합니다.</div>
-<div style="font-size: 12px;">※현재 버전의 세이브 데이터(zip)에는 음악파일이 포함되지 않습니다. (매회 업로드가 필요합니다.)</div>
+<div style="font-size: 12px; margin-top: 3px">※ <b>미리듣기<sup class="self-only">*</sup></b>、<b>SE 테스트<sup class="self-only">*</sup></b> 는 자신만 들을 수 있게 음악을 1회 재생합니다.</div>
+<div style="font-size: 12px">※ <b>BGM</b> 은 방 내의 전원에게 하나의 음악을 반복 재생합니다.</div>
+<div style="font-size: 12px; margin-bottom: 8px">※현재 버전의 세이브 데이터(zip)에는 음악 파일은 포함되지 않습니다. (매번 업로드가 필요합니다)</div>
+
+<div class="footer" style="position: sticky; bottom: 0px; padding: 2px 0px 0px 3px">
+  <div style="display: flex">
+    <div style="flex-basis: auto"><b style="white-space: nowrap">미리듣기 음량<sup class="self-only">*</sup>：</b></div>
+    <div style="flex-basis: auto"><button class="button-mute" (click)="isAuditionMute = !isAuditionMute" [title]="isAuditionMute ? '뮤트 해제' : '뮤트'"><i class="material-icons" style="font-size: 22px">{{ isAuditionMute ? 'volume_off' : auditionVolume == 0 ? 'volume_mute' : auditionVolume <= 0.5 ? 'volume_down' : 'volume_up' }}</i></button></div>
+    <div style="flex-basis: 100%; max-width: 250px"><input [(ngModel)]="auditionVolume" type="range" [title]="isAuditionMute ? '' : percentAuditionVolume + '%'" min="0" max="1" step="0.01" style="width: 100%" /></div>
+    <div style="flex-basis: auto; padding-right: 1em"><span style="white-space: nowrap; padding-left: 4px"><input type="number" min="0" max="100" step="1" style="width: 3.2em" [(ngModel)]="percentAuditionVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span></div>
+  </div>
+  <div style="display: flex">
+    <div style="flex-basis: auto"><b style="white-space: nowrap">재생 음량<sup class="self-only">*</sup>：</b></div>
+    <div style="flex-basis: auto"><button class="button-mute" (click)="isMute = !isMute" [title]="isMute ? '뮤트 해제' : '뮤트'"><i class="material-icons" style="font-size: 22px">{{ isMute ? 'volume_off' : volume == 0 ? 'volume_mute' : volume <= 0.5 ? 'volume_down' : 'volume_up' }}</i></button></div>
+    <div style="flex-basis: 100%; max-width: 250px"><input [(ngModel)]="volume" type="range" min="0" [title]="isMute ? '' : percentVolume + '%'" max="1" step="0.01" style="width: 100%" /></div>
+    <div style="flex-basis: auto; padding-right: 1em"><span style="white-space: nowrap; padding-left: 4px"><input type="number" min="0" max="100" step="1" style="width: 3.2em" [(ngModel)]="percentVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span></div>
+  </div>
+  <hr />
+  <div style="display: flex">
+    <div style="flex-basis: auto"><b style="white-space: nowrap">알림 음량<sup class="self-only">*</sup>：</b></div>
+    <div style="flex-basis: auto"><button class="button-mute" (click)="isNoticeMute = !isNoticeMute" [title]="isNoticeMute ? '뮤트 해제' : '뮤트'"><i class="material-icons" style="font-size: 22px">{{ isNoticeMute ? 'volume_off' : noticeVolume == 0 ? 'volume_mute' : noticeVolume <= 0.5 ? 'volume_down' : 'volume_up' }}</i></button></div>
+    <div style="flex-basis: 100%; max-width: 250px"><input [(ngModel)]="noticeVolume" (change)="noticeTest()" type="range" min="0" [title]="isNoticeMute ? '' : percentNoticeVolume + '%'" max="1" step="0.01" style="width: 100%" /></div>
+    <div style="flex-basis: auto; padding-right: 1em"><span style="white-space: nowrap; padding-left: 4px"><input (change)="noticeTest()" type="number" min="0" max="100" step="1" style="width: 3.2em" [(ngModel)]="percentNoticeVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span></div>
+  </div>
+  <div style="display: flex">
+    <div style="flex-basis: auto"><b style="white-space: nowrap">ＳＥ 음량<sup class="self-only">*</sup>：</b></div>
+    <div style="flex-basis: auto"><button class="button-mute" (click)="isSoundEffectMute = !isSoundEffectMute" [title]="isSoundEffectMute ? '뮤트 해제' : '뮤트'"><i class="material-icons" style="font-size: 22px">{{ isSoundEffectMute ? 'volume_off' : soundEffectVolume == 0 ? 'volume_mute' : soundEffectVolume <= 0.5 ? 'volume_down' : 'volume_up' }}</i></button></div>
+    <div style="flex-basis: 100%; max-width: 250px"><input [(ngModel)]="soundEffectVolume" type="range" min="0" [title]="isSoundEffectMute ? '' : percentSoundEffectVolume + '%'" max="1" step="0.01" style="width: 100%" /></div>
+    <div style="flex-basis: auto; padding-right: 1em"><span style="white-space: nowrap; padding-left: 4px"><input type="number" min="0" max="100" step="1" style="width: 3.2em" [(ngModel)]="percentSoundEffectVolume"><b style="font-size: smaller; padding-left: 3px;">%</b></span></div>
+  </div>
+  <div style="display: flex; justify-content: space-between; padding-bottom: 2px">
+    <div><small>※설정한 음량은 브라우저에 저장됩니다.</small></div>
+    <div><button style="font-size: xx-small; font-weight: bolder; margin-right: 2em; white-space: nowrap" (click)="soundTest($event)">ＳＥ 테스트<sup style="font-size: larger" class="self-only">*</sup></button></div>
+  </div>
+</div>

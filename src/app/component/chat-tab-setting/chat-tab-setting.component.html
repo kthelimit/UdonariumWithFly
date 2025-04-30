@@ -1,27 +1,27 @@
 <div class="flex-container">
   <div class="flex-item no-grow">
     <div>
-      <button (click)="create()" style="font-size: smaller; margin-bottom: 2px">채팅 탭 작성</button>
+      <button (click)="create()" style="margin: 0px 0px 2px 0px; font-size: smaller">채팅 탭을 만든다</button>
     </div>
-    <select style="width: 100%; max-width: 140px" size="10" (change)="onChangeSelectTab($event.target.value)" [ngModel]="selectedTab?.identifier">
-      <option *ngFor="let chatTab of chatTabs" value="{{chatTab.identifier}}" title="{{chatTab.name}}" [style.color]="chatTab.name == '' ? 'gray' : ''">{{chatTab.name == '' ? '(이름없는 탭)' : chatTab.name}}</option>
+    <select #select style="width: 100%; max-width: 140px" size="10" (change)="onChangeSelectTab(select.value)" [ngModel]="selectedTab?.identifier">
+      <option *ngFor="let chatTab of chatTabs" value="{{chatTab.identifier}}" title="{{chatTab.name}}" [style.color]="chatTab.name == '' ? 'gray' : ''">{{chatTab.name == '' ? '(이름 없는 탭)' : chatTab.name}}</option>
     </select>
   </div>
   <div class="flex-item">
     <ng-container *ngIf="!isEmpty && selectedTab">
-      <div><label><b style="font-size: smaller">탭 이름: </b>
-        <input style="width: 200px" [(ngModel)]="tabName" placeholder="Name" [attr.disabled]="!isEditable ? '' : null" /></label>
+      <div><b style="font-size: smaller">탭 이름: </b>
+        <input style="width: 200px" [(ngModel)]="tabName" placeholder="Name" [attr.disabled]="!isEditable ? '' : null" />
       </div>
       <div style="font-weight: bolder; font-size: smaller; padding-top: 3px">
-        <label>
+        <label [style.cursor]="isEditable ? 'pointer' : 'default'">
           <input type="checkbox" [(ngModel)]="isUseStandImage" checked="{{isUseStandImage ? 'checked' : ''}}" (change)="isUseStandImage = (isUseStandImage ? true : false)" [attr.disabled]="!isEditable ? '' : null" />
-          컷인,스탠딩 유효
+          <span style="text-shadow: #111 0 0 1px">💭</span>,컷인, 스탠드 유효
         </label>
       </div>
       <div style="font-weight: bolder; font-size: smaller; padding-top: 3px">
-        <label>
+        <label [style.cursor]="isEditable ? 'pointer' : 'default'">
           <input type="checkbox" [(ngModel)]="recieveOperationLogLevel" checked="{{recieveOperationLogLevel > 0 ? 'checked' : ''}}" (change)="recieveOperationLogLevel = (recieveOperationLogLevel > 0 ? 1 : 0)" [attr.disabled]="!isEditable ? '' : null" />
-          동작 로그를 송신한다
+          조작 로그를 수신한다
         </label>
       </div>
       <hr/>
@@ -48,5 +48,5 @@
   </div>
 </div>
 <ng-container *ngIf="isEmpty">
-  <div style="font-size: 12px;">※채팅 탭이 작성되어 있지 않습니다. 「채팅 탭 작성」을 눌러 채팅 탭을 작성할 수 있습니다.</div>
+  <div style="font-size: 12px;">※작성된 채팅 탭이 없습니다. 「채팅 탭을 만든다」을 눌러 채팅 탭을 작성할 수 있습니다.</div>
 </ng-container>

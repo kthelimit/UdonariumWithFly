@@ -22,6 +22,8 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { RangeArea } from '@udonarium/range';
+import { ChatMessageService } from 'service/chat-message.service';
 
 @Component({
   selector: 'game-character-sheet',
@@ -99,11 +101,12 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
     private panelService: PanelService,
     private modalService: ModalService,
     private pointerDeviceService: PointerDeviceService,
+    private chatMessageService: ChatMessageService
   ) { }
 
   ngOnInit() {
     EventSystem.register(this)
-      .on('DELETE_GAME_OBJECT', -1000, event => {
+      .on('DELETE_GAME_OBJECT', event => {
         if (this.tabletopObject && this.tabletopObject.identifier === event.data.identifier) {
           this.panelService.close();
         }
@@ -112,35 +115,42 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
         if (this.tabletopObject && this.tabletopObject.identifier === event.data.identifier) {
           switch (this.tabletopObject.aliasName) {
             case 'terrain':
-              this.panelService.title = `지형 설정 - ${this.tableTopObjectName}`;
+              this.panelService.title = `지형 설정 - ${this.tabletopObjectName}`;
               break;
             case 'card':
               const card = this.tabletopObject;
               if (card instanceof Card) { 
-                this.panelService.title = `카드 설정 - ${card.isFront ? this.tableTopObjectName : '카드(뒷면)'}`;
+                this.panelService.title = `카드 설정 - ${card.isFront ? this.tabletopObjectName : '카드(뒷면)'}`;
               } 
               break;
             case 'card-stack':
-              this.panelService.title = `카드 더미 설정 - ${this.tableTopObjectName}`;
+              this.panelService.title = `카드 더미 설정 - ${this.tabletopObjectName}`;
               break;
             case 'table-mask':
-              this.panelService.title = `맵마스크 설정 - ${this.tableTopObjectName}`;
+              this.panelService.title = `맵 마스크 설정 - ${this.tabletopObjectName}`;
               break;
             case 'text-note':
-              this.panelService.title = `공유메모 설정 - ${this.tableTopObjectName}`;
+              this.panelService.title = `공유 메모 설정 - ${this.tabletopObjectName}`;
               break;
             case 'dice-symbol':
-              this.panelService.title = `다이스심볼 설정 - ${this.tableTopObjectName}`;
+              this.panelService.title = `다이스 심볼 설정 - ${this.tabletopObjectName}`;
               break;
             case 'character':
-              this.panelService.title = `캐릭터시트 - ${this.tableTopObjectName}`;
+              this.panelService.title = `캐릭터 시트 - ${this.tabletopObjectName}`;
               break;
-          }  
+            case 'range':
+              this.panelService.title = `사정 · 범위 설정 - ${this.tabletopObjectName}`;
+              break;
+          }
         }
       });
   }
 
   ngAfterViewInit() {
+    queueMicrotask(() => {
+      const title = (this.tabletopObject instanceof Card && !this.tabletopObject.isFront) ? '카드 설정 - 카드(뒷면)' : this.panelService.title;
+      this.chatMessageService.sendOperationLog(`${title} 를 열었다`);
+    });
   }
 
   ngOnDestroy() {
@@ -177,6 +187,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
         (cloneObject as any).toTopmost();
       case 'table-mask':
         (cloneObject as any).isLock = false;
+        (cloneObject as any).isPreview = false;
         SoundEffect.play(PresetSound.cardPut);
         break;
       case 'text-note':
@@ -191,7 +202,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  get tableTopObjectName(): string {
+  get tabletopObjectName(): string {
     let element = this.tabletopObject.commonDataElement.getFirstElementByName('name') || this.tabletopObject.commonDataElement.getFirstElementByName('title');
     return element ? <string>element.value : '';
   }
@@ -203,6 +214,11 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
     return tabletopObject.imageFile;
   }
 
+  get descriptionType():string {
+    if (this.tabletopObject instanceof RangeArea && !this.tabletopObject.isApplyWidth) return 'range-not-width';
+    return this.tabletopObject.aliasName;
+  }
+
   async saveToXML() {
     if (!this.tabletopObject || this.isSaveing) return;
     this.isSaveing = true;
@@ -210,7 +226,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
 
     //let element = this.tabletopObject.commonDataElement.getFirstElementByName('name') || this.tabletopObject.commonDataElement.getFirstElementByName('title');
     //let objectName: string = element ? <string>element.value : '';
-    let objectName = this.tableTopObjectName;
+    const objectName = ((this.tabletopObject instanceof Card && !this.tabletopObject.isFront) ? '카드' : this.tabletopObjectName);
 
     await this.saveDataService.saveGameObjectAsync(this.tabletopObject, 'fly_xml_' + objectName, percent => {
       this.progresPercent = percent;
@@ -275,7 +291,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
         }
       }
     });
-    EventSystem.trigger('UPDATE_GAME_OBJECT', this.tabletopObject);
+    //EventSystem.trigger('UPDATE_GAME_OBJECT', this.tabletopObject);
   }
 
   openModalAddImage() {
@@ -359,7 +375,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
       if (this.tabletopObject.currntImageIndex >= elements.length - 1) this.tabletopObject.currntImageIndex =  elements.length - 2;
       if (this.tabletopObject.currntImageIndex < 0) this.tabletopObject.currntImageIndex = 0;
     }
-    EventSystem.trigger('UPDATE_GAME_OBJECT', this.tabletopObject);
+    //EventSystem.trigger('UPDATE_GAME_OBJECT', this.tabletopObject);
   }
 
   deleteIcon(index: number=0, imageIdentifier='') {
@@ -472,7 +488,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
     return card ? card.fontsize + 9 : 18;
   }
 
-  get cardText(): number {
+  get cardText(): string {
     let card = null;
     if (this.tabletopObject instanceof CardStack) {
       card = this.tabletopObject.topCard;
@@ -480,6 +496,18 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
       card = this.tabletopObject;
     }
     return card ? StringUtil.rubyToHtml(StringUtil.escapeHtml(card.text)) : '';
+  }
+
+  get cardTextShadowCss(): string {
+    const shadow = StringUtil.textShadowColor(this.cardColor);
+    return `${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px, 
+    ${shadow} 0px 0px 2px,
+    ${shadow} 0px 0px 2px,
+    ${shadow} 0px 0px 2px`;
   }
 
   get isVisible(): boolean {

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { ObjectSerializer } from '@udonarium/core/synchronize-object/object-serializer';
@@ -10,6 +10,7 @@ import { TableSelecter } from '@udonarium/table-selecter';
 import { ConfirmationComponent, ConfirmationType } from 'component/confirmation/confirmation.component';
 
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
+import { ChatMessageService } from 'service/chat-message.service';
 import { ImageService } from 'service/image.service';
 import { ModalService } from 'service/modal.service';
 import { PanelService } from 'service/panel.service';
@@ -20,7 +21,7 @@ import { SaveDataService } from 'service/save-data.service';
   templateUrl: './game-table-setting.component.html',
   styleUrls: ['./game-table-setting.component.css']
 })
-export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewInit {
+export class GameTableSettingComponent implements OnInit, OnDestroy {
   minSize: number = 1;
   maxSize: number = 100;
 
@@ -32,6 +33,9 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
 
   get tableDistanceviewImage(): ImageFile {
     return this.imageService.getEmptyOr(this.selectedTable ? this.selectedTable.backgroundImageIdentifier : null);
+  }
+  get tableDistanceviewImage2(): ImageFile {
+    return this.imageService.getEmptyOr(this.selectedTable ? this.selectedTable.backgroundImageIdentifier2 : null);
   }
 
   get tableName(): string { return this.selectedTable.name; }
@@ -49,6 +53,7 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
   get tableGridShow(): boolean { return this.tableSelecter.gridShow; }
   set tableGridShow(tableGridShow: boolean) {
     this.tableSelecter.gridShow = tableGridShow;
+    if (tableGridShow) this.tableSelecter.viewTable.gridClipRect = null;
     EventSystem.trigger('UPDATE_GAME_OBJECT', this.tableSelecter.toContext()); // 自分にだけイベントを発行してグリッド更新を誘発
   }
 
@@ -91,14 +96,15 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
     private modalService: ModalService,
     private saveDataService: SaveDataService,
     private imageService: ImageService,
-    private panelService: PanelService
+    private panelService: PanelService,
+    private chatMessageService: ChatMessageService
   ) { }
 
   ngOnInit() {
     Promise.resolve().then(() => { this.modalService.title = this.panelService.title = '테이블 설정' });
     this.selectedTable = this.tableSelecter.viewTable;
     EventSystem.register(this)
-      .on('DELETE_GAME_OBJECT', 1000, event => {
+      .on('DELETE_GAME_OBJECT', 2000, event => {
         if (!this.selectedTable || event.data.identifier !== this.selectedTable.identifier) return;
         let object = ObjectStore.instance.get(event.data.identifier);
         if (object !== null) {
@@ -106,8 +112,6 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
         }
       });
   }
-
-  ngAfterViewInit() { }
 
   ngOnDestroy() {
     EventSystem.unregister(this);
@@ -187,18 +191,29 @@ export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewIn
     });
   }
 
+  openDistanceViewImageModal2() {
+    if (this.isDeleted) return;
+    let currentImageIdentifires: string[] = [];
+    if (this.selectedTable && this.selectedTable.backgroundImageIdentifier2) currentImageIdentifires = [this.selectedTable.backgroundImageIdentifier2];
+    this.modalService.open<string>(FileSelecterComponent, { isAllowedEmpty: true, currentImageIdentifires: currentImageIdentifires }).then(value => {
+      if (!this.selectedTable || !value) return;
+      this.selectedTable.backgroundImageIdentifier2 = value;
+    });
+  }
+
   onShowHiddenImages($event: Event) {
     if (this.isShowHideImages) {
       this.isShowHideImages = false;
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '숨김설정의 이미지를 표시', 
-        text: '숨김설정의 이미지를 표시합니까？',
+        title: '숨김 설정의 이미지를 표시', 
+        text: '숨김 설정인 이미지를 표시합니까?',
         help: '스포일러 등에 주의해주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
+          this.chatMessageService.sendOperationLog('테이블 설정에서 숨김 설정인 이미지를 표시했다');
           this.isShowHideImages = true;
           (<HTMLInputElement>$event.target).checked = true;
           this.changeDetector.markForCheck();

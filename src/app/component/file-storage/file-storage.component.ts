@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 
 import { FileArchiver } from '@udonarium/core/file-storage/file-archiver';
-import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { ImageFile, ImageState } from '@udonarium/core/file-storage/image-file';
 import { ImageStorage } from '@udonarium/core/file-storage/image-storage';
 import { EventSystem, Network } from '@udonarium/core/system';
 
@@ -13,6 +13,8 @@ import { UUID } from '@udonarium/core/system/util/uuid';
 import { ConfirmationComponent, ConfirmationType } from 'component/confirmation/confirmation.component';
 import { ModalService } from 'service/modal.service';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
+import { AppComponent } from 'src/app/app.component';
+import { ChatMessageService } from 'service/chat-message.service';
 
 @Component({
   selector: 'file-storage',
@@ -110,7 +112,8 @@ export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private changeDetector: ChangeDetectorRef,
     private panelService: PanelService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private chatMessageService: ChatMessageService
   ) { }
   
   ngOnInit() {
@@ -258,12 +261,13 @@ export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '숨김 설정의 이미지를 표시', 
-        text: '숨김 설정의 이미지를 표시합니까?',
+        title: '숨김 설정인 이미지를 표시', 
+        text: '숨김 설정인 이미지를 표시합니까?',
         help: '스포일러 등에 주의해주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
+          this.chatMessageService.sendOperationLog('파일 리스트로부터 숨김 설정인 이미지를 표시했다');
           this.isShowHideImages = true;
           (<HTMLInputElement>$event.target).checked = true;
           this.changeDetector.markForCheck();
@@ -274,9 +278,9 @@ export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
 
   setectedImagesToHidden(toHidden: boolean) {
     this.modalService.open(ConfirmationComponent, {
-      title: toHidden ? '숨김으로 설정' : '숨김 설정을 삭제', 
-      text: `이미지${ toHidden ? '를 숨김으로 설정' : '의 숨김 설정을 삭제'}할까요?`,
-      help: toHidden ? '선택한 이미지를 숨김 설정으로 합니다. \n이것은 「의도치않게 스포일러를 접한다」같은 상황을 방지하기 위한 것으로 다른 사람으로부터 완전히 숨길 수 있는 것은 아닙니다.' : '선택한 이미지의 숨김 설정을 삭제합니다.',
+      title: toHidden ? '숨김으로 설정' : '숨김 설정을 해제', 
+      text: `이미지 ${ toHidden ? '를 숨김으로 설정' : '의 숨김 설정을 해제'}합니까?`,
+      help: toHidden ? '선택한 이미지를 숨김으로 설정합니다.\n이것은 「의도치않게 스포일러를 접한다」같은 상황을 방지하기 위한 것으로 다른 사람으로부터 완전히 숨길 수 있는 것은 아닙니다.' : '선택한 이미지의 숨김 설정을 해제합니다.',
       type: ConfirmationType.OK_CANCEL,
       materialIcon: toHidden ? 'visibility_off' : 'visibility',
       action: () => {
@@ -347,5 +351,14 @@ export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
   suggestWords(): string[] {
     const selectedWords = this.selectedImagesOwnWords(true);
     return Array.from(new Set(this.allImagesOwnWords.concat(this.deletedWords))).filter(word => word.indexOf('*') !== 0 && !selectedWords.includes(word));
+  }
+
+  chanageImageView(imageFile: ImageFile) {
+    if (imageFile.state === ImageState.COMPLETE) {
+      if (AppComponent.imageUrl) URL.revokeObjectURL(AppComponent.imageUrl);
+      AppComponent.imageUrl = URL.createObjectURL(imageFile.blob);
+    } else {
+      AppComponent.imageUrl = imageFile.url;
+    }
   }
 }

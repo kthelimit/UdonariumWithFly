@@ -1,14 +1,14 @@
 <div class="flex-container">
   <div class="flex-item no-grow">
     <div>
-      <button style="font-size: smaller; margin-bottom: 3px" (click)="add()">다이스봇 표 추가</button>
+      <button style="margin: 0px 0px 2px 0px; font-size: smaller" (click)="add()">다이스봇 표 추가</button>
     </div>
-    <select #diceRollTableSelecter style="width: 14em;" size="15" (change)="onChangeDiceRollTable($event.target.value)">
-      <option *ngFor="let diceRollTable of diceRollTables" value="{{ diceRollTable.identifier }}" title="{{diceRollTable.name}}" [style.color]="diceRollTable.name == '' ? 'gray' : ''">{{ diceRollTable.name == '' ? '(이름없는 다이스봇 표)' : diceRollTable.name }}</option>
+    <select #diceRollTableSelecter style="width: 14em;" size="15" (change)="onChangeDiceRollTable(diceRollTableSelecter.value)">
+      <option *ngFor="let diceRollTable of diceRollTables" value="{{ diceRollTable.identifier }}" title="{{diceRollTable.name}}" [style.color]="diceRollTable.name == '' ? 'gray' : ''">{{ diceRollTable.name == '' ? '(이름 없는 다이스봇 표)' : diceRollTable.name }}</option>
     </select>
   </div>
   <div class="flex-item">
-    <button style="float: right;" (click)="helpDiceRollTable()">?</button>
+    <button style="float: right; cursor: help" (click)="helpDiceRollTable()">?</button>
     <ng-container *ngIf="!isEmpty && selectedDiceRollTable">
       <div style="font-size: smaller;">
         <div style="margin-bottom: 3px;">

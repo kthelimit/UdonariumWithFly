@@ -1,9 +1,19 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  Input,
+  NgZone,
+  OnChanges,
+  OnDestroy,
+  ViewChild
+} from '@angular/core';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
-import { ObjectNode } from '@udonarium/core/synchronize-object/object-node';
-import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
+import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TextNote } from '@udonarium/text-note';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
@@ -11,10 +21,11 @@ import { OpenUrlComponent } from 'component/open-url/open-url.component';
 import { InputHandler } from 'directive/input-handler';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
-import { ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
 import { ModalService } from 'service/modal.service';
+import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
+import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
 
 @Component({
   selector: 'text-note',
@@ -22,7 +33,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
   styleUrls: ['./text-note.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
+export class TextNoteComponent implements OnChanges, OnDestroy {
   @ViewChild('textArea', { static: true }) textAreaElementRef: ElementRef;
 
   @Input() textNote: TextNote = null;
@@ -31,12 +42,28 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
   get title(): string { return this.textNote.title; }
   get text(): string { this.calcFitHeightIfNeeded(); return this.textNote.text; }
   set text(text: string) { this.calcFitHeightIfNeeded(); this.textNote.text = text; }
+
+  get color(): string { return this.textNote.color; }
+  set color(color: string) { this.textNote.color = color; }
+
+  get textShadowCss(): string {
+    const shadow = StringUtil.textShadowColor(this.color, '#f2f2f2', '#000000');
+    return `${shadow} 0px 0px 0.5px, 
+    ${shadow} 0px 0px 0.5px, 
+    ${shadow} 0px 0px 0.5px, 
+    ${shadow} 0px 0px 0.5px, 
+    ${shadow} 0px 0px 0.5px, 
+    ${shadow} 0px 0px 0.5px,
+    ${shadow} 0px 0px 0.5px,
+    ${shadow} 0px 0px 0.5px`;
+  }
+
   get fontSize(): number { this.calcFitHeightIfNeeded(); return this.textNote.fontSize; }
   get imageFile(): ImageFile { return this.textNote.imageFile; }
   get rotate(): number { return this.textNote.rotate; }
   set rotate(rotate: number) { this.textNote.rotate = rotate; }
-  get height(): number { return this.adjustMinBounds(this.textNote.height); }
-  get width(): number { return this.adjustMinBounds(this.textNote.width); }
+  get height(): number { return MathUtil.clampMin(this.textNote.height); }
+  get width(): number { return MathUtil.clampMin(this.textNote.width); }
 
   get altitude(): number { return this.textNote.altitude; }
   set altitude(altitude: number) { this.textNote.altitude = altitude; }
@@ -59,7 +86,18 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
   get isLocked(): boolean { return this.textNote.isLocked; }
   set isLocked(isLocked: boolean) { this.textNote.isLocked = isLocked; }
 
-  get isSelected(): boolean { return document.activeElement === this.textAreaElementRef.nativeElement; }
+  get isShowTitle(): boolean { return this.textNote.isShowTitle; }
+  set isShowTitle(isShowTitle: boolean) { this.textNote.isShowTitle = isShowTitle; }
+
+  get isWhiteOut(): boolean { return this.textNote.isWhiteOut; }
+  set isWhiteOut(isWhiteOut: boolean) { this.textNote.isWhiteOut = isWhiteOut; }
+
+  get isEditorSelected(): boolean { return document.activeElement === this.textAreaElementRef.nativeElement; }
+  get isActive(): boolean { return document.activeElement === this.textAreaElementRef.nativeElement; }
+
+  get selectionState(): SelectionState { return this.selectionService.state(this.textNote); }
+  get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
+  get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
 
   get rubiedText(): string {
     return StringUtil.rubyToHtml(StringUtil.escapeHtml(this.text));
@@ -70,36 +108,7 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
   gridSize: number = 50;
   math = Math;
 
-  private _transitionTimeout = null;
-  private _transition: boolean = false;
-  get transition(): boolean { return this._transition; }
-  set transition(transition: boolean) {
-    this._transition = transition;
-    if (this._transitionTimeout) clearTimeout(this._transitionTimeout);
-    if (transition) {
-      this._transitionTimeout = setTimeout(() => {
-        this._transition = false;
-      }, 132);
-    } else {
-      this._transitionTimeout = null;
-    }
-  }
-  private _fallTimeout = null;
-  private _fall: boolean = false;
-  get fall(): boolean { return this._fall; }
-  set fall(fall: boolean) {
-    this._fall = fall;
-    if (this._fallTimeout) clearTimeout(this._fallTimeout);
-    if (fall) {
-      this._fallTimeout = setTimeout(() => {
-        this._fall = false;
-      }, 132);
-    } else {
-      this._fallTimeout = null;
-    }
-  }
-
-  private calcFitHeightTimer: NodeJS.Timer = null;
+  private calcFitHeightTimer: NodeJS.Timeout = null;
 
   movableOption: MovableOption = {};
   rotableOption: RotableOption = {};
@@ -111,32 +120,41 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
     private panelService: PanelService,
     private changeDetector: ChangeDetectorRef,
     private pointerDeviceService: PointerDeviceService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private selectionService: TabletopSelectionService
   ) { }
 
   viewRotateZ = 10;
   private input: InputHandler = null;
   
-  ngOnInit() {
+  get isInverse(): boolean {
+    const rotate = Math.abs(this.viewRotateZ + this.rotate) % 360;
+    return 90 < rotate && rotate < 270
+  }
+
+  ngOnChanges(): void {
+    EventSystem.unregister(this);
     EventSystem.register(this)
-      .on('UPDATE_GAME_OBJECT', -1000, event => {
-        let object = ObjectStore.instance.get(event.data.identifier);
-        if (!this.textNote || !object) return;
-        if (this.textNote === object || (object instanceof ObjectNode && this.textNote.contains(object))) {
-          this.changeDetector.markForCheck();
-        }
+      .on(`UPDATE_GAME_OBJECT/identifier/${this.textNote?.identifier}`, event => {
+        this.changeDetector.markForCheck();
+      })
+      .on(`UPDATE_OBJECT_CHILDREN/identifier/${this.textNote?.identifier}`, event => {
+        this.changeDetector.markForCheck();
       })
       .on('SYNCHRONIZE_FILE_LIST', event => {
         this.changeDetector.markForCheck();
       })
-      .on('UPDATE_FILE_RESOURE', -1000, event => {
+      .on('UPDATE_FILE_RESOURE', event => {
         this.changeDetector.markForCheck();
       })
       .on<object>('TABLE_VIEW_ROTATE', -1000, event => {
         this.ngZone.run(() => {
           this.viewRotateZ = event.data['z'];
           this.changeDetector.markForCheck();
-        });
+        })
+      })
+      .on(`UPDATE_SELECTION/identifier/${this.textNote?.identifier}`, event => {
+        this.changeDetector.markForCheck();
       });
     this.movableOption = {
       tabletopObject: this.textNote,
@@ -147,7 +165,7 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
       tabletopObject: this.textNote
     };
   }
-
+  
   ngAfterViewInit() {
     this.ngZone.runOutsideAngular(() => {
       this.input = new InputHandler(this.elementRef.nativeElement);
@@ -156,18 +174,8 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
-    if (this._transitionTimeout) clearTimeout(this._transitionTimeout);
-    if (this._fallTimeout) clearTimeout(this._fallTimeout)
     EventSystem.unregister(this);
-  }
-
-  onInputStart(e: any) {
-    this.input.cancel();
-
-    // TODO:もっと良い方法考える
-    if (this.textNote.isLocked) {
-      EventSystem.trigger('DRAG_LOCKED_OBJECT', {});
-    }
+    this.input.destroy();
   }
 
   @HostListener('dragstart', ['$event'])
@@ -176,15 +184,24 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
     e.preventDefault();
   }
 
+  onInputStart(e: any) {
+    this.input.cancel();
+
+    // TODO:もっと良い方法考える
+    if (this.isLocked) {
+      EventSystem.trigger('DRAG_LOCKED_OBJECT', { srcEvent: e });
+    }
+  }
+
   @HostListener('mousedown', ['$event'])
   onMouseDown(e: any) {
-    if (this.isSelected) return;
+    if (this.isActive || this.isLocked) return;
     e.preventDefault();
     this.textNote.toTopmost();
 
     // TODO:もっと良い方法考える
     if (e.button === 2) {
-      EventSystem.trigger('DRAG_LOCKED_OBJECT', {});
+      EventSystem.trigger('DRAG_LOCKED_OBJECT', { srcEvent: e });
       return;
     }
 
@@ -209,57 +226,112 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostListener('contextmenu', ['$event'])
   onContextMenu(e: Event) {
     this.removeMouseEventListeners();
-    if (this.isSelected) return;
+    if (this.isActive) return;
     e.stopPropagation();
     e.preventDefault();
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return;
     let position = this.pointerDeviceService.pointers[0];
-    this.contextMenuService.open(position, [
+
+    let menuActions: ContextMenuAction[] = [];
+    menuActions = menuActions.concat(this.makeSelectionContextMenu());
+    menuActions = menuActions.concat(this.makeContextMenu());
+
+    this.contextMenuService.open(position, menuActions, this.title);
+  }
+
+  onMove() {
+    this.contextMenuService.close();
+    SoundEffect.play(PresetSound.cardPick);
+  }
+
+  onMoved() {
+    SoundEffect.play(PresetSound.cardPut);
+  }
+
+  private makeSelectionContextMenu(): ContextMenuAction[] {
+    if (this.selectionService.objects.length < 1) return [];
+
+    let actions: ContextMenuAction[] = [];
+
+    let objectPosition = { x: this.textNote.location.x, y: this.textNote.location.y, z: this.textNote.posZ };
+    actions.push({ name: '여기에 모은다', action: () => this.selectionService.congregate(objectPosition) });
+    actions.push(ContextMenuSeparator);
+
+    return actions;
+  }
+
+  private makeContextMenu(): ContextMenuAction[] {
+    let actions: ContextMenuAction[] = [
       (this.isLocked
         ? {
           name: '☑ 고정', action: () => {
             this.isLocked = false;
             SoundEffect.play(PresetSound.unlock);
-          }
+          },
+          checkBox: 'check'
         } : {
           name: '☐ 고정', action: () => {
             this.isLocked = true;
             SoundEffect.play(PresetSound.lock);
-          }
+          },
+          checkBox: 'check'
         }),
       ContextMenuSeparator,
       (this.isUpright
         ? {
-          name: '☑ 위치', action: () => {
-            this.transition = true;
+          name: '☑ 직립', action: () => {
+            //this.transition = true;
             this.isUpright = false;
-          }
+          },
+          checkBox: 'check'
         } : {
-          name: '☐ 위치', action: () => {
-            this.transition = true;
+          name: '☐ 직립', action: () => {
+            //this.transition = true;
             this.isUpright = true;
-          }
+          },
+          checkBox: 'check'
+        }),
+      (this.isShowTitle
+        ? {
+          name: '☑ 타이틀 바의 표시', action: () => {
+            this.isShowTitle = false;
+          },
+          checkBox: 'check'
+        } : {
+          name: '☐ 타이틀 바의 표시', action: () => {
+            this.isShowTitle = true;
+          },
+          checkBox: 'check'
+        }),
+      (this.isWhiteOut
+        ? {
+          name: '☑ 배경의 색 빼기', action: () => {
+            this.isWhiteOut = false;
+          },
+          checkBox: 'check'
+        } : {
+          name: '☐ 배경의 색 빼기', action: () => {
+            this.isWhiteOut = true;
+          },
+          checkBox: 'check'
         }),
       ContextMenuSeparator,
       (this.isAltitudeIndicate
         ? {
-          name: '☑ 고도의 표시', action: () => {
+          name: '☑ 고도 표시', action: () => {
             this.isAltitudeIndicate = false;
-          }
+          },
+          checkBox: 'check'
         } : {
-          name: '☐ 고도의 표시', action: () => {
+          name: '☐ 고도 표시', action: () => {
             this.isAltitudeIndicate = true;
-          }
+          },
+          checkBox: 'check'
         }),
       {
         name: '고도를 0으로 한다', action: () => {
           if (this.altitude != 0) {
-            if (this.isUpright) {
-              this.fall = true;
-            } else {
-              this.transition = true;
-            }
             this.altitude = 0;
             SoundEffect.play(PresetSound.sweep);
           }
@@ -267,9 +339,9 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
         altitudeHande: this.textNote
       },
       ContextMenuSeparator,
-      { name: '메모를 편집', action: () => { this.showDetail(this.textNote); } },
+      { name: '메모를 편집...', action: () => { this.showDetail(this.textNote); } },
       (this.textNote.getUrls().length <= 0 ? null : {
-        name: '참조URL을 연다', action: null,
+        name: '참조 URL을 연다', action: null,
         subActions: this.textNote.getUrls().map((urlElement) => {
           const url = urlElement.value.toString();
           return {
@@ -282,7 +354,7 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
               } 
             },
             disabled: !StringUtil.validUrl(url),
-            error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
+            error: !StringUtil.validUrl(url) ? 'URL이 올바르지 않습니다' : null,
             isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
           };
         })
@@ -292,7 +364,6 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
         name: '사본을 작성', action: () => {
           let cloneObject = this.textNote.clone();
           cloneObject.isLocked = false;
-          console.log('사본', cloneObject);
           cloneObject.location.x += this.gridSize;
           cloneObject.location.y += this.gridSize;
           cloneObject.toTopmost();
@@ -305,15 +376,9 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
           SoundEffect.play(PresetSound.sweep);
         }
       },
-    ], this.title);
-  }
+    ];
 
-  onMove() {
-    SoundEffect.play(PresetSound.cardPick);
-  }
-
-  onMoved() {
-    SoundEffect.play(PresetSound.cardPut);
+    return actions;
   }
 
   calcFitHeightIfNeeded() {
@@ -339,10 +404,6 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
     return (!this.isSelected && str.lastIndexOf("\n") == str.length - 1) ? str + "\n" : str;
   }
 
-  private adjustMinBounds(value: number, min: number = 0): number {
-    return value < min ? min : value;
-  }
-
   private addMouseEventListeners() {
     document.body.addEventListener('mouseup', this.callbackOnMouseUp, false);
   }
@@ -356,8 +417,12 @@ export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {
     let coordinate = this.pointerDeviceService.pointers[0];
     let title = '공유 메모 설정';
     if (gameObject.title.length) title += ' - ' + gameObject.title;
-    let option: PanelOption = { title: title, left: coordinate.x - 350, top: coordinate.y - 200, width: 700, height: 450 };
+    let option: PanelOption = { title: title, left: coordinate.x - 350, top: coordinate.y - 200, width: 560, height: 470 };
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
     component.tabletopObject = gameObject;
+  }
+
+  activate() {
+    if (!this.isLocked) this.textAreaElementRef.nativeElement.focus();
   }
 }
