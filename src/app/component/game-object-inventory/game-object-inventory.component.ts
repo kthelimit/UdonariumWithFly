@@ -1,4 +1,5 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { animate, keyframes, style, transition, trigger } from '@angular/animations';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 
 import { GameObject } from '@udonarium/core/synchronize-object/game-object';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
@@ -21,17 +22,53 @@ import { GameObjectInventoryService } from 'service/game-object-inventory.servic
 import { ModalService } from 'service/modal.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
+import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
 
 @Component({
   selector: 'game-object-inventory',
   templateUrl: './game-object-inventory.component.html',
   styleUrls: ['./game-object-inventory.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [
+    trigger('SlideInOut', [
+      transition('void => *', [
+        animate('200ms ease', keyframes([
+          style({ transform: 'translateX(60px)', opacity: 0, offset: 0 }),
+          style({ transform: 'translateX(0px)', opacity: 1, offset: 1.0 })
+        ]))
+      ]),
+      transition('* => void', [
+        animate('200ms ease', keyframes([
+          style({ transform: 'translateX(0px)', opacity: 1, offset: 0 }),
+          style({ transform: 'translateX(60px)', opacity: 0, offset: 1.0 })
+        ]))
+      ]),
+      /*
+      transition(':increment', [
+        animate('200ms ease', keyframes([
+          style({ transform: 'translateY(-150px)', opacity: 0, offset: 0 }),
+          style({ transform: 'translateY(0px)', opacity: 1, offset: 1.0 })
+        ]))
+      ]),
+      transition(':decrement', [
+        animate('200ms ease', keyframes([
+          style({ transform: 'translateY(150px)', opacity: 0, offset: 0 }),
+          style({ transform: 'translateY(0px)', opacity: 1, offset: 1.0 })
+        ]))
+      ]),
+      */
+    ])
+  ]
 })
 export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   inventoryTypes: string[] = ['table', 'common', 'graveyard'];
 
-  selectTab: string = 'table';
+  _selectTab: string = 'table';
+  get selectTab(): string { return this._selectTab; };
+  set selectTab(selectTab: string) {
+    this._selectTab = selectTab;
+    this.selectionService.clear();
+  };
   selectedIdentifier: string = '';
 
   isEdit: boolean = false;
@@ -52,9 +89,14 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
 
   get sortOrderName(): string { return this.sortOrder === SortOrder.ASC ? '오름차순' : '내림차순'; }
 
-  get newLineString(): string { return this.inventoryService.newLineString; }
+  //get newLineStrings(): string { return this.inventoryService.newLineStrings; }
 
   get isGMMode(): boolean{ return PeerCursor.myCursor ? PeerCursor.myCursor.isGMMode : false; }
+
+  selectionState(tabletopObject: TabletopObject): SelectionState { return this.selectionService.state(tabletopObject); }
+  checkSelected(tabletopObject: TabletopObject): boolean { return this.selectionState(tabletopObject) !== SelectionState.NONE; }
+  checkMagnetic(tabletopObject: TabletopObject): boolean { return this.selectionState(tabletopObject) === SelectionState.MAGNETIC; }
+  get newLineDataElement(): DataElement { return this.inventoryService.newLineDataElement; }
 
   constructor(
     private changeDetector: ChangeDetectorRef,
@@ -62,13 +104,14 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     private inventoryService: GameObjectInventoryService,
     private contextMenuService: ContextMenuService,
     private pointerDeviceService: PointerDeviceService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private selectionService: TabletopSelectionService
   ) { }
 
   ngOnInit() {
     Promise.resolve().then(() => this.panelService.title = '인벤토리');
     EventSystem.register(this)
-      .on('SELECT_TABLETOP_OBJECT', -1000, event => {
+      .on('SELECT_TABLETOP_OBJECT', event => {
         if (ObjectStore.instance.get(event.data.identifier) instanceof TabletopObject) {
           this.selectedIdentifier = event.data.identifier;
           this.changeDetector.markForCheck();
@@ -128,18 +171,98 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     return this.getInventory(gameObject.location.name).dataElementMap.get(gameObject.identifier);
   }
 
-  onContextMenu(e: Event, gameObject: GameCharacter) {
+  onContextMenu(event: Event, gameObject: GameCharacter) {
     if (document.activeElement instanceof HTMLInputElement && document.activeElement.getAttribute('type') !== 'range') return;
-    e.stopPropagation();
-    e.preventDefault();
+    event.stopPropagation();
+    event.preventDefault();
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return;
 
     this.selectGameObject(gameObject);
 
-    let position = this.pointerDeviceService.pointers[0];
-    
+    const target = <HTMLElement>event.target;
+    let position;
+    if (target && target.tagName === 'BUTTON') {
+      const clientRect = target.getBoundingClientRect();
+      position = {
+        x: window.pageXOffset + clientRect.left + target.clientWidth,
+        y: window.pageYOffset + clientRect.top
+      };
+    } else {
+      position = this.pointerDeviceService.pointers[0];
+    }
+
     let actions: ContextMenuAction[] = [];
+    if (this.checkSelected(gameObject)) {
+      let selectedCharacter = () => this.selectionService.objects.filter(object => object.aliasName === gameObject.aliasName) as GameCharacter[];
+      let subActions: ContextMenuAction[] = [];
+      if (this.selectTab != 'table') {
+        subActions.push({
+          name: '전부 테이블로 이동', action: () => {
+            selectedCharacter().forEach(gameCharacter => {
+              EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: gameCharacter.identifier });
+              let isStealthMode = GameCharacter.isStealthMode;
+              gameCharacter.setLocation('table');
+              this.selectionService.remove(gameCharacter);
+              if (gameCharacter.isHideIn && gameCharacter.isVisible && !isStealthMode && !PeerCursor.myCursor.isGMMode) {
+                this.modalService.open(ConfirmationComponent, {
+                  title: '스텔스 모드',
+                  text: '스텔스 모드가 됩니다.',
+                  help: '위치를 당신 혼자서만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
+                  type: ConfirmationType.OK,
+                  materialIcon: 'disabled_visible'
+                });
+              }
+            });
+            SoundEffect.play(PresetSound.piecePut);
+            EventSystem.call('UPDATE_INVENTORY', true);
+          }
+        });
+      }
+      if (this.selectTab != 'common') {
+        subActions.push({
+          name: '전부 공유 인벤토리로 이동', action: () => {
+            selectedCharacter().forEach(gameCharacter => {
+              gameCharacter.setLocation('common');
+              this.selectionService.remove(gameCharacter);
+            });
+            SoundEffect.play(PresetSound.piecePut);
+            EventSystem.call('UPDATE_INVENTORY', true);
+          }
+        });
+      }
+      if (this.selectTab === 'table' || this.selectTab === 'common' || this.selectTab === 'graveyard') {
+        subActions.push({
+          name: '전부 개인 인벤토리로 이동', action: () => {
+            selectedCharacter().forEach(gameCharacter => {
+              gameCharacter.setLocation(Network.peerId);
+              this.selectionService.remove(gameCharacter);
+            });
+            SoundEffect.play(PresetSound.piecePut);
+            EventSystem.call('UPDATE_INVENTORY', true);
+          }
+        });
+      }
+      if (this.selectTab != 'graveyard') {
+        subActions.push({
+          name: '전부 묘지로 이동', action: () => {
+            selectedCharacter().forEach(gameCharacter => {
+              gameCharacter.setLocation('graveyard');
+              this.selectionService.remove(gameCharacter);
+            });
+            SoundEffect.play(PresetSound.sweep);
+            EventSystem.call('UPDATE_INVENTORY', true);
+          }
+        });
+      }
+      actions.push({
+        name: '선택한 캐릭터',
+        action: null,
+        subActions: subActions
+      });
+      actions.push(ContextMenuSeparator);
+    }
+
     if (gameObject.location.name === 'table' && (this.isGMMode || gameObject.isVisible)) {
       actions.push({
         name: '테이블 위에서 찾는다',
@@ -151,8 +274,31 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
         selfOnly: true
       });
     }
+    if (gameObject.location.name != 'table' && (this.isGMMode || gameObject.isVisible)) {
+      actions.push({
+        name: '테이블에 이동',
+        action: () => {
+          let isStealthMode = GameCharacter.isStealthMode;
+          EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: gameObject.identifier });
+          gameObject.setLocation('table');
+          this.selectionService.remove(gameObject);
+          if (gameObject.isHideIn && gameObject.isVisible && !isStealthMode && !PeerCursor.myCursor.isGMMode) {
+            this.modalService.open(ConfirmationComponent, {
+              title: '스텔스 모드', 
+              text: '스텔스 모드가 됩니다',
+              help: '위치를 당신 혼자서만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
+              type: ConfirmationType.OK,
+              materialIcon: 'disabled_visible'
+            });
+          }
+          SoundEffect.play(PresetSound.piecePut);
+          EventSystem.call('UPDATE_INVENTORY', true);
+        }
+      });
+    }
+
     if (gameObject.isHideIn) {
-      actions.push({ 
+      actions.push({
         name: '위치를 공개한다',
         action: () => {
           gameObject.owner = '';
@@ -162,19 +308,19 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
       });
     }
     if (!gameObject.isHideIn || !gameObject.isVisible) {
-      actions.push({ 
-        name: '위치를 자신만 본다(스텔스)',
+      actions.push({
+        name: '위치를 혼자만 본다(스텔스)',
         action: () => {
           if (gameObject.location.name === 'table' && !GameCharacter.isStealthMode && !PeerCursor.myCursor.isGMMode) {
             this.modalService.open(ConfirmationComponent, {
-              title: '스텔스모드', 
-              text: '스텔스모드가 됩니다.',
-              help: '위치를 자신만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
+              title: '스텔스 모드', 
+              text: '스텔스 모드가 됩니다',
+              help: '위치를 당신 혼자서만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
               type: ConfirmationType.OK,
               materialIcon: 'disabled_visible'
             });
           }
-          gameObject.owner = Network.peerContext.userId;
+          gameObject.owner = Network.peer.userId;
           SoundEffect.play(PresetSound.sweep);
           EventSystem.call('UPDATE_INVENTORY', true);
         }
@@ -186,15 +332,16 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
         name: '이미지 변경',
         action: null,
         subActions: gameObject.imageFiles.map((image, i) => {
-          return { 
-            name: `${gameObject.currntImageIndex == i ? '◉' : '○'}`, 
-            action: () => { 
+          return {
+            name: `${gameObject.currntImageIndex == i ? '◉' : '○'}`,
+            action: () => {
               gameObject.currntImageIndex = i;
               SoundEffect.play(PresetSound.surprise);
               EventSystem.trigger('UPDATE_INVENTORY', null);
-            }, 
+            },
             default: gameObject.currntImageIndex == i,
-            icon: image
+            icon: image,
+            checkBox: 'radio'
           };
         }),
       });
@@ -205,79 +352,91 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
         name: '☑ 오버뷰에 얼굴 아이콘을 사용', action: () => {
           gameObject.isUseIconToOverviewImage = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       } : {
         name: '☐ 오버뷰에 얼굴 아이콘을 사용', action: () => {
           gameObject.isUseIconToOverviewImage = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       }));
     actions.push((gameObject.isShowChatBubble
       ? {
         name: '☑ 💭의 표시', action: () => {
           gameObject.isShowChatBubble = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       } : {
         name: '☐ 💭의 표시', action: () => {
           gameObject.isShowChatBubble = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       }));
     actions.push(
       (gameObject.isDropShadow
       ? {
-        name: '☑ 그림자의 표시', action: () => {
+        name: '☑ 그림자 표시', action: () => {
           gameObject.isDropShadow = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       } : {
-        name: '☐ 그림자의 표시', action: () => {
+        name: '☐ 그림자 표시', action: () => {
           gameObject.isDropShadow = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       })
     );
-    actions.push({ name: '이미지 효과', action: null,  
+    actions.push({ name: '이미지 효과', action: null,
       subActions: [
       (gameObject.isInverse
         ? {
           name: '☑ 반전', action: () => {
             gameObject.isInverse = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
-          }
+          },
+          checkBox: 'check'
         } : {
           name: '☐ 반전', action: () => {
             gameObject.isInverse = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
-          }
+          },
+          checkBox: 'check'
         }),
       (gameObject.isHollow
         ? {
           name: '☑ 흐리게', action: () => {
             gameObject.isHollow = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
-          }
+          },
+          checkBox: 'check'
         } : {
           name: '☐ 흐리게', action: () => {
             gameObject.isHollow = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
-          }
+          },
+          checkBox: 'check'
         }),
       (gameObject.isBlackPaint
         ? {
           name: '☑ 검은칠', action: () => {
             gameObject.isBlackPaint = false;
             EventSystem.trigger('UPDATE_INVENTORY', null);
-          }
+          },
+          checkBox: 'check'
         } : {
           name: '☐ 검은칠', action: () => {
             gameObject.isBlackPaint = true;
             EventSystem.trigger('UPDATE_INVENTORY', null);
-          }
+          },
+          checkBox: 'check'
         }),
-        { name: '오오라', action: null, subActions: [ { name: `${gameObject.aura == -1 ? '◉' : '○'} 없음`, action: () => { gameObject.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) } }, ContextMenuSeparator].concat(['블랙', '블루', '그린', '시안', '레드', '마젠타', '옐로', '화이트'].map((color, i) => {  
-          return { name: `${gameObject.aura == i ? '◉' : '○'} ${color}`, action: () => { gameObject.aura = i; EventSystem.trigger('UPDATE_INVENTORY', null) } };
+        { name: '오오라', action: null, subActions: [ { name: `${gameObject.aura == -1 ? '◉' : '○'} 없음`, action: () => { gameObject.aura = -1; EventSystem.trigger('UPDATE_INVENTORY', null) }, checkBox: 'radio' }, ContextMenuSeparator].concat(['블랙', '블루', '그린', '시안', '레드', '마젠타', '옐로', '화이트'].map((color, i) => {
+          return { name: `${gameObject.aura == i ? '◉' : '○'} ${color}`, action: () => { gameObject.aura = i; EventSystem.trigger('UPDATE_INVENTORY', null) }, colorSample: true, checkBox: 'radio' };
         })) },
         ContextMenuSeparator,
         {
@@ -298,25 +457,29 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
         name: '☑ 다른 캐릭터에 올린다', action: () => {
           gameObject.isNotRide = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       } : {
         name: '☐ 다른 캐릭터에 올린다', action: () => {
           gameObject.isNotRide = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       }));
     actions.push(
       (gameObject.isAltitudeIndicate
       ? {
-        name: '☑ 고도의 표시', action: () => {
+        name: '☑ 고도 표시', action: () => {
           gameObject.isAltitudeIndicate = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       } : {
-        name: '☐ 고도의 표시', action: () => {
+        name: '☐ 고도 표시', action: () => {
           gameObject.isAltitudeIndicate = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       })
     );
     actions.push(
@@ -330,14 +493,14 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
       altitudeHande: gameObject
     });
     actions.push(ContextMenuSeparator);
-    actions.push({ name: '상세를 표시', action: () => { this.showDetail(gameObject); } });
+    actions.push({ name: '상세를 표시...', action: () => { this.showDetail(gameObject); } });
     //if (gameObject.location.name !== 'graveyard') {
-      actions.push({ name: '채팅 팔레트를 표시', action: () => { this.showChatPalette(gameObject) }, disabled: gameObject.location.name === 'graveyard' });
+      actions.push({ name: '채팅 팔레트를 표시...', action: () => { this.showChatPalette(gameObject) }, disabled: gameObject.location.name === 'graveyard' });
     //}
-    actions.push({ name: '스탠딩 설정', action: () => { this.showStandSetting(gameObject) } });
+    actions.push({ name: '스탠드 설정...', action: () => { this.showStandSetting(gameObject) } });
     actions.push(ContextMenuSeparator);
     actions.push({
-      name: '참조URL을 연다', action: null,
+      name: '참조 URL을 연다', action: null,
       subActions: gameObject.getUrls().map((urlElement) => {
         const url = urlElement.value.toString();
         return {
@@ -347,10 +510,10 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
               window.open(url.trim(), '_blank', 'noopener');
             } else {
               this.modalService.open(OpenUrlComponent, { url: url, title: gameObject.name, subTitle: urlElement.name });
-            } 
+            }
           },
           disabled: !StringUtil.validUrl(url),
-          error: !StringUtil.validUrl(url) ? 'URL이 정확하지 않습니다' : null,
+          error: !StringUtil.validUrl(url) ? 'URL이 올바르지 않습니다' : null,
           isOuterLink: StringUtil.validUrl(url) && !StringUtil.sameOrigin(url)
         };
       }),
@@ -362,12 +525,14 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
         name: '☑ 테이블 인벤토리에 표시', action: () => {
           gameObject.isInventoryIndicate = false;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       } : {
         name: '☐ 테이블 인벤토리에 표시', action: () => {
           gameObject.isInventoryIndicate = true;
           EventSystem.trigger('UPDATE_INVENTORY', null);
-        }
+        },
+        checkBox: 'check'
       });
     let locations = [
       { name: 'table', alias: '테이블' },
@@ -380,18 +545,19 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
       action: null,
       subActions: locations
         .filter((location, i) => { return !(gameObject.location.name == location.name || (i == 1 && !locations.map(loc => loc.name).includes(gameObject.location.name))) })
-        .map((location) => { 
+        .map((location) => {
           return {
-            name: `${location.alias}`, 
+            name: `${location.alias}`,
             action: () => {
               let isStealthMode = GameCharacter.isStealthMode;
               EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: gameObject.identifier });
               gameObject.setLocation(location.name);
+              this.selectionService.remove(gameObject);
               if (location.name === 'table' && gameObject.isHideIn && gameObject.isVisible && !isStealthMode && !PeerCursor.myCursor.isGMMode) {
                 this.modalService.open(ConfirmationComponent, {
-                  title: '스텔스모드', 
-                  text: '스텔스모드가 됩니다.',
-                  help: '위치를 자신만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
+                  title: '스텔스 모드', 
+                  text: '스텔스 모드가 됩니다',
+                  help: '위치를 당신 혼자서만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
                   type: ConfirmationType.OK,
                   materialIcon: 'disabled_visible'
                 });
@@ -403,7 +569,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
               }
               EventSystem.call('UPDATE_INVENTORY', true);
             }
-          } 
+          }
         }),
       disabled: !gameObject.isVisible && !this.isGMMode
     });
@@ -451,7 +617,8 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     if (gameObject.location.name === 'graveyard') {
       actions.push(ContextMenuSeparator);
       actions.push({
-        name: '삭제(완전삭제)', action: () => {
+        name: '삭제(완전 삭제)', action: () => {
+          this.selectionService.remove(gameObject);
           this.deleteGameObject(gameObject);
           SoundEffect.play(PresetSound.sweep);
         }
@@ -461,6 +628,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
       actions.push({
         name: '삭제(묘지로 이동)', action: () => {
           EventSystem.call('FAREWELL_STAND_IMAGE', { characterIdentifier: gameObject.identifier });
+          this.selectionService.remove(gameObject);
           gameObject.setLocation('graveyard');
           SoundEffect.play(PresetSound.sweep);
         }
@@ -477,9 +645,9 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     let tabTitle = this.getTabTitle(this.selectTab);
     let gameObjects = this.getGameObjects(this.selectTab);
     this.modalService.open(ConfirmationComponent, {
-      title: '묘지를 비운다', 
+      title: '묘지를 비운다',
       text: '캐릭터를 완전히 삭제합니까?',
-      helpHtml: `<b>${ StringUtil.escapeHtml(tabTitle) }</b>に存在する <b>${ gameObjects.length }</b> 체의 캐릭터를 완전히 삭제합니다.`,
+      helpHtml: `<b>${ StringUtil.escapeHtml(tabTitle) }</b>에 존재하는 <b>${ gameObjects.length }</b> 체의 캐릭터를 완전히 삭제합니다.`,
       type: ConfirmationType.OK_CANCEL,
       materialIcon: 'delete_forever',
       action: () => {
@@ -512,15 +680,30 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     component.character = gameObject;
   }
 
-  selectGameObject(gameObject: GameObject) {
-    EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName, highlighting: true });
+  selectGameObject(gameObject: GameObject, e: Event=null) {
+    if (!(gameObject instanceof TabletopObject)) return;
+    if (e && e instanceof MouseEvent && e.ctrlKey) {
+      SoundEffect.playLocal(PresetSound.selectionStart);
+      if (this.checkSelected(gameObject)) {
+        this.selectionService.remove(gameObject);
+      } else {
+        EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName, highlighting: true });
+        this.selectionService.add(gameObject);
+      }
+    } else {
+      EventSystem.trigger('SELECT_TABLETOP_OBJECT', { identifier: gameObject.identifier, className: gameObject.aliasName, highlighting: true });
+      if (!this.checkSelected(gameObject)) {
+        this.selectionService.clear();
+      }
+    }
   }
 
-  focusGameObject(gameObject: GameCharacter, e: Event, ) {
+  focusGameObject(gameObject: GameCharacter, e: Event) {
     if (!(e.target instanceof HTMLElement)) return;
     if (new Set(['input', 'button']).has(e.target.tagName.toLowerCase())) return;
+    if (e instanceof MouseEvent && e.ctrlKey) return;
     if (gameObject.location.name !== 'table' || (!gameObject.isVisible && !this.isGMMode)) return;
-    EventSystem.trigger('FOCUS_TABLETOP_OBJECT', { x: gameObject.location.x, y: gameObject.location.y, z: gameObject.posZ + (gameObject.altitude > 0 ? gameObject.altitude * 50 : 0) });
+    EventSystem.trigger('FOCUS_TABLETOP_OBJECT', { x: gameObject.location.x + gameObject.size * 50 / 2, y: gameObject.location.y + gameObject.size * 50 / 2, z: gameObject.posZ + (gameObject.altitude > 0 ? gameObject.altitude * 50 : 0) });
   }
 
   private deleteGameObject(gameObject: GameObject) {
@@ -534,7 +717,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     let component = this.panelService.open<StandSettingComponent>(StandSettingComponent, option);
     component.character = gameObject;
   }
-  
+
   trackByGameObject(index: number, gameObject: GameObject) {
     return gameObject ? gameObject.identifier : index;
   }

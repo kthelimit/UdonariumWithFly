@@ -1,19 +1,24 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
-import { PeerContext } from '@udonarium/core/system/network/peer-context';
 import { EventSystem, Network } from '@udonarium/core/system';
+import { PeerContext } from '@udonarium/core/system/network/peer-context';
+import { PeerSessionGrade } from '@udonarium/core/system/network/peer-session-state';
 import { PeerCursor } from '@udonarium/peer-cursor';
 
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
 import { LobbyComponent } from 'component/lobby/lobby.component';
-import { AppConfigService } from 'service/app-config.service';
+import { AppConfig, AppConfigService } from 'service/app-config.service';
 import { ModalService } from 'service/modal.service';
 import { PanelService } from 'service/panel.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ChatMessageService } from 'service/chat-message.service';
 import { ConfirmationComponent, ConfirmationType } from 'component/confirmation/confirmation.component';
 import { GameCharacter } from '@udonarium/game-character';
+import { ImageFile, ImageState } from '@udonarium/core/file-storage/image-file';
+import { ImageStorage } from '@udonarium/core/file-storage/image-storage';
+
+import * as localForage from 'localforage';
 
 @Component({
   selector: 'peer-menu',
@@ -37,11 +42,16 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
   isRoomNameCopied = false;
   isPasswordCopied = false;
   isPasswordOpen = false;
+  isRoomInfoCopied = false
 
-  private _timeOutId;
-  private _timeOutId2;
-  private _timeOutId3;
+  help: string = '';
 
+  private _timeOutId: NodeJS.Timeout;
+  private _timeOutId2: NodeJS.Timeout;
+  private _timeOutId3: NodeJS.Timeout;
+  private _timeOutId4: NodeJS.Timeout;
+
+  private interval: NodeJS.Timeout;
   get myPeer(): PeerCursor { return PeerCursor.myCursor; }
 
   get myPeerName(): string {
@@ -49,10 +59,14 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     return PeerCursor.myCursor.name;
   }
   set myPeerName(name: string) {
-    if (window.localStorage) {
-      localStorage.setItem(PeerCursor.CHAT_MY_NAME_LOCAL_STORAGE_KEY, name);
+    if (PeerCursor.myCursor) {
+      PeerCursor.myCursor.name = name;
+      if (PeerCursor.myCursor.name === PeerCursor.CHAT_DEFAULT_NAME) {
+        localForage.removeItem(PeerCursor.CHAT_MY_NAME_LOCAL_STORAGE_KEY).catch(e => console.log(e));
+      } else {
+        localForage.setItem(PeerCursor.CHAT_MY_NAME_LOCAL_STORAGE_KEY, PeerCursor.myCursor.name).catch(e => console.log(e));
+      }
     }
-    if (PeerCursor.myCursor) PeerCursor.myCursor.name = name;
   }
 
   get myPeerColor(): string {
@@ -60,11 +74,15 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     return PeerCursor.myCursor.color;
   }
   set myPeerColor(color: string) {
-    if (PeerCursor.myCursor) {
+    if (color && PeerCursor.myCursor) {
+      color = color.trim().toLowerCase();
+      if (!/^\#[0-9a-f]{6}$/.test(color)) return; 
       PeerCursor.myCursor.color = (color == PeerCursor.CHAT_TRANSPARENT_COLOR) ? PeerCursor.CHAT_DEFAULT_COLOR : color;
-    }
-    if (window.localStorage) {
-      localStorage.setItem(PeerCursor.CHAT_MY_COLOR_LOCAL_STORAGE_KEY, PeerCursor.myCursor.color);
+      if (PeerCursor.myCursor.color === PeerCursor.CHAT_DEFAULT_COLOR) {
+        localForage.removeItem(PeerCursor.CHAT_MY_COLOR_LOCAL_STORAGE_KEY).catch(e => console.log(e));
+      } else {
+        localForage.setItem(PeerCursor.CHAT_MY_COLOR_LOCAL_STORAGE_KEY, PeerCursor.myCursor.color).catch(e => console.log(e));
+      }
     }
   }
 
@@ -74,9 +92,12 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
   get isGMHold(): boolean { return PeerCursor.isGMHold; }
   get isDisableConnect(): boolean { return this.isGMHold || this.isGMMode; }
 
-  get maskedPassword(): string { return '*'.repeat(this.networkService.peerContext.password.length) }
+  get maskedPassword(): string { return '●●●●●●●●' }
+  get config(): AppConfig { return AppConfigService.appConfig; }
+  get canUsePrivateSession(): boolean { return this.config.backend.mode == 'skyway'; }
 
   constructor(
+    private ngZone: NgZone,
     private modalService: ModalService,
     private panelService: PanelService,
     private chatMessageService: ChatMessageService,
@@ -84,14 +105,24 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => { this.panelService.title = '정보'; this.panelService.isAbleFullScreenButton = false });
+    Promise.resolve().then(() => { this.panelService.title = '접속 정보'; this.panelService.isAbleFullScreenButton = false });
+  }
+
+  ngAfterViewInit() {
+    EventSystem.register(this)
+      .on('OPEN_NETWORK', event => {
+        this.ngZone.run(() => { });
+      });
+    this.interval = setInterval(() => { }, 1000);
   }
 
   ngOnDestroy() {
     clearTimeout(this._timeOutId);
     clearTimeout(this._timeOutId2);
     clearTimeout(this._timeOutId3);
+    clearTimeout(this._timeOutId4);
     EventSystem.unregister(this);
+    clearInterval(this.interval);
   }
 
   changeIcon() {
@@ -100,6 +131,16 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     this.modalService.open<string>(FileSelecterComponent, { currentImageIdentifires: currentImageIdentifires }).then(value => {
       if (!this.myPeer || !value) return;
       this.myPeer.imageIdentifier = value;
+      let file: ImageFile = ImageStorage.instance.get(value);
+      if (file) {
+        if (file.state === ImageState.COMPLETE) {
+          localForage.setItem(PeerCursor.CHAT_MY_ICON_LOCAL_STORAGE_KEY, file.blob).catch(e => console.log(e));
+        } else if (value === 'none_icon') {
+          localForage.removeItem(PeerCursor.CHAT_MY_ICON_LOCAL_STORAGE_KEY).catch(e => console.log(e));
+        } else {
+          localForage.setItem(PeerCursor.CHAT_MY_ICON_LOCAL_STORAGE_KEY, value).catch(e => console.log(e));
+        }
+      }
     });
   }
 
@@ -107,11 +148,11 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     let targetUserId = this.targetUserId;
     this.targetUserId = '';
     if (targetUserId.length < 1) return;
-
-    let context = PeerContext.create(targetUserId);
-    if (context.isRoom) return;
+    this.help = '';
+    let peer = PeerContext.create(targetUserId);
+    if (peer.isRoom) return;
     ObjectStore.instance.clearDeleteHistory();
-    Network.connect(context.peerId);
+    Network.connect(peer);
     if (PeerCursor.isGMHold || this.isGMMode) {
       PeerCursor.isGMHold = false;
       this.isGMMode = false;
@@ -132,6 +173,10 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
       }
     }
     this.modalService.open(LobbyComponent, { width: 700, height: 400, left: 0, top: 400 });
+  }
+
+  stringFromSessionGrade(grade: PeerSessionGrade): string {
+    return PeerSessionGrade[grade] ?? PeerSessionGrade[PeerSessionGrade.UNSPECIFIED];
   }
 
   findUserId(peerId: string) {
@@ -160,8 +205,8 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
   }
 
   copyPeerId() {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(this.networkService.peerContext.userId);
+    if (navigator.clipboard && this.canUsePrivateSession) {
+      navigator.clipboard.writeText(this.networkService.peer.userId);
       this.isCopied = true;
       clearTimeout(this._timeOutId);
       this._timeOutId = setTimeout(() => {
@@ -172,7 +217,7 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
 
   copyRoomName() {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(this.networkService.peerContext.roomName + '/' + this.networkService.peerContext.roomId);
+      navigator.clipboard.writeText(this.networkService.peer.roomName + '/' + this.networkService.peer.roomId);
       this.isRoomNameCopied = true;
       clearTimeout(this._timeOutId2);
       this._timeOutId2 = setTimeout(() => {
@@ -183,12 +228,42 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
 
   copyPassword() {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(this.networkService.peerContext.password);
-      this.isPasswordCopied = true;
-      clearTimeout(this._timeOutId3);
-      this._timeOutId2 = setTimeout(() => {
-        this.isPasswordCopied = false;
-      }, 1000);
+      this.modalService.open(ConfirmationComponent, {
+        title: '패스워드의 복사', 
+        text: '패스워드를 클립보드에 복사합니까?',
+        helpHtml: '패스워드를 공유할 때에는 SNS의 공개 어카운트 등으로 <b>불특정 다수에게 공개하는 것을 피해</b> 주세요.',
+        type: ConfirmationType.OK_CANCEL,
+        materialIcon: 'content_copy',
+        action: () => {
+          navigator.clipboard.writeText(this.networkService.peer.password);
+          this.isPasswordCopied = true;
+          clearTimeout(this._timeOutId3);
+          this._timeOutId3 = setTimeout(() => {
+            this.isPasswordCopied = false;
+          }, 1000);
+        }
+      });
+      this.isPasswordOpen = false;
+    }
+  }
+
+  copyRoomInfo() {
+    if (navigator.clipboard) {
+      this.modalService.open(ConfirmationComponent, {
+        title: '방 정보의 복사', 
+        text: '방 정보(방 이름/방 ID, 패스워드)를 클립보드에 복사합니까?',
+        helpHtml: '패스워드를 공유할 때에는 SNS의 공개 어카운트 등으로 <b>불특정 다수에게 공개하는 것을 피해</b> 주세요.',
+        type: ConfirmationType.OK_CANCEL,
+        materialIcon: 'content_copy',
+        action: () => {
+          navigator.clipboard.writeText('방 이름：' + this.networkService.peer.roomName + '/' + this.networkService.peer.roomId + '  패스워드：' + this.networkService.peer.password);
+          this.isRoomInfoCopied = true;
+          clearTimeout(this._timeOutId4);
+          this._timeOutId4 = setTimeout(() => {
+            this.isRoomInfoCopied = false;
+          }, 1000);
+        }
+      });
       this.isPasswordOpen = false;
     }
   }
@@ -203,8 +278,9 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
     } else {
       $event.preventDefault();
       this.modalService.open(ConfirmationComponent, {
-        title: '패스워드 표시', 
+        title: '패스워드의 표시', 
         text: '패스워드를 표시합니까?',
+        helpHtml: '플레이 실황중 등에 실수로 패스워드를 표시하지 않도록 주의해주세요. <br또한 패스워드를 공유할 때에는 SNS의 공개 어카운트 등으로 <b>불특정 다수에게 공개하는 것을 피해</b> 주세요.',
         type: ConfirmationType.OK_CANCEL,
         materialIcon: 'visibility',
         action: () => {
@@ -235,8 +311,8 @@ export class PeerMenuComponent implements OnInit, OnDestroy {
             if (GameCharacter.isStealthMode) {
               this.modalService.open(ConfirmationComponent, {
                 title: '스텔스 모드', 
-                text: '스텔스 모드가 됩니다.',
-                help: '위치를 자신만 볼 수 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자들에게 전해지지 않습니다.',
+                text: '스텔스 모드가 됩니다',
+                help: '위치를 당신 혼자서만 보고 있는 캐릭터가 1개 이상 테이블 위에 있는 동안, 당신의 커서 위치는 다른 참가자에게 전달되지 않습니다.',
                 type: ConfirmationType.OK,
                 materialIcon: 'disabled_visible'
               });

@@ -17,6 +17,7 @@ import { ContextMenuAction } from './context-menu.service';
 import { PointerCoordinate } from './pointer-device.service';
 
 import { ImageTag } from '@udonarium/image-tag';
+import { RangeArea } from '@udonarium/range';
 
 @Injectable({
   providedIn: 'root'
@@ -52,7 +53,7 @@ export class TabletopActionService {
     //if (!image) image = ImageStorage.instance.add(url);
     if (!image) {
       image = ImageStorage.instance.add(url);
-      ImageTag.create(image.identifier).tag = '*default 지형';
+      ImageTag.create(image.identifier).tag = '*기본 지형';
     }
 
     let viewTable = this.getViewTable();
@@ -68,7 +69,7 @@ export class TabletopActionService {
   }
 
   createTextNote(position: PointerCoordinate): TextNote {
-    let textNote = TextNote.create('공유메모', '텍스트를 입력해주세요', 5, 4, 3);
+    let textNote = TextNote.create('공유 메모', '텍스트를 입력해주세요', 5, 4, 3);
     textNote.location.x = position.x;
     textNote.location.y = position.y;
     textNote.posZ = position.z;
@@ -85,7 +86,7 @@ export class TabletopActionService {
       //if (!image) { image = ImageStorage.instance.add(url); }
       if (!image) {
         image = ImageStorage.instance.add(url);
-        ImageTag.create(image.identifier).tag = `*default ${ diceType === DiceType.D2 ? '코인' : '다이스'}`;
+        ImageTag.create(image.identifier).tag = `*기본 ${ diceType === DiceType.D2 ? '코인' : '다이스'}`;
       }
       diceSymbol.imageDataElement.getFirstElementByName(face).value = image.identifier;
     });
@@ -96,7 +97,7 @@ export class TabletopActionService {
       //if (!image) { image = ImageStorage.instance.add(url); }
       if (!image) {
         image = ImageStorage.instance.add(url);
-        ImageTag.create(image.identifier).tag = `*default ${ diceType === DiceType.D2 ? '코인' : '다이스'}`;
+        ImageTag.create(image.identifier).tag = `*기본 ${ diceType === DiceType.D2 ? '코인' : '다이스'}`;
       }
       diceSymbol.imageDataElement.getFirstElementByName(face).value = image.identifier;
     });
@@ -116,12 +117,12 @@ export class TabletopActionService {
     frontImage = ImageStorage.instance.get(frontUrl);
     if (!frontImage) {
       frontImage = ImageStorage.instance.add(frontUrl);
-      ImageTag.create(frontImage.identifier).tag = '*default 카드';
+      ImageTag.create(frontImage.identifier).tag = '*기본 카드';
     }
     backImage = ImageStorage.instance.get(backUrl);
     if (!backImage) {
       backImage = ImageStorage.instance.add(backUrl);
-      ImageTag.create(backImage.identifier).tag = '*default 카드';
+      ImageTag.create(backImage.identifier).tag = '*기본 카드';
     }
     let card = Card.create('카드', frontImage.identifier, backImage.identifier);
     card.location.x = position.x - 25;
@@ -170,7 +171,7 @@ export class TabletopActionService {
     if (!ImageStorage.instance.get(back)) {
       //ImageStorage.instance.add(back);
       const image = ImageStorage.instance.add(back);
-      ImageTag.create(image.identifier).tag = '*default 카드';
+      ImageTag.create(image.identifier).tag = '*기본 카드';
     }
 
     let suits: string[] = ['c', 'd', 'h', 's'];
@@ -190,7 +191,7 @@ export class TabletopActionService {
       if (!ImageStorage.instance.get(url)) {
         //ImageStorage.instance.add(url);
         const image = ImageStorage.instance.add(url);
-        ImageTag.create(image.identifier).tag = '*default 카드';
+        ImageTag.create(image.identifier).tag = '*기본 카드';
       }
       let card = Card.create(this.cardName(trump), url, back);
       //let card = Card.create('카드', url, back);
@@ -199,13 +200,44 @@ export class TabletopActionService {
     return cardStack;
   }
 
+  createRangeArea(position: PointerCoordinate, typeName: string): RangeArea {
+    let range;
+    switch (typeName) {
+      case 'LINE':
+        range = RangeArea.create('사정・범위 (직선)', 1, 6, 100);
+        break;
+      case 'CIRCLE':
+        range = RangeArea.create('사정・범위 (원)', 3, 3, 100);
+        break;
+      case 'SQUARE':
+        range = RangeArea.create('사정・범위 (정방형)', 3, 3, 100);
+        break;
+      case 'DIAMOND':
+        range = RangeArea.create('사정・범위 (다이아몬드)', 3, 3, 100);
+        break;
+      case 'CORN':
+      default:
+        range = RangeArea.create('사정・범위 (콘형)', 6, 6, 100);
+        break;
+    }
+
+    range.location.x = position.x;
+    range.location.y = position.y;
+    range.posZ = position.z;
+    range.type = typeName;
+    let data = range.commonDataElement.getFirstElementByName('opacity');
+    //console.log( '射程範囲TEST' + data);
+    data.currentValue = 60;
+    return range;
+  }
+
   makeDefaultTable() {
     let gameTable = new GameTable('gameTable');
     let testBgFile: ImageFile = null;
     let bgFileContext = ImageFile.createEmpty('testTableBackgroundImage_image').toContext();
     bgFileContext.url = './assets/images/BG10a_80.jpg';
     testBgFile = ImageStorage.instance.add(bgFileContext);
-    ImageTag.create(testBgFile.identifier).tag = '*default 테이블';
+    ImageTag.create(testBgFile.identifier).tag = '*기본 테이블';
     gameTable.name = '최초의 테이블';
     gameTable.imageIdentifier = testBgFile.identifier;
     gameTable.width = 20;
@@ -224,7 +256,7 @@ export class TabletopActionService {
     fileContext = ImageFile.createEmpty('testCharacter_1_image').toContext();
     fileContext.url = './assets/images/mon_052.gif';
     testFile = ImageStorage.instance.add(fileContext);
-    ImageTag.create(testFile.identifier).tag = '*default 캐릭터';
+    ImageTag.create(testFile.identifier).tag = '*기본 캐릭터';
     testCharacter.location.x = 5 * 50;
     testCharacter.location.y = 9 * 50;
     testCharacter.initialize();
@@ -240,7 +272,7 @@ export class TabletopActionService {
     fileContext = ImageFile.createEmpty('testCharacter_3_image').toContext();
     fileContext.url = './assets/images/mon_128.gif';
     testFile = ImageStorage.instance.add(fileContext);
-    ImageTag.create(testFile.identifier).tag = '*default 캐릭터';
+    ImageTag.create(testFile.identifier).tag = '*기본 캐릭터';
     testCharacter.location.x = 4 * 50;
     testCharacter.location.y = 2 * 50;
     testCharacter.initialize();
@@ -250,7 +282,7 @@ export class TabletopActionService {
     fileContext = ImageFile.createEmpty('testCharacter_4_image').toContext();
     fileContext.url = './assets/images/mon_150.gif';
     testFile = ImageStorage.instance.add(fileContext);
-    ImageTag.create(testFile.identifier).tag = '*default 캐릭터';
+    ImageTag.create(testFile.identifier).tag = '*기본 캐릭터';
     testCharacter.location.x = 6 * 50;
     testCharacter.location.y = 11 * 50;
     testCharacter.initialize();
@@ -260,7 +292,7 @@ export class TabletopActionService {
     fileContext = ImageFile.createEmpty('testCharacter_5_image').toContext();
     fileContext.url = './assets/images/mon_211.gif';
     testFile = ImageStorage.instance.add(fileContext);
-    ImageTag.create(testFile.identifier).tag = '*default 캐릭터';
+    ImageTag.create(testFile.identifier).tag = '*기본 캐릭터';
     testCharacter.location.x = 12 * 50;
     testCharacter.location.y = 12 * 50;
     testCharacter.initialize();
@@ -271,7 +303,7 @@ export class TabletopActionService {
     fileContext.url = './assets/images/mon_135.gif';
     testFile = ImageStorage.instance.add(fileContext);
 
-    ImageTag.create(testFile.identifier).tag = '*default 캐릭터';
+    ImageTag.create(testFile.identifier).tag = '*기본 캐릭터';
     testCharacter.initialize();
     testCharacter.location.x = 5 * 50;
     testCharacter.location.y = 13 * 50;
@@ -288,6 +320,7 @@ export class TabletopActionService {
       this.getCreateBlankCardMenu(position),
       this.getCreateTrumpMenu(position),
       this.getCreateDiceSymbolMenu(position),
+      this.getCreateRangeMenu(position),
     ];
   }
 
@@ -321,7 +354,7 @@ export class TabletopActionService {
 
   private getCreateTextNoteMenu(position: PointerCoordinate): ContextMenuAction {
     return {
-      name: '공유메모를 작성', action: () => {
+      name: '공유 메모를 작성', action: () => {
         this.createTextNote(position);
         SoundEffect.play(PresetSound.cardPut);
       }
@@ -339,7 +372,7 @@ export class TabletopActionService {
 
   private getCreateTrumpMenu(position: PointerCoordinate): ContextMenuAction {
     return {
-      name: '트럼프의 카드 더미를 작성', action: () => {
+      name: '트럼프 카드 더미를 작성', action: () => {
         this.createTrump(position);
         SoundEffect.play(PresetSound.cardPut);
       }
@@ -368,7 +401,28 @@ export class TabletopActionService {
         }
       });
     });
-    return { name: '다이스를 작성', action: null, subActions: subMenus };
+    return { name: '코인／다이스를 작성', action: null, subActions: subMenus };
+  }
+
+  private getCreateRangeMenu(position: PointerCoordinate): ContextMenuAction {
+    let dices: { menuName: string, typeName: string }[] = [
+      { menuName: '콘형', typeName: 'CORN'},
+      { menuName: '직선', typeName: 'LINE'},
+      { menuName: '원', typeName: 'CIRCLE'},
+      { menuName: '정방형', typeName: 'SQUARE'},
+      { menuName: '다이아몬드', typeName: 'DIAMOND'},
+    ];
+    let subMenus: ContextMenuAction[] = [];
+
+    dices.forEach(item => {
+      subMenus.push({
+        name: item.menuName, action: () => {
+          this.createRangeArea(position, item.typeName);
+          SoundEffect.play(PresetSound.dicePut);
+        }
+      });
+    });
+    return { name: '사정・범위를 작성', action: null, subActions: subMenus };
   }
 
   private getViewTable(): GameTable {
