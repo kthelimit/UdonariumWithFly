@@ -27,8 +27,7 @@
   <div *ngIf="isEdit" style="flex-grow: 1; height: 0; min-height: 100px;">
     <textarea class="palette" style="resize: none;" [(ngModel)]="editPalette" placeholder="채팅 팔레트"></textarea>
   </div>
-  <div style="flex-grow: 0;">
-      <span *ngIf="isEdit">채팅 팔레트를 확정</span>
+  <div style="flex-grow: 0; padding-left: 0px; padding-top: 1px">
     <button type="submit" style="margin: 0px" (click)="toggleEditMode()">
       <span *ngIf="!isEdit">채팅 팔레트 편집</span>
       <span *ngIf="isEdit">채팅 팔레트 확정</span>

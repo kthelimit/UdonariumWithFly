@@ -13,7 +13,7 @@ const HOURS = 60 * 60 * 1000;
 
 @Injectable()
 export class ChatMessageService {
-  private intervalTimer: NodeJS.Timer = null;
+  private intervalTimer: NodeJS.Timeout = null;
   private timeOffset: number = Date.now();
   private performanceOffset: number = performance.now();
 
@@ -79,7 +79,7 @@ export class ChatMessageService {
     // もうちょとなんとかする
     let effective = !(isUseFaceIcon && this.findFaceIconIdentifier(sendFrom));
     let chatMessage: ChatMessageContext = {
-      from: Network.peerContext.userId,
+      from: Network.peer.userId,
       to: ChatMessageService.findId(sendTo),
       //to: this.findId(sendTo),
       //name: this.makeMessageName(sendFrom, sendTo),
@@ -109,14 +109,15 @@ export class ChatMessageService {
     for (const chatTab of this.chatTabs) {
       if (chatTab.recieveOperationLogLevel < logLevel) continue;
       let chatMessage: ChatMessageContext = {
-        from: Network.peerContext.userId,
+        from: Network.peer.userId,
         //to: ChatMessageService.findId(PeerCursor.myCursor.userId),
         //to: this.findId(sendTo),
         name: PeerCursor.myCursor.name,
         imageIdentifier: PeerCursor.myCursor.imageIdentifier,
         timestamp: this.calcTimeStamp(chatTab),
         tag: 'opelog',
-        text: StringUtil.cr(text),
+        //text: StringUtil.cr(text),
+        text: text,
         color: PeerCursor.myCursor.color
       };
 

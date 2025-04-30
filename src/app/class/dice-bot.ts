@@ -613,6 +613,7 @@ export class DiceBot extends GameObject {
             } else {
               return '다이스봇 정보가 없습니다.';
             }
+          })
         });
     } else {
       let help = [''];

@@ -37,8 +37,8 @@ export class ChatTabSettingComponent implements OnInit, OnDestroy {
   get isEditable(): boolean { return !this.isEmpty && !this.isDeleted; }
 
   get roomName():string {
-    let roomName = Network.peerContext && 0 < Network.peerContext.roomName.length
-      ? Network.peerContext.roomName
+    let roomName = Network.peer && 0 < Network.peer.roomName.length
+      ? Network.peer.roomName
       : '방 데이터';
     return roomName;
   }
@@ -57,7 +57,7 @@ export class ChatTabSettingComponent implements OnInit, OnDestroy {
   ngOnInit() {
     Promise.resolve().then(() => { this.modalService.title = this.panelService.title = '채팅 탭 설정'; this.panelService.isAbleFullScreenButton = false });
     EventSystem.register(this)
-      .on('DELETE_GAME_OBJECT', 1000, event => {
+      .on('DELETE_GAME_OBJECT', 2000, event => {
         if (!this.selectedTab || event.data.identifier !== this.selectedTab.identifier) return;
         let object = ObjectStore.instance.get(event.data.identifier);
         if (object !== null) {

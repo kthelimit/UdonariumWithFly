@@ -49,7 +49,7 @@ export class PasswordCheckComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   submit() {
-    this.help = '패스워드가 다릅니다.';
     if (this.targetPeers.find(peer => peer.verifyPassword(this.password))) this.modalService.resolve(this.password);
+    this.help = '패스워드가 다릅니다.';
   }
 }

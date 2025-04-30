@@ -174,7 +174,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
     let sampleDiceRollTable = new DiceRollTable('SampleDiceRollTable');
     sampleDiceRollTable.initialize();
-    sampleDiceRollTable.name = '샘플 다이스봇 표'
+    sampleDiceRollTable.name = '샘플 다이스 봇 표'
     sampleDiceRollTable.command = 'SAMPLE'
     sampleDiceRollTable.dice = '1d6';
     sampleDiceRollTable.value = "1:이것은 다이스봇 표의 샘플입니다.\n2:숫자와 대응하는 결과를 1줄에 1개씩 :(콜론)으로 구분하고\n3:숫자:결과의 형태로 작성합니다.\n4:\\\\n  \\n으로 행을 바꿉니다.\n5-6:또, -(하이픈)으로 구분해서 숫자의 범위를 지정할 수 있습니다.";
@@ -183,7 +183,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     let fileContext = ImageFile.createEmpty('none_icon').toContext();
     fileContext.url = './assets/images/ic_account_circle_black_24dp_2x.png';
     let noneIconImage = ImageStorage.instance.add(fileContext);
-    ImageTag.create(noneIconImage.identifier).tag = '*default 아이콘';
     ImageTag.create(noneIconImage.identifier).tag = '*기본 아이콘';
 
     fileContext = ImageFile.createEmpty('stand_no_image').toContext();
@@ -192,10 +191,14 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     ImageTag.create(standNoIconImage.identifier).tag = '*기본 스탠드';
 
     try {
+      localForage.getItem(AudioPlayer.MAIN_VOLUME_LOCAL_STORAGE_KEY).then(volume => { 
+        if (typeof volume === 'number' && 0 <= volume && volume <= 1) AudioPlayer.volume = volume;
       });
       localForage.getItem(AudioPlayer.AUDITION_VOLUME_LOCAL_STORAGE_KEY).then(volume => {
         if (typeof volume === 'number' && 0 <= volume && volume <= 1) AudioPlayer.auditionVolume = volume;
       });
+      localForage.getItem(AudioPlayer.SOUND_EFFECT_VOLUME_LOCAL_STORAGE_KEY).then(volume => {
+        if (typeof volume === 'number' && 0 <= volume && volume <= 1) AudioPlayer.soundEffectVolume = volume;
       });
       localForage.getItem(AudioPlayer.NOTICE_VOLUME_LOCAL_STORAGE_KEY).then(volume => {
         if (typeof volume === 'number' && 0 <= volume && volume <= 1) AudioPlayer.noticeVolume = volume;
@@ -308,6 +311,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
                 })
                 .sort((a, b) => {
                   return langSortOrder.indexOf(a.lang) < langSortOrder.indexOf(b.lang) ? -1 
+                    : langSortOrder.indexOf(a.lang) > langSortOrder.indexOf(b.lang) ? 1
                     : a.normalize == b.normalize ? 0 
                     : a.normalize < b.normalize ? -1 : 1;
                 });
@@ -329,21 +333,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
                     DiceBot.diceBotInfosIndexed.push(group);
                     group = { index: index, infos: [] };
                   }
-                  group.infos.push({ script: (API_VERSION == 1 ? info.system : info.id), game: info.name });
+                  group.infos.push({ id: (API_VERSION == 1 ? info.system : info.id), game: info.name });
                 }
                 DiceBot.diceBotInfosIndexed.push(group);
-                DiceBot.diceBotInfosIndexed.sort((a, b) => a.index == b.index ? 0 : a.index < b.index ? -1 : 1);
+                //DiceBot.diceBotInfosIndexed.sort((a, b) => a.index == b.index ? 0 : a.index < b.index ? -1 : 1);
               }
             });
-        } else {
-          DiceBot.diceBotInfos.forEach((info) => {
-            let normalize = info.sort_key.normalize('NFKD');
-            if (a.sort_key == 'Other' && b.sort_key == 'Other') {
-              return 0;
-            } else if (a.sort_key == 'Other') {
-              return 1;
-            }
-            return a.sort_key == b.sort_key ? 0 
         }
         console.log('LOAD_CONFIG !!!');
         Network.configure(event.data);
@@ -682,7 +677,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.contextMenuService.open(position, menu, '도구 상자');
   }
 
-      { name: '바로 위에서 내려다본다', action: () => EventSystem.trigger('RESET_POINT_OF_VIEW', 'top') }
   resetPointOfView(event: Event) {
     const button = <HTMLElement>event.target;
     const clientRect = button.getBoundingClientRect();
@@ -706,9 +700,13 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     const isShowStand = StandImageComponent.isShowStand;
     const isShowNameTag = StandImageComponent.isShowNameTag;
     const isCanBeGone = StandImageComponent.isCanBeGone; 
-    this.contextMenuService.open(this.pointerDeviceService.pointers[0], [
+    this.contextMenuService.open(position, [
       { name: `${ TableSelecter.instance.gridShow ? '☑' : '☐' }테이블 그리드를 항상 표시`, 
+        action: () => {
+          TableSelecter.instance.gridShow = !TableSelecter.instance.gridShow;
           EventSystem.trigger('UPDATE_GAME_OBJECT', TableSelecter.instance.toContext()); 
+        },
+        checkBox: 'check'
       },
       { name: `${ TableSelecter.instance.gridSnap ? '☑' : '☐' }오브젝트 이동 시에 스냅`, 
         action: () => {
@@ -727,6 +725,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       { name: `${ isShowStand ? '☑' : '☐' }스탠드 표시`, 
         action: () => {
           StandImageComponent.isShowStand = !isShowStand;
+        },
+        checkBox: 'check'
       },
       { name: `${ isShowNameTag ? '☑' : '☐' }네임태그 표시`, 
         action: () => {

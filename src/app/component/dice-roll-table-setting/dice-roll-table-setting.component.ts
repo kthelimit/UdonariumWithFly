@@ -49,7 +49,7 @@ export class DiceRollTableSettingComponent implements OnInit, OnDestroy, AfterVi
   ) { }
 
   ngOnInit() {
-    Promise.resolve().then(() => this.modalService.title = this.panelService.title = '다이스봇 표 ');
+    Promise.resolve().then(() => this.modalService.title = this.panelService.title = '다이스봇 표 설정');
     EventSystem.register(this)
       .on('DELETE_GAME_OBJECT', 1000, event => {
         if (!this.selectedDiceRollTable || event.data.identifier !== this.selectedDiceRollTable.identifier) return;

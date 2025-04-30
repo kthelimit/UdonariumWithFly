@@ -494,7 +494,6 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
             if (card.isFront) {
               text = `${this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다`
             } else {
-              text = `${this.cardStack.name} 로부터 1장 뽑아서 엎었다`
               text = `${this.cardStack.name} 로부터 1장 뽑아서 엎어두었다`
             }
             this.chatMessageService.sendOperationLog(text);
