@@ -757,7 +757,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.modalService.open(ConfirmationComponent, {
       title: '다이스 일괄 공개', 
       text: '테이블 위의 다이스, 코인을 공개합니까?',
-      help: '「일괄 공개하지 않음」설정을 한 것은 공개되지 않습니다.',
+      help: '「함께 공개하지 않는다」설정을 한 것은 공개되지 않습니다.',
       type: ConfirmationType.OK_CANCEL,
       materialIcon: 'all_out',
       action: () => {
