@@ -252,7 +252,7 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
       let cardStack: CardStack = e.detail;
       let distance: number = this.cardStack.calcSqrDistance(cardStack);
       if (distance < 25 ** 2) {
-        this.chatMessageService.sendOperationLog(`${cardStack.name == '' ? '(이름 없는 카드 더미)' : cardStack.name} 를 전부 ${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}에 올렸다.`);
+        this.chatMessageService.sendOperationLog(`${cardStack.name == '' ? '(이름 없는 카드 더미)' : cardStack.name}을/를 전부 ${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}에 올렸다.`);
         this.concatStack(cardStack);
       }
     }
@@ -266,9 +266,9 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
         SoundEffect.play(PresetSound.cardDraw);
         let text: string;
         if (card.isFront) {
-          text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다.`
+          text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name}을/를 뽑았다.`
         } else {
-          text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아 엎어두었다`
+          text = `${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}로부터 1장 뽑아 엎어두었다`
         }
         this.chatMessageService.sendOperationLog(text);
       }
@@ -492,9 +492,9 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
             SoundEffect.play(PresetSound.cardDraw);
             let text: string;
             if (card.isFront) {
-              text = `${this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다`
+              text = `${this.cardStack.name}로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name}을/를 뽑았다`
             } else {
-              text = `${this.cardStack.name} 로부터 1장 뽑아서 엎어두었다`
+              text = `${this.cardStack.name}로부터 1장 뽑아서 엎어두었다`
             }
             this.chatMessageService.sendOperationLog(text);
           }
@@ -519,7 +519,7 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
               if (cards.length > 0) {
                 const frontCards = cards.filter(card => card.isFront);
                 if (frontCards.length == 0) {
-                  this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${cards.length}장 뽑아서 엎어두었다`);
+                  this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}로부터 ${cards.length}장 뽑아서 엎어두었다`);
                 } else {
                   const counter = new Map();
                   for (const card of frontCards) {
@@ -546,7 +546,7 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
       (this.cards.length == 0 || !this.cardStack.topCard.isFront ? {
         name: '가장 위를 앞면으로 한다', action: () => {
           if (!this.cardStack.topCard) return;
-          if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 의 가장 위의 ${this.cardStack.topCard.name == '' ? '(이름 없는 카드)' : this.cardStack.topCard.name} 를 공개했다`);
+          if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 의 가장 위의 ${this.cardStack.topCard.name == '' ? '(이름 없는 카드)' : this.cardStack.topCard.name}을/를 공개했다`);
           this.cardStack.faceUp();
           SoundEffect.play(PresetSound.cardDraw);
         },
@@ -562,7 +562,7 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
       {
         name: '전부 앞면으로 한다', action: () => {
           //if (!this.cardStack.topCard) return;
-          //if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name} 를 전부 잎면으로 하고 가장 위의 ${this.cardStack.topCard.name} 를 공개했다`);
+          //if (!this.cardStack.topCard.isFront) this.chatMessageService.sendOperationLog(`${this.cardStack.name}을/를 전부 잎면으로 하고 가장 위의 ${this.cardStack.topCard.name}을/를 공개했다`);
           this.cardStack.faceUpAll();
           SoundEffect.play(PresetSound.cardDraw);
         },
@@ -593,7 +593,7 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
       },
       { name: '카드 리스트를 본다...', action: () => {
         this.showStackList(this.cardStack);
-        this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 의 카드 리스트를 봤다`);
+        this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}의 카드 리스트를 봤다`);
       }, disabled: this.cards.length == 0 },
       ContextMenuSeparator,
       (this.isShowTotal

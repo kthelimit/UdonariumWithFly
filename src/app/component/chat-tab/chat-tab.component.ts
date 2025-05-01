@@ -39,7 +39,7 @@ export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnCha
   @Input() compact: boolean = false;
   
   sampleMessages: ChatMessage[] = [
-    this.makeSampleMessage('System', null, '튜토리얼 : 처음에', null, '유도나리움은 서버를 사용하지 않는 TRPG 온라인 세션 툴입니다. 참가자끼리 접속해, 게임말이나 이미지 파일 등을 동기화합니다.'),
+    this.makeSampleMessage('System', null, '튜토리얼 : 처음에', null, '유드나리움은 서버를 사용하지 않는 TRPG 온라인 세션 툴입니다. 참가자끼리 접속해, 게임말이나 이미지 파일 등을 동기화합니다.'),
     this.makeSampleMessage('System', null, '테이블과 게임말의 기본 조작', null, `＜테이블 조작＞
 테이블을 왼쪽 드래그 : 시점 변경
 테이블을 오른쪽 드래그 : 시점 회전
@@ -66,7 +66,7 @@ Ctrl+마우스 왼쪽 버튼+드래그 조작 : 마우스 커서가 닿은 대�
 
 <선택 해제>
 원하는 곳 클릭 : 모든 선택 상태를 해제`),
-    this.makeSampleMessage('System', null, '이미지와 음악', null, '파일을 브라우저 화면에 드래그&드롭하여 유도나리움에 넣을 수 있습니다. '),
+    this.makeSampleMessage('System', null, '이미지와 음악', null, '파일을 브라우저 화면에 드래그&드롭하여 유드나리움에 넣을 수 있습니다. '),
     this.makeSampleMessage('System', null, '데이터 저장', null, '모든 데이터가 각 참여자의 브라우저 내에만 존재하기 때문에 전원이 룸에서 이탈하면 데이터가 소실됩니다. 룸의 상태를 다음 세션으로 미루고 싶은 경우는, 반드시 「저장」을 실행해 세이브 데이터(zip)를 생성해 주세요. 저장한 zip 파일을 브라우저 화면에 드롭하면 불러올 수 있습니다.'),
     this.makeSampleMessage('System', '???', '플레이어', '다이렉트 메시지', '다이렉트 메시지(비밀 대화)는 세이브 데이터에 기록되지 않습니다.'),
     this.makeSampleMessage('System', '???', '플레이어', '다이렉트 메시지', '또, 과거의 다이렉트 메시지는 당신의 ID가 갱신되면 같은 룸 내에서도 보이지 않게 됩니다. 주의하세요.'),

@@ -780,7 +780,7 @@ export class GameTableMaskComponent implements OnChanges, OnDestroy, AfterViewIn
       },
       {
         name: '삭제', action: () => {
-          this.chatMessageService.sendOperationLog(`${ this.gameTableMask.name == '' ? '(이름 없는 맵 마스크)' : this.gameTableMask.name } 를 삭제했다`);
+          this.chatMessageService.sendOperationLog(`${ this.gameTableMask.name == '' ? '(이름 없는 맵 마스크)' : this.gameTableMask.name }을/를 삭제했다`);
           this.gameTableMask.destroy();
           SoundEffect.play(PresetSound.sweep);
         }

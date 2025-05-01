@@ -297,7 +297,7 @@ export class CardComponent implements OnDestroy, OnChanges, AfterViewInit {
     menuActions = menuActions.concat(this.makeSelectionContextMenu());
     menuActions = menuActions.concat(this.makeContextMenu());
 
-    this.contextMenuService.open(position, menuActions, this.isVisible ? this.name : 'カード');
+    this.contextMenuService.open(position, menuActions, this.isVisible ? this.name : '카드');
   }
 
   onMove() {
@@ -322,7 +322,7 @@ export class CardComponent implements OnDestroy, OnChanges, AfterViewInit {
   }
 
   private createStack() {
-    let cardStack = CardStack.create('山札');
+    let cardStack = CardStack.create('카드 더미');
     cardStack.location.x = this.card.location.x;
     cardStack.location.y = this.card.location.y;
     cardStack.posZ = this.card.posZ;
@@ -415,7 +415,7 @@ export class CardComponent implements OnDestroy, OnChanges, AfterViewInit {
                 });
                 const messages = [...counter.keys()].map(key => key + (counter.get(key) <= 1 ? '' : ` ×${counter.get(key)}장`));
                 if (faceDownCount) messages.push(`(엎어둔 카드)×${faceDownCount}장`);
-                this.chatMessageService.sendOperationLog(messages.join('、') + ' 를 혼자만 봤다');
+                this.chatMessageService.sendOperationLog(messages.join('、') + '을 혼자만 봤다');
                 SoundEffect.play(PresetSound.cardDraw);
               }
             },
@@ -468,7 +468,7 @@ export class CardComponent implements OnDestroy, OnChanges, AfterViewInit {
       : {
         name: '혼자만 본다(손패로 한다)', action: () => {
           SoundEffect.play(PresetSound.cardDraw);
-          this.chatMessageService.sendOperationLog(`${this.card.isFront ? (this.card.name == '' ? '(이름 없는 카드)' : this.card.name)  : '(엎어둔 카드)'} 를 혼자만 봤다`);
+          this.chatMessageService.sendOperationLog(`${this.card.isFront ? (this.card.name == '' ? '(이름 없는 카드)' : this.card.name)  : '(엎어둔 카드)'}을/를 혼자만 봤다`);
           this.card.faceDown();
           this.owner = Network.peer.userId;
         }

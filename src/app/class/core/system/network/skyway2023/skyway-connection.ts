@@ -72,7 +72,7 @@ export class SkyWayConnection implements Connection {
     if (!this.peer.isRoom) {
       console.warn('connect() is Fail. 방 접속만 가능');
       let errorType = 'udonarium-unsupported';
-      let errorMessage = '현재의 유도나리움으로 SkyWay(2023)을 사용하는 경우, 프라이빗 접속은 이용할 수 없습니다. 방 접속 기능을 이용해주세요.';
+      let errorMessage = '현재의 유드나리움으로 SkyWay(2023)을 사용하는 경우, 프라이빗 접속은 이용할 수 없습니다. 방 접속 기능을 이용해주세요.';
       if (this.callback.onError) this.callback.onError(this.peer, errorType, errorMessage, {});
       return false;
     }

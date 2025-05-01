@@ -22,7 +22,7 @@ export class ModalService {
   private modalContext: ModalContext = null;
   private count = 0;
 
-  title: string = '이름없는 모달';
+  title: string = '이름 없는 모달';
 
   /* Todo */
   static defaultParentViewContainerRef: ViewContainerRef;

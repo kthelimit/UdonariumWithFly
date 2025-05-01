@@ -418,7 +418,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
           text = commandsInfo.endString;
           if (commandsInfo.commands.length) {
             //await (async () => {
-              const loggingTexts: string[] = [`${targetCharacter.name == '' ? '(이름 없는 캐릭터)' : targetCharacter.name} へのコマンド：${commandsInfo.commandString}`];
+              const loggingTexts: string[] = [`${targetCharacter.name == '' ? '(이름 없는 캐릭터)' : targetCharacter.name}에의 커맨트：${commandsInfo.commandString}`];
               let isDiceRoll = false;
               for (let i = 0; i < commandsInfo.commands.length; i++) {
                 let rollResult = null;
@@ -458,7 +458,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
                     }
                   }
                   
-                  if (!target) throw `→ 명령어 오류：${(StringUtil.cr(targetName).trim() == '') ? '(이름 없는 변수)' : StringUtil.cr(targetName).trim()} 를 찾지 못했다.`;
+                  if (!target) throw `→ 명령어 오류：${(StringUtil.cr(targetName).trim() == '') ? '(이름 없는 변수)' : StringUtil.cr(targetName).trim()}을/를 찾지 못했다.`;
 
                   oldValue = target.loggingValue;
                   let value = null;
@@ -499,9 +499,9 @@ export class ChatInputComponent implements OnInit, OnDestroy {
                   if (value == null 
                     || (rollResult && rollResult.isDiceRollTable && rollResult.isFailure) 
                     || (isOperateNumber && value !== '' && isNaN(value))) {
-                    throw `→ ${target.name == '' ? '(이름 없는 변수)' : target.name} 를 조작 → 명령어 오류：` + command.operator + command.value;
+                    throw `→ ${target.name == '' ? '(이름 없는 변수)' : target.name}을/를 조작 → 명령어 오류：` + command.operator + command.value;
                   } else if (target.isUrl && !StringUtil.validUrl(StringUtil.cr(value))) {
-                    throw `→ ${target.name == '' ? '(이름 없는 변수)' : target.name} 를 조작 → URL이 올바르지 않음：` + command.value;
+                    throw `→ ${target.name == '' ? '(이름 없는 변수)' : target.name}을/를 조작 → URL이 올바르지 않음：` + command.value;
                   }
                   //console.log(value)
                   if (operator === '>') {

@@ -149,7 +149,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterView
   ngAfterViewInit() {
     queueMicrotask(() => {
       const title = (this.tabletopObject instanceof Card && !this.tabletopObject.isFront) ? '카드 설정 - 카드(뒷면)' : this.panelService.title;
-      this.chatMessageService.sendOperationLog(`${title} 를 열었다`);
+      this.chatMessageService.sendOperationLog(`${title}을/를 열었다`);
     });
   }
 

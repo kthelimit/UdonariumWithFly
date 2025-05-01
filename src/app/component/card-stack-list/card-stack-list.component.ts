@@ -31,7 +31,7 @@ export class CardStackListComponent implements OnChanges, OnDestroy {
   ) { }
 
   ngOnChanges() {
-    Promise.resolve().then(() => this.panelService.title = this.cardStack.name + ' 의 카드 리스트');
+    Promise.resolve().then(() => this.panelService.title = this.cardStack.name + '의 카드 리스트');
     EventSystem.unregister(this);
     EventSystem.register(this)
       .on(`UPDATE_GAME_OBJECT/identifier/${this.cardStack?.identifier}`, event => {
@@ -67,9 +67,9 @@ export class CardStackListComponent implements OnChanges, OnDestroy {
     card.toTopmost();
     SoundEffect.play(PresetSound.cardDraw);
     if (card.isFront) {
-      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name} 를 뽑았다.`);
+      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}로부터 ${card.name == '' ? '(이름 없는 카드)' : card.name}을/를 뽑았다.`);
     } else {
-      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name} 로부터 1장 뽑아서 엎어두었다`);
+      this.chatMessageService.sendOperationLog(`${this.cardStack.name == '' ? '(이름 없는 카드 더미)' : this.cardStack.name}로부터 1장 뽑아서 엎어두었다`);
     }
   } 
 

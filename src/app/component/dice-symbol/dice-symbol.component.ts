@@ -216,7 +216,7 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
         if (this.owner && !this.isLock) {
           this.owner = '';
           SoundEffect.play(PresetSound.unlock);
-          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름 없는 ' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name} の${this.isCoin ? '앞면／뒷면' : '눈'}을 공개 → ${this.face}`);
+          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름 없는 ' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name}의 ${this.isCoin ? '앞면／뒷면' : '눈'}을 공개 → ${this.face}`);
         }
       })
       .on<object>('TABLE_VIEW_ROTATE', event => {
@@ -341,7 +341,7 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
                     isContainDice = isContainDice || !diceSymbol.isCoin;
                     EventSystem.call('ROLL_DICE_SYMBOL', { identifier: diceSymbol.identifier });
                     let face = diceSymbol.diceRoll();
-                    let message = `${diceSymbol.name == '' ? '(이름 없는 ' + (diceSymbol.isCoin ? '코인' : '다이스') + ')' : diceSymbol.name} を${diceSymbol.isCoin ? '토스했다' : '굴렸다'}`;
+                    let message = `${diceSymbol.name == '' ? '(이름 없는 ' + (diceSymbol.isCoin ? '코인' : '다이스') + ')' : diceSymbol.name}을/를 ${diceSymbol.isCoin ? '토스했다' : '굴렸다'}`;
                     if (diceSymbol.owner === '') message += ` → ${face}`;
                     messages.push(message);
                   }
@@ -358,7 +358,7 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
                 const messages: string[] = []; 
                 selectedDiceSymbols().forEach(diceSymbol => {
                   if (diceSymbol.owner != '') {
-                    messages.push(`${diceSymbol.name == '' ? '(이름 없는 ' + (diceSymbol.isCoin ? '코인' : '다이스') + ')' : diceSymbol.name} の${diceSymbol.isCoin ? '앞면／뒷면' : '눈'}을 공개 → ${diceSymbol.face}`);
+                    messages.push(`${diceSymbol.name == '' ? '(이름 없는 ' + (diceSymbol.isCoin ? '코인' : '다이스') + ')' : diceSymbol.name}의 ${diceSymbol.isCoin ? '앞면／뒷면' : '눈'}을 공개 → ${diceSymbol.face}`);
                   }
                   diceSymbol.owner = '';
                 });
@@ -376,7 +376,7 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
                   }
                   diceSymbol.owner = Network.peer.userId;
                 });
-                if (names.length) this.chatMessageService.sendOperationLog(names.join(',') + '를 혼자만 봤다');
+                if (names.length) this.chatMessageService.sendOperationLog(names.join(',') + '을/를 혼자만 봤다');
                 SoundEffect.play(PresetSound.lock);
               },
               disabled: !selectedDiceSymbols().some(diceSymbol => diceSymbol.owner != Network.peer.userId)
@@ -416,7 +416,7 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
       actions.push({
         name: '자신만 본다', action: () => {
           this.owner = Network.peer.userId;
-          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름 없는 ' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name}을 자신만 봤다`);
+          this.chatMessageService.sendOperationLog(`${this.diceSymbol.name == '' ? '(이름 없는 ' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name}을/를 자신만 봤다`);
           SoundEffect.play(PresetSound.lock);
         }
       });
