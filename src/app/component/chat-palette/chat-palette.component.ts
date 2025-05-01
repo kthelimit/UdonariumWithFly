@@ -276,6 +276,6 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
 　받아라!｜약속된 승리의 검《엑스칼리버》!
 
 ・💭
-　캐릭터에서 채팅을 보낼 때, [와 ]로 둘러싼 내용을 💭로 표시합니다.`];
+　캐릭터에서 채팅을 보낼 때, "와 "로 둘러싼 내용을 💭로 표시합니다.`];
   }
 }
