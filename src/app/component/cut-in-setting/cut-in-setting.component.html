@@ -50,7 +50,7 @@
               <option [value]="2" [selected]="cutInType == 2">열린다(좌우)</option>
               <option [value]="3" [selected]="cutInType == 3">열린다(상하)</option>
             </select>
-            <label style="margin-left: 1em; font-size: smaller" [style.cursor]="isEditable ? 'pointer' : 'default'"><input name="borderStyle" type="checkbox" (click)="borderStyle = borderStyle == 0 ? 1 : 0" [checked]="borderStyle == 1" [attr.disabled]="!isEditable ? '' : null"><b>枠あり</b></label>
+            <label style="margin-left: 1em; font-size: smaller" [style.cursor]="isEditable ? 'pointer' : 'default'"><input name="borderStyle" type="checkbox" (click)="borderStyle = borderStyle == 0 ? 1 : 0" [checked]="borderStyle == 1" [attr.disabled]="!isEditable ? '' : null"><b>테두리 있음</b></label>
           </div>
           <div style="padding-left: 2px">
             <b style="font-size: smaller">채팅 말미(끝): </b><br>
