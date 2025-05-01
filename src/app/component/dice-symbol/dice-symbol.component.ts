@@ -541,7 +541,7 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
       }
     //}
     let face = this.diceSymbol.diceRoll();
-    let message = `${this.diceSymbol.name == '' ? '(이름 없는 ' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name}을${this.isCoin ? '토스했다' : '굴렸다'}`;
+    let message = `${this.diceSymbol.name == '' ? '(이름 없는 ' + (this.isCoin ? '코인' : '다이스') + ')' : this.diceSymbol.name}을/를 ${this.isCoin ? '토스했다' : '굴렸다'}`;
     if (this.owner === '') message += ` → ${face}`;
     this.chatMessageService.sendOperationLog(message);
     return face;

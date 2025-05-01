@@ -198,7 +198,7 @@ export class JukeboxComponent implements OnInit, OnDestroy {
         { name: '다이스 심볼을 둔다', action: () => { this.playSETest(PresetSound.dicePut); }},
         { name: '다이스를 굴린다１', action: () => { this.playSETest(PresetSound.diceRoll1); }},
         { name: '다이스를 굴린다２', action: () => { this.playSETest(PresetSound.diceRoll2); }},
-        { name: '코인 토스스', action: () => { this.playSETest(PresetSound.coinToss); }},
+        { name: '코인 토스', action: () => { this.playSETest(PresetSound.coinToss); }},
       ]},
       { name: '카드 · 카드 더미', subActions: [
         { name: '카드를 뽑는다 / 뒤집는다', action: () => { this.playSETest(PresetSound.cardDraw); }},
