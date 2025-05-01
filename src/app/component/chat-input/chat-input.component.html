@@ -67,7 +67,7 @@
     <div>
       <form>
         <input *ngIf="onlyCharacters" type="color" style="width:1em; margin-left: 3px" [(ngModel)]="paletteColor" [ngModelOptions]="{standalone: true}">
-        <textarea class="chat-input" [placeholder]="!onlyCharacters ? 'Ctrl+⇅:히스토리&#x23CE;:송신Shift+&#x23CE;:개행　채팅 팔레트 색상 우선' : 'Ctrl+⇅:히스토리&#x23CE;:송신Shift+&#x23CE;:개행　白(255,255,255):당신의 색'" [(ngModel)]="text"
+        <textarea class="chat-input" [placeholder]="!onlyCharacters ? 'Ctrl+⇅:히스토리&#x23CE;:송신Shift+&#x23CE;:개행　채팅 팔레트 색상 우선' : 'Ctrl+⇅:히스토리&#x23CE;:송신 Shift+&#x23CE;:개행　흰색(255,255,255):당신의 색'" [(ngModel)]="text"
           [ngModelOptions]="{standalone: true}" (input)="onInput()" (keydown.enter)="sendChat($event)" (focus)="isFilterTextUpdate = true" (blur)="isFilterTextUpdate = false"
           (keydown.control.arrowup)="moveHistory($event, 1)" (keydown.control.arrowdown)="moveHistory($event, -1)" (keydown.arrowdown)="moveTo($event)"
           #textArea></textarea>

@@ -76,9 +76,9 @@
 <ng-template #secret>
   <span><s>（시크릿 다이스）</s></span>
 </ng-template>
-<ng-template #editor>
-    <button *ngIf="!isEditing" class="edit-button" (click)="editStart()" title="편집"><i class="material-icons small-font">edit</i></button>
+<ng-template #editor>    
   <span class="edit-buttons" style="margin-left: 4px; white-space: nowrap">
+    <button *ngIf="!isEditing" class="edit-button" (click)="editStart()" title="편집"><i class="material-icons small-font">edit</i></button>
     <button *ngIf="!isEditing" class="edit-button" aria-hidden="true" style="visibility: hidden"><i class="material-icons small-font">clear</i></button>
     <button *ngIf="isEditing" class="edit-button" [disabled]="editingText.trim().length == 0" (click)="editEnd()" title="확정"><i class="material-icons small-font">done</i></button>
     <button *ngIf="isEditing" class="edit-button" (click)="editCancel()" title="취소"><i class="material-icons small-font">clear</i></button>

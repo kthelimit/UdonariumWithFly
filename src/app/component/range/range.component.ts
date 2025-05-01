@@ -605,13 +605,13 @@ export class RangeComponent implements OnChanges, OnDestroy, AfterViewInit {
         menuArray.push(
           this.range.isFollowAltitude
           ? {
-            name: '☑ 높이・고도에도 따른다, action: () => {
+            name: '☑ 높이・고도에도 따른다', action: () => {
               this.range.isFollowAltitude = false;
             },
             checkBox: 'check'
           }
           : {
-            name: '☐ 높이・고도에도 따른다, action: () => {
+            name: '☐ 높이・고도에도 따른다', action: () => {
               this.range.isFollowAltitude = true;
               if (this.followingCharactor) this.range.following();
             },

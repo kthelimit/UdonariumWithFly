@@ -1,7 +1,7 @@
 <div *ngIf="!isConnected;else other_content">
-  <div>방 이름 : <input class="input" (input)="calcPeerId($event.target.value, password)" [(ngModel)]="roomName" required minlength="1" maxlength="128" #roomNameValidation="ngModel"
+  <div>방 이름 : <input #input class="input" (input)="calcPeerId(input.value, password)" [(ngModel)]="roomName" required minlength="1" maxlength="128" #roomNameValidation="ngModel"
       placeholder="방의 이름은 필수" /></div>
-  <div>패스워드: <input class="input" (input)="calcPeerId(roomName, $event.target.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="비워두면 패스워드 없음"
+  <div>패스워드: <input #input class="input" (input)="calcPeerId(roomName, input.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="비워두면 패스워드 없음"
     /></div>
   <hr/>
   <div *ngIf="roomNameValidation.errors && (roomNameValidation.dirty || roomNameValidation.touched)">

@@ -33,12 +33,12 @@
     <div *ngIf="isSaveing" class="progress">{{progresPercent}}%</div>
   </div>
 </button>
-<ng-container *ngIf="tabletopObject.aliasName === 'character'">
+<ng-container *ngIf="tabletopObject.aliasName === 'character'">    
+  <select #select *ngIf="tabletopObject" (change)="setLocation(select.value)" [ngModel]="tabletopObject.location.name">
     <option value="table">테이블</option>
     <option value="common">공유 인벤토리</option>
     <option value="{{networkService.peerId}}">개인 인벤토리</option>
     <option value="graveyard">묘지</option>
-  <select #select *ngIf="tabletopObject" (change)="setLocation(select.value)" [ngModel]="tabletopObject.location.name">
   </select>
   <button (click)="openModal('shadowImageIdentifier', tabletopObject.shadowImageFile.url.length > 0)" [disabled]="!tabletopObject.imageElement || tabletopObject.imageElement.value == 'null'">이미지의 그림자 변경</button>
 </ng-container>
@@ -48,10 +48,10 @@
   </span>
   <div *ngIf="(0 < tabletopObject.imageFile?.url.length || 0 < tabletopObject.faceIcons?.length) && tabletopObject.aliasName != 'table-mask'" class="box main-image-box">
     <div class="icons-box">
-      <div *ngFor="let faceIconImage of tabletopObject.faceIcons; index as i; trackBy: identify" style="position: relative" [style.top.px]="-showIconOffset(i)">
-          <button *ngIf="tabletopObject.currntIconIndex == i" class="button-delete-icon" title="얼굴 아이콘 삭제" (click)="deleteIcon(i, faceIconImage.identifier)">
+      <div *ngFor="let faceIconImage of tabletopObject.faceIcons; index as i; trackBy: identify" style="position: relative" [style.top.px]="-showIconOffset(i)">          
         <span @bounceInOut *ngIf="0 < faceIconImage.url.length" class="icon-image-box" style="display: block" [ngClass]="{'current-icon': tabletopObject.currntIconIndex == i}">
           <img [src]="faceIconImage.url | safe: 'resourceUrl'" [style.cursor]="tabletopObject.currntIconIndex == i ? 'auto' : 'pointer'" [alt]="faceIconImage.name" (click)="selectIcon(i)" draggable="false" />
+          <button *ngIf="tabletopObject.currntIconIndex == i" class="button-delete-icon" title="얼굴 아이콘 삭제" (click)="deleteIcon(i, faceIconImage.identifier)">
             <b class="material-icons" style="font-size: 1rem;">close</b>
           </button>
         </span>

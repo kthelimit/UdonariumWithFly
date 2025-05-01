@@ -900,7 +900,7 @@ export class DiceBot extends GameObject {
 }
 
 function initializeDiceBotQueue(): PromiseQueue {
-  const langSortOrder = ['영어어', '정체중문', '간체중문', '한국어', '그외'];
+  const langSortOrder = ['영어', '정체중문', '간체중문', '한국어', '그외'];
   let queue = new PromiseQueue('DiceBotQueue');
   queue.add(async () => {
     loader = new (await import(
