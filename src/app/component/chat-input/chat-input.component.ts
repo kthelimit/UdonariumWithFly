@@ -695,8 +695,8 @@ export class ChatInputComponent implements OnInit, OnDestroy {
           dialogText = dialogText.slice(choiceMatch[1].length)
         }
         //console.log(dialogText)
-        //💭はEvant機能使うようにする
-        const dialogRegExp = /「+([\s\S]+?)」/gm;
+        //💭はEvant機能使うようにする       
+        const dialogRegExp = /\[+([\s\S]+?)\]/gm;
         // const dialogRegExp = /(?:^|[^\￥])「([\s\S]+?[^\￥])」/gm; 
         //ToDO ちゃんとパースする
         let match;
@@ -823,12 +823,12 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     }
     
     let contextMenuActions: ContextMenuAction[] = [
-      { name: '「」를 입력', 
+      { name: '[]를 입력', 
         action: () => {
           let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement;
           let text = this.text.trim();
-          if (text.slice(0, 1) != '「') text = '「' + text;
-          if (text.slice(-1) != '」') text = text + '」';
+          if (text.slice(0, 1) != '[') text = '[' + text;
+          if (text.slice(-1) != ']') text = text + ']';
           this.text = text;
           textArea.value = this.text;
           textArea.selectionStart = this.text.length - 1;
